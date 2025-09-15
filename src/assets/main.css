@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Linden+Hill:ital@0;1&display=swap');
+
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#app {
+  font-family: 'Crimson Text' Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  background-color: rgb(253, 253, 253);
+  color: #2c3e50;
+  padding: 2rem;
+}
+
+hr {
+  border: none;
+  max-width: 70%;
+  background-color: #CFCFCF;
+  height: 1px;
+  margin: 1rem auto;
+}
+
