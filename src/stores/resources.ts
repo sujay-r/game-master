@@ -1,9 +1,12 @@
 import { defineStore } from "pinia";
 import type { StatType } from "@/types/common";
 
+interface StatStoreState {
+  stats: StatType[]
+}
 
 const useStatStore = defineStore("stats", {
-  state: () => ({
+  state: (): StatStoreState => ({
     stats: [
       {
         statName: "Health", stat: 50, effects: [{ buff: true, text: "Workout" }, {
