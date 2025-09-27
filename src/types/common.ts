@@ -1,6 +1,7 @@
 export interface StatusEffectType {
   buff: boolean,
-  text: string
+  text: string,
+  id?: number
 }
 
 export interface StatType {

@@ -1,8 +1,9 @@
 <template>
   <div v-if="visible" class="modal-overlay" @click.self="close">
     <div class="modal-content">
+      <button class="modal-close" @click="close">X</button>
       <slot />
-      <button class="modal-close" @click="close">Close</button>
+      <button v-if="props.includeCloseButton" class="modal-button" @click="close">Close</button>
     </div>
   </div>
 </template>
@@ -11,7 +12,8 @@
 import { ref, watch } from 'vue';
 
 const props = defineProps<{
-  modelValue: boolean
+  modelValue: boolean,
+  includeCloseButton: boolean
 }>();
 
 const emits = defineEmits<{
@@ -52,6 +54,30 @@ function close() {
 }
 
 .modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  border: none;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.modal-close:hover {
+  background: #f2dede;
+  font-size: 1.3rem;
+  color: crimson;
+  box-shadow: 0 4px 12px rgba(192, 57, 43, 0.12);
+}
+
+.modal-button {
   margin-top: 1rem;
   padding: 0.5rem 1rem;
   background: #32A287;
@@ -61,11 +87,11 @@ function close() {
   cursor: pointer;
 }
 
-.modal-close:hover {
+.modal-button:hover {
   background-color: #4BAB91;
 }
 
-.modal-close:active {
+.modal-button:active {
   background-color: #2D826D;
 }
 </style>
