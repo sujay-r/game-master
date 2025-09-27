@@ -4,7 +4,8 @@ export interface StatusEffectType {
 }
 
 export interface StatType {
-  statName: string,
-  stat: number,
+  id: number,
+  name: string,
+  value: number,
   effects: StatusEffectType[]
 }

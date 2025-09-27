@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import type { StatType } from "@/types/common";
+import { fetchStatsWithEffects } from "@/lib/supabase";
 
 interface StatStoreState {
   stats: StatType[]
@@ -7,18 +8,17 @@ interface StatStoreState {
 
 const useStatStore = defineStore("stats", {
   state: (): StatStoreState => ({
-    stats: [
-      {
-        statName: "Health", stat: 50, effects: [{ buff: true, text: "Workout" }, {
-          buff: false, text:
-            "Sick"
-        }]
-      },
-      { statName: "Focus", stat: 90, effects: [] },
-      { statName: "Energy", stat: 20, effects: [] },
-      { statName: "Mood", stat: 65, effects: [{ buff: false, text: "Shitty CS game" }] },
-    ]
-  })
+    stats: []
+  }),
+  actions: {
+    async fetchStatsFromDb() {
+      try {
+        this.stats = await fetchStatsWithEffects();
+      } catch (err) {
+        console.error("Error while fetching stats from the database: ", err);
+      }
+    }
+  }
 })
 
 export { useStatStore }
