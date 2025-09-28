@@ -1,6 +1,5 @@
 <template>
-  <h1>HUD</h1>
-  <hr>
+  <HKTitle img_path="/src/assets/imgs/thestats_alt.png" />
   <p v-if="!stats.stats.length" class="loading-message">Loading stats...</p>
   <div v-else v-for="stat in stats.stats" :key="stat.id" class="stat-container">
     <HUDStat :stat-name="stat.name" :stat="stat.value" :effects="stat.effects" />
@@ -36,6 +35,7 @@
 <script setup lang="ts">
 import HUDStat from '@/components/HUDStat.vue';
 import Modal from '@/components/Modal.vue';
+import HKTitle from '@/components/HKTitle.vue';
 import { useStatStore } from '@/stores/resources';
 import { addStatusEffect } from '@/lib/supabase';
 import { ref, onMounted } from 'vue';
@@ -76,19 +76,19 @@ const resetStatusEffectInputFields = () => {
 <style scoped>
 .loading-message {
   text-align: left;
-  margin: 0 0 0 15%;
+  margin: 0 0 0 30%;
 }
 
 .stat-container {
   display: flex;
-  margin: 1.5rem 0 0 15%;
+  margin: 1.5rem 0 0 30%;
 }
 
 .stat-button {
   background-color: #32A287;
   border-radius: 20px;
-  font-family: 'Crimson Text';
-  font-size: 1em;
+  font-family: "Perpetua", serif;
+  font-size: 1.1em;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
   color: #fff;
   cursor: pointer;
@@ -106,7 +106,7 @@ const resetStatusEffectInputFields = () => {
 
 .stat-add {
   display: flex;
-  margin: 1.5rem 0 0 15%;
+  margin: 1.5rem 0 0 30%;
 }
 
 .stat-add-container {
@@ -125,7 +125,59 @@ const resetStatusEffectInputFields = () => {
   margin-top: 1rem;
 }
 
+.stat-add-input-row input[type="text"] {
+  background: transparent;
+  border: 1px solid #C7C7C7;
+  border-radius: 8px;
+  padding: 0.5em 1em;
+  font-size: 1em;
+  font-family: 'Perpetua', serif;
+  color: #424242;
+  outline: none;
+  transition: border-color 0.2s;
+  box-shadow: none;
+}
+
+.stat-add-input-row input[type="text"]:focus {
+  border-color: #4BAB91;
+}
+
+.stat-add-input-row input[type="checkbox"] {
+  appearance: none;
+  width: 1.2em;
+  height: 1.2em;
+  border: 1.5px solid #C7C7C7;
+  border-radius: 5px;
+  background: transparent;
+  margin-top: 4px;
+  margin-right: 0.7em;
+  position: relative;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.stat-add-input-row input[type="checkbox"]:checked {
+  background-color: #32A287;
+  border-color: #4BAB91;
+}
+
+.stat-add-input-row input[type="checkbox"]:checked::after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 0.32em;
+  top: 0.15em;
+  width: 0.3em;
+  height: 0.6em;
+  border: solid #fff;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+
 .stat-add-input-label {
+  font-size: 1.2em;
+  margin: auto 0;
   margin-right: 1rem;
 }
 

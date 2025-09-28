@@ -72,7 +72,8 @@ const fillColor = computed(() => {
 }
 
 .hudstat-heading {
-  font-size: 1.2em;
+  font-family: 'Perpetua';
+  font-size: 1.3em;
   font-weight: bold;
   margin: 0;
 }
@@ -84,6 +85,7 @@ const fillColor = computed(() => {
 .hudstat-text {
   margin-left: 3px;
   text-shadow: 0 2px 4px rgba(30, 30, 40, 0.7);
+  font-size: 1.1em;
 }
 
 .progress-bar {
@@ -92,6 +94,7 @@ const fillColor = computed(() => {
   height: 18px;
   background: rgba(0, 0, 0, 0);
   margin-left: 10px;
+  margin-top: 2px;
   overflow: hidden;
 }
 

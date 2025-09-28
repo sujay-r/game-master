@@ -1,13 +1,46 @@
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Linden+Hill:ital@0;1&display=swap');
-
 html, body, #app {
   height: 100%;
   margin: 0;
   padding: 0;
 }
 
+@font-face {
+  font-family: Perpetua;
+  src: url('./fonts/perpetua.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Perpetua;
+  src: url('./fonts/perpetua-bold.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Perpetua;
+  src: url('./fonts/perpetua-italic.woff') format('woff');
+  font-weight: normal;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: Trajan;
+  src: url('./fonts/TrajanPro-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Trajan;
+  src: url('./fonts/TrajanPro-Bold.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
+}
+
 #app {
-  font-family: 'Crimson Text' Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Perpetua', Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
@@ -24,3 +57,6 @@ hr {
   margin: 1rem auto;
 }
 
+:is(h1, h2, h3, h4, h5, h6) {
+  font-family: 'Trajan', serif;
+}

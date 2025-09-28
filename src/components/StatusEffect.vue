@@ -22,11 +22,12 @@ const effectSign = computed(() => {
 
 <style scoped>
 .effect-container {
-  margin: 5px 0 0;
+  margin: 2px 0 0;
 }
 
 .effect-text {
-  font-style: oblique;
+  font-style: italic;
+  font-size: 1.2em;
   margin: 0;
 }
 

@@ -1,7 +1,11 @@
 <template>
   <div v-if="visible" class="modal-overlay" @click.self="close">
     <div class="modal-content">
-      <button class="modal-close" @click="close">X</button>
+      <button class="modal-close" @click="close">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+          <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
+        </svg>
+      </button>
       <slot />
       <button v-if="props.includeCloseButton" class="modal-button" @click="close">Close</button>
     </div>
@@ -46,7 +50,7 @@ function close() {
 
 .modal-content {
   background: #fff;
-  padding: 2rem;
+  padding: 2rem 3.5rem;
   border-radius: 12px;
   min-width: 300px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
@@ -61,8 +65,6 @@ function close() {
   background: rgba(0, 0, 0, 0.05);
   border-radius: 50%;
   cursor: pointer;
-  font-size: 1.2rem;
-  font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -70,11 +72,28 @@ function close() {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+.modal-close>svg {
+  height: 20px;
+  width: 20px;
+  fill: #929292;
+}
+
+
 .modal-close:hover {
   background: #f2dede;
-  font-size: 1.3rem;
-  color: crimson;
   box-shadow: 0 4px 12px rgba(192, 57, 43, 0.12);
+}
+
+.modal-close:active {
+  background: #D9C8C8;
+}
+
+.modal-close>svg:hover {
+  fill: #DC143C;
+}
+
+.modal-close>svg:active {
+  fill: #B11B32
 }
 
 .modal-button {
