@@ -19,11 +19,7 @@
       </div>
       <div class="stat-add-input-row">
         <label for="statSelect" class="stat-add-input-label">Affects which stats: </label>
-        <select id="statSelect" multiple v-model="tempStatusEffectSelectedStats">
-          <option v-for="stat in stats.stats" :key="stat.id" :value="stat">
-            {{ stat.name }}
-          </option>
-        </select>
+        <MultiselectDropdown :options="stats.stats" v-model="tempStatusEffectSelectedStats" />
       </div>
       <div class="stat-add-input-button">
         <button class="stat-button longer-button" @click="createNewStatusEffect">Add</button>
@@ -36,6 +32,7 @@
 import HUDStat from '@/components/HUDStat.vue';
 import Modal from '@/components/Modal.vue';
 import HKTitle from '@/components/HKTitle.vue';
+import MultiselectDropdown from '@/components/MultiselectDropdown.vue';
 import { useStatStore } from '@/stores/resources';
 import { addStatusEffect } from '@/lib/supabase';
 import { ref, onMounted } from 'vue';
@@ -46,6 +43,8 @@ const modalOpen = ref<boolean>(false);
 const tempStatusEffectText = ref<string>("");
 const tempStatusEffectBuffBool = ref<boolean>(false);
 const tempStatusEffectSelectedStats = ref<StatType[]>([])
+
+// TODO: Use grid layout to arrange status add screen input form.
 
 onMounted(() => {
   if (!stats.stats.length) {
@@ -122,6 +121,7 @@ const resetStatusEffectInputFields = () => {
 .stat-add-input-row {
   display: flex;
   flex-direction: row;
+  justify-content: space-between;
   margin-top: 1rem;
 }
 

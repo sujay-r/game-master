@@ -9,6 +9,8 @@
 import { computed } from 'vue';
 import type { StatusEffectType } from '@/types/common';
 
+// TODO: Add a close button to delete status effect.
+
 const props = defineProps<{
   effect: StatusEffectType
 }>()
