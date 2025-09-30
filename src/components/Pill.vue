@@ -1,14 +1,24 @@
 <template>
-  <span class="pill" :style="{ backgroundColor: color }">{{ text }}</span>
+  <span class="pill" :style="{ backgroundColor: color }">
+    {{ text }}
+    <span class="pill-close" @click="deletePill">&times;</span>
+  </span>
 </template>
 
 <script setup lang="ts">
-// TODO: Add a close button to delete pill.
-
 const props = defineProps<{
   text: string
   color?: string
-}>()
+}>();
+
+const emits = defineEmits<{
+  (e: 'delete', value: boolean): void
+
+}>();
+
+const deletePill = () => {
+  emits('delete', true);
+}
 </script>
 
 <style scoped>
@@ -25,5 +35,21 @@ const props = defineProps<{
   border: none;
   border-radius: 25px;
   user-select: none;
+}
+
+.pill-close {
+  margin-left: 0.3em;
+  cursor: pointer;
+  font-weight: bold;
+  color: #888;
+  transition: color 0.2s;
+}
+
+.pill-close:hover {
+  color: #DC143C;
+}
+
+.pill-close:active {
+  color: #B11B32;
 }
 </style>
