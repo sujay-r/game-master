@@ -40,9 +40,18 @@ function deleteEffect() {
 }
 
 .effect-delete {
+  display: none;
   margin: 0;
   margin-left: 2px;
   cursor: pointer;
+}
+
+.effect-container:hover {
+  cursor: default;
+}
+
+.effect-container:hover .effect-delete {
+  display: inline;
 }
 
 .effect-delete:hover {

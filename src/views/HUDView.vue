@@ -1,23 +1,22 @@
 <template>
   <HKTitle img_path="/src/assets/imgs/thestats_alt.png" />
   <p v-if="!stats.stats.length" class="loading-message">Loading stats...</p>
-  <div v-else v-for="stat in stats.stats" :key="stat.id" class="stat-container">
-    <HUDStat :stat-name="stat.name" :stat="stat.value" :effects="stat.effects" />
+  <div v-else class="stat-container">
+    <HUDStat v-for="stat in stats.stats" :key="stat.id" :stat-name="stat.name" :stat="stat.value"
+      :effects="stat.effects" />
   </div>
-  <button class="stat-button stat-add" @click="modalOpen = true">+ Status Effect</button>
+  <div class="stat-add-button-container">
+    <button class="stat-button stat-add" @click="modalOpen = true">+ Status Effect</button>
+  </div>
   <Modal v-model="modalOpen" :include-close-button="false">
     <div class="stat-add-container">
       <h2>Add Status Effect</h2>
       <hr class="stat-add-hr">
-      <div class="stat-add-input-row">
+      <div class="input-grid">
         <label for="effectName" class="stat-add-input-label">Effect: </label>
         <input type="text" id="effectName" v-model="tempStatusEffectText" placeholder="Enter status effect here">
-      </div>
-      <div class="stat-add-input-row">
         <label for="effectBuff" class="stat-add-input-label">Buff?</label>
         <input type="checkbox" id="effectBuff" v-model="tempStatusEffectBuffBool">
-      </div>
-      <div class="stat-add-input-row">
         <label for="statSelect" class="stat-add-input-label">Affects which stats: </label>
         <MultiselectDropdown :options="stats.stats" v-model="tempStatusEffectSelectedStats" />
       </div>
@@ -44,7 +43,6 @@ const tempStatusEffectText = ref<string>("");
 const tempStatusEffectBuffBool = ref<boolean>(false);
 const tempStatusEffectSelectedStats = ref<StatType[]>([])
 
-// TODO: Use grid layout to arrange status add screen input form.
 
 onMounted(() => {
   if (!stats.stats.length) {
@@ -80,8 +78,13 @@ const resetStatusEffectInputFields = () => {
 }
 
 .stat-container {
-  display: flex;
-  margin: 1.5rem 0 0 30%;
+  text-align: left;
+  max-width: 60rem;
+  display: grid;
+  margin-left: 30%;
+  grid-template-columns: 1fr 1fr;
+  row-gap: 2em;
+  column-gap: 30%;
 }
 
 .stat-button {
@@ -96,6 +99,10 @@ const resetStatusEffectInputFields = () => {
   border: none;
 }
 
+.stat-add-button-container {
+  margin: 0 auto;
+}
+
 .stat-button:hover {
   background-color: #4BAB91;
 }
@@ -106,7 +113,8 @@ const resetStatusEffectInputFields = () => {
 
 .stat-add {
   display: flex;
-  margin: 1.5rem 0 0 30%;
+  margin-top: 2.5rem;
+  margin-left: 45%;
 }
 
 .stat-add-container {
@@ -116,18 +124,17 @@ const resetStatusEffectInputFields = () => {
 
 .stat-add-hr {
   margin-top: 0;
+  margin-bottom: 1.5em;
   width: 100%;
 }
 
-.stat-add-input-row {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-top: 1rem;
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  row-gap: 1.5em;
 }
 
-.stat-add-input-row input[type="text"] {
+.input-grid input[type="text"] {
   background: transparent;
   border: 1px solid #C7C7C7;
   border-radius: 8px;
@@ -140,11 +147,11 @@ const resetStatusEffectInputFields = () => {
   box-shadow: none;
 }
 
-.stat-add-input-row input[type="text"]:focus {
+.input-grid input[type="text"]:focus {
   border-color: #4BAB91;
 }
 
-.stat-add-input-row input[type="checkbox"] {
+.input-grid input[type="checkbox"] {
   appearance: none;
   width: 1.2em;
   height: 1.2em;
@@ -159,12 +166,12 @@ const resetStatusEffectInputFields = () => {
   transition: border-color 0.2s;
 }
 
-.stat-add-input-row input[type="checkbox"]:checked {
+.input-grid input[type="checkbox"]:checked {
   background-color: #32A287;
   border-color: #4BAB91;
 }
 
-.stat-add-input-row input[type="checkbox"]:checked::after {
+.input-grid input[type="checkbox"]:checked::after {
   content: '';
   display: block;
   position: absolute;
