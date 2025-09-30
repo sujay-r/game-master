@@ -21,6 +21,6 @@ h2 {
 
 img {
   margin-bottom: 2em;
-  filter: blur(0.6px);
+  filter: blur(0.7px);
 }
 </style>
