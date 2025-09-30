@@ -71,5 +71,33 @@ async function addStatusEffect(statusEffect: StatusEffectType, stats: StatType[]
   }
 }
 
+async function deleteAffectedStatusFromTable(effectId: number) {
+  try {
+    const response = await client.from("AffectedStat").delete().eq('effect_id', effectId);
+  }
+  catch (err) {
+    throw err
+  }
+}
 
-export { client, fetchStatsWithEffects, insertStatusEffectInTable, addStatusEffect }
+async function deleteStatusEffectFromTable(effectId: number) {
+  try {
+    const response = await client.from("StatusEffect").delete().eq('id', effectId);
+  }
+  catch (err) {
+    throw err
+  }
+}
+
+async function deleteStatusEffect(effectId: number) {
+  try {
+    await deleteAffectedStatusFromTable(effectId);
+    await deleteStatusEffectFromTable(effectId);
+  }
+  catch (err) {
+    console.error("Error while deleting status effect: ", err);
+  }
+}
+
+
+export { client, fetchStatsWithEffects, addStatusEffect, deleteStatusEffect }

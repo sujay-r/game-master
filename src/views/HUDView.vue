@@ -63,6 +63,7 @@ const createNewStatusEffect = async () => {
   await stats.fetchStatsFromDb();
 }
 
+
 const resetStatusEffectInputFields = () => {
   tempStatusEffectText.value = "";
   tempStatusEffectBuffBool.value = false;

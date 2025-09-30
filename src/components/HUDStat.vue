@@ -10,7 +10,7 @@
         </div>
       </li>
       <li class="hudstat-effects" v-for="effect in props.effects">
-        <StatusEffect :effect="effect" />
+        <StatusEffect :effect="effect" v-if="effect.id !== undefined" @delete="removeStatusEffect(effect.id)" />
       </li>
     </ul>
   </div>
@@ -20,6 +20,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import StatusEffect from './StatusEffect.vue';
+import { useStatStore } from '@/stores/resources';
+import { deleteStatusEffect } from '@/lib/supabase';
 import type { StatusEffectType } from '@/types/common';
 
 const props = defineProps<{
@@ -27,6 +29,8 @@ const props = defineProps<{
   stat: number,
   effects: StatusEffectType[]
 }>()
+
+const stats = useStatStore();
 
 const statText = computed(() => {
   if (props.stat < 25) {
@@ -51,6 +55,11 @@ const fillColor = computed(() => {
     return "#43a047"
   }
 })
+
+const removeStatusEffect = async (effectId: number) => {
+  await deleteStatusEffect(effectId);
+  await stats.fetchStatsFromDb();
+}
 </script>
 
 

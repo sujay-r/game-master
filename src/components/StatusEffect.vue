@@ -1,7 +1,7 @@
 <template>
   <div class="effect-container">
     <p class="effect-text" :class="{ buff: props.effect.buff, debuff: !props.effect.buff }">{{
-      effectSign }} {{ props.effect.text }}</p>
+      effectSign }} {{ props.effect.text }} <span class="effect-delete" @click="deleteEffect">&times;</span></p>
   </div>
 </template>
 
@@ -9,17 +9,23 @@
 import { computed } from 'vue';
 import type { StatusEffectType } from '@/types/common';
 
-// TODO: Add a close button to delete status effect.
-
 const props = defineProps<{
   effect: StatusEffectType
-}>()
+}>();
 
+const emits = defineEmits<{
+  (e: 'delete', value: boolean): void
+
+}>();
 
 const effectSign = computed(() => {
   if (props.effect.buff) return '+'
   else return '-'
 })
+
+function deleteEffect() {
+  emits('delete', true);
+}
 </script>
 
 <style scoped>
@@ -31,6 +37,21 @@ const effectSign = computed(() => {
   font-style: italic;
   font-size: 1.2em;
   margin: 0;
+}
+
+.effect-delete {
+  margin: 0;
+  margin-left: 2px;
+  cursor: pointer;
+}
+
+.effect-delete:hover {
+  font-weight: bold;
+}
+
+.effect-delete:active {
+  font-weight: bold;
+  font-size: 0.95em;
 }
 
 .buff {
