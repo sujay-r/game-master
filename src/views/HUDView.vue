@@ -10,8 +10,7 @@
   </div>
   <Modal v-model="modalOpen" :include-close-button="false">
     <div class="stat-add-container">
-      <h2>Add Status Effect</h2>
-      <hr class="stat-add-hr">
+      <HeadingFleur heading-text="Add Status Effect" heading-size="1.8em" />
       <div class="input-grid">
         <label for="effectName" class="stat-add-input-label">Effect: </label>
         <input type="text" id="effectName" v-model="tempStatusEffectText" placeholder="Enter status effect here">
@@ -31,6 +30,7 @@
 import HUDStat from '@/components/HUDStat.vue';
 import Modal from '@/components/Modal.vue';
 import HKTitle from '@/components/HKTitle.vue';
+import HeadingFleur from '@/components/HeadingFleur.vue';
 import MultiselectDropdown from '@/components/MultiselectDropdown.vue';
 import { useStatStore } from '@/stores/resources';
 import { addStatusEffect } from '@/lib/supabase';
