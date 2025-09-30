@@ -74,17 +74,17 @@ const resetStatusEffectInputFields = () => {
 <style scoped>
 .loading-message {
   text-align: left;
-  margin: 0 0 0 30%;
+  margin: 0 0 0 35%;
 }
 
 .stat-container {
   text-align: left;
   max-width: 60rem;
   display: grid;
-  margin-left: 30%;
+  margin-left: 35%;
   grid-template-columns: 1fr 1fr;
   row-gap: 2em;
-  column-gap: 30%;
+  column-gap: 35%;
 }
 
 .stat-button {
@@ -114,7 +114,7 @@ const resetStatusEffectInputFields = () => {
 .stat-add {
   display: flex;
   margin-top: 2.5rem;
-  margin-left: 45%;
+  margin-left: 47%;
 }
 
 .stat-add-container {

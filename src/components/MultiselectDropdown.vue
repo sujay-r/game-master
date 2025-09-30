@@ -17,6 +17,8 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import Pill from '@/components/Pill.vue';
 
+// TODO: Add a dropdown icon
+
 const props = defineProps<{
   options: any[],
   modelValue: any[]
