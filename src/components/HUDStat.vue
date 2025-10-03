@@ -33,7 +33,6 @@ import { useStatStore } from '@/stores/resources';
 import { updateStatValue, deleteStatusEffect } from '@/lib/supabase';
 import type { StatType, StatusEffectType } from '@/types/common';
 
-// TODO: Add an edit button to edit the stat value.
 
 const props = defineProps<{
   stat: StatType,
