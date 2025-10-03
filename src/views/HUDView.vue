@@ -2,8 +2,7 @@
   <HKTitle img_path="/src/assets/imgs/thestats_alt.png" />
   <p v-if="!stats.stats.length" class="loading-message">Loading stats...</p>
   <div v-else class="stat-container">
-    <HUDStat v-for="stat in stats.stats" :key="stat.id" :stat-name="stat.name" :stat="stat.value"
-      :effects="stat.effects" />
+    <HUDStat v-for="stat in stats.stats" :key="stat.id" :stat="stat" :effects="stat.effects" />
   </div>
   <div class="stat-add-button-container">
     <button class="stat-button stat-add" @click="modalOpen = true">+ Status Effect</button>
@@ -36,6 +35,8 @@ import { useStatStore } from '@/stores/resources';
 import { addStatusEffect } from '@/lib/supabase';
 import { ref, onMounted } from 'vue';
 import type { StatType, StatusEffectType } from '@/types/common';
+
+// TODO: Add validation to prevent blank status effects from being added.
 
 const stats = useStatStore();
 const modalOpen = ref<boolean>(false);

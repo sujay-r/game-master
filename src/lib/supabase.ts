@@ -30,6 +30,34 @@ async function fetchStatsWithEffects(): Promise<StatType[]> {
   }
 }
 
+async function fetchStatValue(statId: number) {
+  try {
+    const { data, error } = await client.from('Stat').select('value').eq('id', statId).single();
+
+    if (error) {
+      throw error
+    }
+
+    return data
+  }
+  catch (err) {
+    console.error("Error while fetching stat value: ", err);
+  }
+}
+
+async function updateStatValue(statId: number, newValue: number) {
+  try {
+    const { error } = await client.from('Stat').update({ value: newValue }).eq('id', statId);
+
+    if (error) {
+      throw error
+    }
+  }
+  catch (err) {
+    console.error("Error while updating stat value: ", err);
+  }
+}
+
 async function insertStatusEffectInTable(statusEffect: StatusEffectType): Promise<number> {
   try {
     const { data, error } = await client.from("StatusEffect").insert(statusEffect).select()
@@ -100,4 +128,4 @@ async function deleteStatusEffect(effectId: number) {
 }
 
 
-export { client, fetchStatsWithEffects, addStatusEffect, deleteStatusEffect }
+export { client, fetchStatsWithEffects, fetchStatValue, addStatusEffect, deleteStatusEffect, updateStatValue }
