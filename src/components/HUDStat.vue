@@ -5,17 +5,16 @@
       <li>
         <div class="bar-container">
           <div class="progress-bar">
-            <div class="progress-fill" :style="{ width: stat.value + '%', background: fillColor }">
-              <div class="hudstat-text">{{ statText }}</div>
-            </div>
+            <div class="progress-fill" :style="{ width: stat.value + '%', background: fillColor }"></div>
+            <div class="hudstat-text">{{ statText }}</div>
+            <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#424242"
+              v-if="!showEditBox" @click="showEditBox = true">
+              <path
+                d="M120-120v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm584-528 56-56-56-56-56 56 56 56Z" />
+            </svg>
+            <input v-if="showEditBox" v-model="tempNewValue" class="stat-change-input" type="text"
+              @keydown.enter="updateStat">
           </div>
-          <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#424242"
-            v-if="!showEditBox" @click="showEditBox = true">
-            <path
-              d="M120-120v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm584-528 56-56-56-56-56 56 56 56Z" />
-          </svg>
-          <input v-if="showEditBox" v-model="tempNewValue" class="stat-change-input" type="text"
-            @keydown.enter="updateStat">
         </div>
       </li>
       <li class="hudstat-effects" v-for="effect in props.effects">
@@ -33,6 +32,7 @@ import { useStatStore } from '@/stores/resources';
 import { updateStatValue, deleteStatusEffect } from '@/lib/supabase';
 import type { StatType, StatusEffectType } from '@/types/common';
 
+// TODO: Edit button still rendering under the text when progress bar is too low.
 
 const props = defineProps<{
   stat: StatType,
@@ -114,9 +114,16 @@ async function updateStat(event: KeyboardEvent) {
 }
 
 .hudstat-text {
+  position: absolute;
+  left: 0;
+  top: 0;
   margin-left: 3px;
+  color: #fff;
   text-shadow: 0 2px 4px rgba(30, 30, 40, 0.7);
   font-size: 1.1em;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
 }
 
 .bar-container {
@@ -125,9 +132,10 @@ async function updateStat(event: KeyboardEvent) {
 }
 
 .progress-bar {
+  position: relative;
   display: flex;
   flex-direction: row;
-  width: 100%;
+  width: auto;
   min-width: 150px;
   height: 18px;
   background: rgba(0, 0, 0, 0);
