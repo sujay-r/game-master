@@ -1,5 +1,5 @@
 <template>
-  <HKTitle img_path="/src/assets/imgs/thestats_alt.png" />
+  <HKTitle :img_path="hudTitleURL" />
   <p v-if="!stats.stats.length" class="loading-message">Loading stats...</p>
   <div v-else class="stat-container">
     <HUDStat v-for="stat in stats.stats" :key="stat.id" :stat="stat" :effects="stat.effects" />
@@ -44,6 +44,7 @@ const tempStatusEffectText = ref<string>("");
 const tempStatusEffectBuffBool = ref<boolean>(false);
 const tempStatusEffectSelectedStats = ref<StatType[]>([])
 
+const hudTitleURL = new URL('@/assets/imgs/thestats_alt.png', import.meta.url).href
 
 onMounted(() => {
   if (!stats.stats.length) {
