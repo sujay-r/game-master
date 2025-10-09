@@ -5,7 +5,7 @@
       <li>
         <div class="bar-container">
           <div class="progress-bar" @mouseenter="showEditIcon = true" @mouseleave="showEditIcon = false"
-            @touchstart="showEditIcon != showEditIcon">
+            @touchstart="showEditIcon = !showEditIcon">
             <div class="progress-fill" :style="{ width: stat.value + '%', background: fillColor }"></div>
             <div class="hudstat-text">{{ statText }}</div>
             <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#424242"
