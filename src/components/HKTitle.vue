@@ -8,4 +8,17 @@ const props = defineProps<{
 }>();
 </script>
 
-<style scoped></style>
+<style scoped>
+img {
+  height: auto;
+  max-height: 350px;
+  display: block;
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  img {
+    width: 100vw;
+  }
+}
+</style>

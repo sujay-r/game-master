@@ -199,4 +199,27 @@ const resetStatusEffectInputFields = () => {
 .longer-button {
   width: 6em;
 }
+
+@media (max-width: 900px) {
+  .stat-container {
+    margin-left: 0;
+    grid-template-columns: 1fr;
+    column-gap: 0;
+    max-width: 100%;
+  }
+
+  .loading-message {
+    margin: 0 0 1em 0;
+    text-align: center;
+  }
+
+  .stat-add {
+    margin-left: 0;
+    justify-content: center;
+  }
+
+  .input-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>
