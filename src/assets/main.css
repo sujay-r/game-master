@@ -5,6 +5,14 @@ html, body, #app {
   padding: 0;
 }
 
+html, body {
+  overflow-x: hidden;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 @font-face {
   font-family: Perpetua;
   src: url('./fonts/perpetua.woff') format('woff');
@@ -48,6 +56,7 @@ html, body, #app {
   background-color: #F2F2EE;
   color: #424242;
   padding: 2rem;
+  min-height: 100vh;
 }
 
 hr {
