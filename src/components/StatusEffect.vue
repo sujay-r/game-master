@@ -1,12 +1,14 @@
 <template>
   <div class="effect-container">
     <p class="effect-text" :class="{ buff: props.effect.buff, debuff: !props.effect.buff }">{{
-      effectSign }} {{ props.effect.text }} <span class="effect-delete" @click="deleteEffect">&times;</span></p>
+      effectSign }} {{ props.effect.text }} <span class="effect-delete" @mouseenter="showDelete =
+        true" @mouseleave="showDelete = false" @touchstart="showDelete = !showDelete"
+        @click="deleteEffect">&times;</span></p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import type { StatusEffectType } from '@/types/common';
 
 const props = defineProps<{
@@ -17,6 +19,8 @@ const emits = defineEmits<{
   (e: 'delete', value: boolean): void
 
 }>();
+
+const showDelete = ref<boolean>(false);
 
 const effectSign = computed(() => {
   if (props.effect.buff) return '+'
