@@ -4,9 +4,8 @@
     <ul class="hudstat-viz">
       <li>
         <div class="bar-container">
-          <div class="progress-bar">
+          <div class="progress-bar" @mouseenter="showEditIcon = true" @mouseleave="showEditIcon = false">
             <div class="progress-fill" :style="{ width: stat.value + '%', background: fillColor }"
-              @mouseenter="showEditIcon = true" @mouseleave="showEditIcon = false"
               @touchstart="showEditIcon = !showEditIcon"></div>
             <div class="hudstat-text">{{ statText }}</div>
             <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="#424242"
@@ -34,7 +33,6 @@ import { useStatStore } from '@/stores/resources';
 import { updateStatValue, deleteStatusEffect } from '@/lib/supabase';
 import type { StatType, StatusEffectType } from '@/types/common';
 
-// TODO: Can't click on edit button on PC now.
 // TODO: Edit button still rendering under the text when progress bar is too low.
 
 const props = defineProps<{
