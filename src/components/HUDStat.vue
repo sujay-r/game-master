@@ -34,6 +34,7 @@ import { useStatStore } from '@/stores/resources';
 import { updateStatValue, deleteStatusEffect } from '@/lib/supabase';
 import type { StatType, StatusEffectType } from '@/types/common';
 
+// TODO: Can't click on edit button on PC now.
 // TODO: Edit button still rendering under the text when progress bar is too low.
 
 const props = defineProps<{
