@@ -1,10 +1,10 @@
 <template>
   <div class="effect-container" @mouseenter="">
     <p class="effect-text" :class="{ buff: props.effect.buff, debuff: !props.effect.buff }"
-      @mouseenter="showDelete = true" @mouseleave="showDelete = false" @touchstart="showDelete =
-        !showDelete">{{
-          effectSign }} {{ props.effect.text }} <span class="effect-delete" v-show="showDelete"
-        @click="deleteEffect">&times;</span></p>
+      @mouseenter="showDelete = true" @mouseleave="showDelete = false" @touchstart="showDelete = !showDelete">
+      {{ effectSign }} {{ props.effect.text }} <span class="effect-delete" v-show="showDelete"
+        @click="deleteEffect">&times;</span>
+    </p>
   </div>
 </template>
 
@@ -18,7 +18,6 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   (e: 'delete', value: boolean): void
-
 }>();
 
 const showDelete = ref<boolean>(false);
@@ -45,7 +44,6 @@ function deleteEffect() {
 }
 
 .effect-delete {
-  display: none;
   margin: 0;
   margin-left: 2px;
   cursor: pointer;
@@ -53,10 +51,6 @@ function deleteEffect() {
 
 .effect-container:hover {
   cursor: default;
-}
-
-.effect-container:hover .effect-delete {
-  display: inline;
 }
 
 .effect-delete:hover {
