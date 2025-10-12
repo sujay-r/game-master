@@ -1,8 +1,8 @@
 <template>
-  <div class="effect-container" @mouseenter="">
+  <div class="effect-container">
     <p class="effect-text" :class="{ buff: props.effect.buff, debuff: !props.effect.buff }"
       @mouseenter="showDelete = true" @mouseleave="showDelete = false" @touchstart="showDelete = !showDelete">
-      {{ effectSign }} {{ props.effect.text }} <span class="effect-delete" v-show="showDelete"
+      {{ effectSign }} {{ props.effect.text }} <span class="effect-delete" v-show="showDelete" @touchstart.stop
         @click="deleteEffect">&times;</span>
     </p>
   </div>
