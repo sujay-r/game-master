@@ -1,5 +1,8 @@
 <template>
-  <HKTitle :img_path="hudTitleURL" />
+  <HKTitle :img_path="hudTitleURL" :size="1" />
+
+  <!-- Stats section -->
+  <HeadingFleur heading-text="Stats" heading-size="3.9em" :clean="true" />
   <p v-if="!stats.stats.length" class="loading-message">Loading stats...</p>
   <div v-else class="stat-container">
     <HUDStat v-for="stat in stats.stats" :key="stat.id" :stat="stat" :effects="stat.effects" />
@@ -9,7 +12,7 @@
   </div>
   <Modal v-model="modalOpen" :include-close-button="false">
     <div class="stat-add-container">
-      <HeadingFleur heading-text="Add Status Effect" heading-size="1.8em" />
+      <HeadingFleur heading-text="Add Status Effect" heading-size="1.8em" :clean="false" />
       <div class="input-grid">
         <label for="effectName" class="stat-add-input-label">Effect: </label>
         <input type="text" id="effectName" v-model="tempStatusEffectText" placeholder="Enter status effect here">
@@ -23,6 +26,9 @@
       </div>
     </div>
   </Modal>
+
+  <!-- Quests section -->
+  <HeadingFleur heading-text="Quests" heading-size="3.9em" :clean="true" />
 </template>
 
 <script setup lang="ts">
@@ -36,6 +42,7 @@ import { addStatusEffect } from '@/lib/supabase';
 import { ref, onMounted } from 'vue';
 import type { StatType, StatusEffectType } from '@/types/common';
 
+// TODO: Replace the bottom fleur of the Stats and Quests heading with the voidheart one.
 // TODO: Make Add Status Effect Modal responsive.
 // TODO: Add validation to prevent blank status effects from being added.
 
@@ -45,7 +52,9 @@ const tempStatusEffectText = ref<string>("");
 const tempStatusEffectBuffBool = ref<boolean>(false);
 const tempStatusEffectSelectedStats = ref<StatType[]>([])
 
-const hudTitleURL = new URL('@/assets/imgs/thestats_alt.png', import.meta.url).href
+const hudTitleURL = new URL('@/assets/imgs/TheHUD.png', import.meta.url).href
+const statsTitleURL = new URL('@/assets/imgs/Stats.png', import.meta.url).href
+const questsTitleURL = new URL('@/assets/imgs/Quests.png', import.meta.url).href
 
 onMounted(() => {
   if (!stats.stats.length) {
