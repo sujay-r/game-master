@@ -10,6 +10,11 @@
         </div>
       </div>
     </div>
+    <span class="dropdown-icon" :class="{ open: dropdownOpen }">
+      <svg width="20" height="20" viewBox="0 0 20 20">
+        <polyline points="6 8 10 12 14 8" fill="none" stroke="#C7C7C7" stroke-width="2" />
+      </svg>
+    </span>
   </div>
 </template>
 
@@ -102,8 +107,22 @@ onBeforeUnmount(() => {
 <style scoped>
 .dropdown-container {
   display: flex;
+  position: relative;
   flex-direction: column;
   min-width: 15em;
+}
+
+.dropdown-icon {
+  position: absolute;
+  right: 0.2em;
+  top: 60%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  transition: transform 0.2s;
+}
+
+.dropdown-icon.open svg {
+  transform: rotate(180deg);
 }
 
 .selected-pill-container {

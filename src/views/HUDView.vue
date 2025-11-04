@@ -36,6 +36,7 @@ import { addStatusEffect } from '@/lib/supabase';
 import { ref, onMounted } from 'vue';
 import type { StatType, StatusEffectType } from '@/types/common';
 
+// TODO: Make Add Status Effect Modal responsive.
 // TODO: Add validation to prevent blank status effects from being added.
 
 const stats = useStatStore();
