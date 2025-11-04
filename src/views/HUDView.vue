@@ -53,8 +53,6 @@ const tempStatusEffectBuffBool = ref<boolean>(false);
 const tempStatusEffectSelectedStats = ref<StatType[]>([])
 
 const hudTitleURL = new URL('@/assets/imgs/TheHUD.png', import.meta.url).href
-const statsTitleURL = new URL('@/assets/imgs/Stats.png', import.meta.url).href
-const questsTitleURL = new URL('@/assets/imgs/Quests.png', import.meta.url).href
 
 onMounted(() => {
   if (!stats.stats.length) {
