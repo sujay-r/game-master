@@ -24,7 +24,10 @@ const fleurSize = computed(() => {
   const match = props.headingSize.match(/[\d.]+/);
   const size = match ? Number(match[0]) : null;
 
-  return `${size * 8}em`
+  if (size) {
+    return `${size * 8}em`;
+  }
+  return '8em';
 })
 </script>
 
