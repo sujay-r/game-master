@@ -42,7 +42,7 @@ import { addStatusEffect } from '@/lib/supabase';
 import { ref, onMounted } from 'vue';
 import type { StatType, StatusEffectType } from '@/types/common';
 
-// TODO: Replace the bottom fleur of the Stats and Quests heading with the voidheart one.
+// TODO: Make the Stat/Quest heading size responsive (including the fleur).
 // TODO: Make Add Status Effect Modal responsive.
 // TODO: Add validation to prevent blank status effects from being added.
 
