@@ -1,7 +1,7 @@
 <template>
   <div class="task-container" @click="taskOpen = true">
-    <input type="checkbox" class="task-checkbox">
-    <h5>{{ task.title }}</h5>
+    <input type="checkbox" class="task-checkbox" @click.self.stop>
+    <h4 class="task-title">{{ task.title }}</h4>
     <div class="token-section">
       <div v-for="outcome in task.outcomes" :key="outcome.token_type" class="token-container">
         <span class="token-count-text" :style="`color: ${outcome.icon_color}`">{{ outcome.quantity }}</span> <span
@@ -60,10 +60,15 @@ onMounted(async () => {
   align-items: center;
   min-height: 48px;
   transition: box-shadow 0.2s;
+  cursor: pointer;
 }
 
 .task-container:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 3px 8px rgba(0, 0, 0, 0.10);
+}
+
+.task-title {
+  cursor: text;
 }
 
 .token-section {
