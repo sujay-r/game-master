@@ -7,11 +7,13 @@ const router = createRouter({
   routes: [
     {
       path: '/quests',
+      // path: '/',
       name: "HUD",
       component: HUDView
     },
     {
       path: '/',
+      // path: '/quests',
       name: "Quests",
       component: QuestView
     }

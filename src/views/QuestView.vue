@@ -1,21 +1,22 @@
 <template>
   <HKTitle :img_path="questsTitleURL" :size="1" />
-  <Task :task="dummyTask" />
+  <Task v-for="task in tasks" :task="task" />
 </template>
 
 <script setup lang="ts">
 import HKTitle from '@/components/HKTitle.vue';
 import Task from '@/components/Task.vue';
-import { type TaskType, TaskStatus } from '@/types/common';
+import type { TaskType } from '@/types/common';
+import { fetchTasksWithOutcomes } from '@/lib/supabase';
+import { ref, onMounted } from 'vue';
 
 const questsTitleURL = new URL('@/assets/imgs/theQuests.png', import.meta.url).href
-const dummyTask: TaskType = {
-  title: "Dummy task",
-  description: "Description for the dummy task.",
-  status: TaskStatus.Todo,
-  notes: "",
-  createdAt: ""
-}
+const tasks = ref<TaskType[]>([]);
+
+
+onMounted(async () => {
+  tasks.value = await fetchTasksWithOutcomes();
+})
 
 </script>
 

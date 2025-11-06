@@ -1,34 +1,50 @@
 <template>
-  <div class="task-container">
+  <div class="task-container" @click="taskOpen = true">
     <input type="checkbox" class="task-checkbox">
     <h5>{{ task.title }}</h5>
-    <div class="token-container">
-      <p v-for="token in taskOutcomes" :key="token.tokenType" style="margin-right: 5px">{{ token.tokenType }}: {{
-        token.quantity }}</p>
+    <div class="token-section">
+      <div v-for="outcome in task.outcomes" :key="outcome.token_type" class="token-container">
+        <span class="token-count-text" :style="`color: ${outcome.icon_color}`">{{ outcome.quantity }}</span> <span
+          class="icon-container" v-html="outcome.icon"></span>
+      </div>
     </div>
   </div>
+  <Modal v-model="taskOpen" :include-close-button="true">
+    <h2>{{ task.title }}</h2>
+    <p>{{ task.description }}</p>
+  </Modal>
 </template>
 
 <script setup lang="ts">
-import type { TaskType } from '@/types/common';
+import { onMounted, ref } from 'vue';
+import Modal from './Modal.vue';
+import type { TaskType, TaskOutcomeType } from '@/types/common';
+import { getTokenIconSvg } from '@/lib/supabase';
+import { changeSvgColor, changeSvgSize } from '@/utils/svg';
 
-// TODO: Add icons for task outcomes.
+// TODO: Create design for task pop-up modal.
 // TODO: Create a modal window for whenever a task gets clicked on.
 
 const props = defineProps<{
   task: TaskType
 }>();
 
-const taskOutcomes = [
-  {
-    tokenType: "Care",
-    quantity: 2
-  },
-  {
-    tokenType: "Grind",
-    quantity: 4
+const taskOpen = ref<boolean>(false);
+
+onMounted(async () => {
+  if (props.task.outcomes) {
+    await Promise.all(
+      props.task.outcomes.map(async (taskOutcome: TaskOutcomeType) => {
+        const svgText = await getTokenIconSvg(taskOutcome.icon_filename);
+        const coloredSvg = changeSvgColor(svgText, taskOutcome.icon_color);
+        const finalSvg = changeSvgSize(coloredSvg, 15);
+
+        taskOutcome.icon = finalSvg;
+      })
+    );
   }
-]
+})
+
 </script>
 
 <style scoped>
@@ -50,12 +66,32 @@ const taskOutcomes = [
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 3px 8px rgba(0, 0, 0, 0.10);
 }
 
-.token-container {
+.token-section {
   position: absolute;
   right: 20px;
   display: flex;
   justify-content: flex-start;
   align-items: center;
+}
+
+.token-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0.1em;
+}
+
+.token-count-text {
+  display: contents;
+  font-size: 1.3em;
+  font-weight: bold;
+}
+
+.icon-container {
+  display: contents;
+  margin: 0;
+  padding: 0;
 }
 
 .task-checkbox {

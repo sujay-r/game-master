@@ -17,12 +17,21 @@ export enum TaskStatus {
   Done = "DONE"
 }
 
+export interface TaskOutcomeType {
+  token_type: string,
+  quantity: string,
+  icon_filename: string,
+  icon_color: string,
+  icon?: string
+}
+
 export interface TaskType {
   title: string,
   description: string,
   status: TaskStatus,
   notes: string,
   createdAt: string,
+  outcomes?: TaskOutcomeType[],
   id?: number,
   questId?: number,
 }
