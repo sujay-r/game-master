@@ -1,25 +1,27 @@
 <template>
-  <div class="task-container" @click="taskOpen = true">
+  <div v-if="taskData" class="task-container" @click="taskOpen = true">
     <input type="checkbox" class="task-checkbox" @click.self.stop>
-    <h4 class="task-title">{{ task.title }}</h4>
+    <p v-if="!isEditingTitle" class="task-title" @click.self.stop @click.self="editTitle">{{ taskData.title }}</p>
+    <input v-else type="text" class='task-title' v-model="editedTitle" @click.self.stop @keyup.enter="saveTitle"
+      @blur="cancelEditing" @keyup.esc="cancelEditing" ref="titleInput" />
     <div class="token-section">
-      <div v-for="outcome in task.outcomes" :key="outcome.token_type" class="token-container">
+      <div v-for="outcome in taskData.outcomes" :key="outcome.token_type" class="token-container">
         <span class="token-count-text" :style="`color: ${outcome.icon_color}`">{{ outcome.quantity }}</span> <span
           class="icon-container" v-html="outcome.icon"></span>
       </div>
     </div>
   </div>
-  <Modal v-model="taskOpen" :include-close-button="true">
-    <h2>{{ task.title }}</h2>
-    <p>{{ task.description }}</p>
+  <Modal v-if="taskData" v-model="taskOpen" :include-close-button="true">
+    <h2>{{ taskData.title }}</h2>
+    <p>{{ taskData.description }}</p>
   </Modal>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, toRaw, nextTick } from 'vue';
 import Modal from './Modal.vue';
 import type { TaskType, TaskOutcomeType } from '@/types/common';
-import { getTokenIconSvg } from '@/lib/supabase';
+import { fetchTokenIconSvg, updateTaskTitle } from '@/lib/supabase';
 import { changeSvgColor, changeSvgSize } from '@/utils/svg';
 
 // TODO: Create design for task pop-up modal.
@@ -30,12 +32,46 @@ const props = defineProps<{
 }>();
 
 const taskOpen = ref<boolean>(false);
+const taskData = ref<TaskType>();
+const isEditingTitle = ref<boolean>(false);
+const editedTitle = ref<string>('');
+const titleInput = ref<HTMLInputElement | null>(null);
+
+function editTitle() {
+  isEditingTitle.value = true;
+  editedTitle.value = taskData.value?.title || '';
+  nextTick(() => {
+    titleInput.value?.focus();
+  })
+}
+
+async function saveTitle() {
+  if (!taskData.value) return;
+  const newTitle = editedTitle.value.trim();
+
+  if (newTitle && newTitle !== taskData.value.title) {
+    taskData.value.title = newTitle;
+    if (taskData.value.id) {
+      updateTaskTitle(taskData.value.id, newTitle);
+    }
+    else {
+      console.error(`Task ID not found for ${taskData.value.title}. Can't update title.`)
+    }
+  }
+
+  isEditingTitle.value = false;
+}
+
+function cancelEditing() {
+  isEditingTitle.value = false;
+}
 
 onMounted(async () => {
-  if (props.task.outcomes) {
+  taskData.value = structuredClone(toRaw(props.task));
+  if (taskData.value.outcomes) {
     await Promise.all(
-      props.task.outcomes.map(async (taskOutcome: TaskOutcomeType) => {
-        const svgText = await getTokenIconSvg(taskOutcome.icon_filename);
+      taskData.value.outcomes.map(async (taskOutcome: TaskOutcomeType) => {
+        const svgText = await fetchTokenIconSvg(taskOutcome.icon_filename);
         const coloredSvg = changeSvgColor(svgText, taskOutcome.icon_color);
         const finalSvg = changeSvgSize(coloredSvg, 15);
 
@@ -68,6 +104,9 @@ onMounted(async () => {
 }
 
 .task-title {
+  font-family: Trajan;
+  font-weight: bold;
+  font-size: 1em;
   cursor: text;
 }
 

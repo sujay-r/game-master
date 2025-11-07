@@ -127,7 +127,7 @@ async function deleteStatusEffect(effectId: number) {
   }
 }
 
-async function getTokenIconSvg(iconName: string): Promise<string> {
+async function fetchTokenIconSvg(iconName: string): Promise<string> {
   const { data, error } = await client.storage.from("icons").download(iconName);
   if (error) {
     throw error
@@ -175,5 +175,51 @@ async function fetchTasksWithOutcomes() {
   return results
 }
 
+async function fetchTaskWithOutcomes(taskId: number) {
+  const { data, error } = await client.from("Task").select("*, TaskOutcome(*)").eq('id', taskId)
+  if (error) {
+    throw error
+  }
 
-export { client, fetchStatsWithEffects, fetchStatValue, addStatusEffect, deleteStatusEffect, updateStatValue, getTokenIconSvg, fetchTasksWithOutcomes }
+  const results = await Promise.all(
+    data.map(async (item) => {
+      const { TaskOutcome, ...rest } = item
+      const tokenTypes = TaskOutcome.map((outcome: { token_type: string }) => outcome.token_type)
+      const tokens = await fetchTokens(tokenTypes)
+
+      return {
+        ...rest, outcomes: TaskOutcome.map((outcome: { token_type: string, quantity: number }) => {
+          const token = tokens.find(t => t.token_type === outcome.token_type)
+
+          return {
+            token_type: outcome.token_type,
+            quantity: outcome.quantity,
+            icon_filename: token.icon_filename,
+            icon_color: token.icon_color
+          }
+        })
+      }
+    })
+  );
+
+  return results[0];
+}
+
+async function updateTaskField(taskId: number, fieldName: string, newValue: any) {
+  const { error } = await client.from("Task").update({ [fieldName]: newValue }).eq('id', taskId)
+  if (error) {
+    throw error
+  }
+}
+
+async function updateTaskTitle(taskId: number, newTitle: string) {
+  try {
+    await updateTaskField(taskId, 'title', newTitle);
+  }
+  catch (err) {
+    console.error(err);
+  }
+}
+
+
+export { client, fetchStatsWithEffects, fetchStatValue, addStatusEffect, deleteStatusEffect, updateStatValue, fetchTokenIconSvg, fetchTasksWithOutcomes, fetchTaskWithOutcomes, updateTaskTitle }
