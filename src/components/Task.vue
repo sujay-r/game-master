@@ -24,6 +24,7 @@ import type { TaskType, TaskOutcomeType } from '@/types/common';
 import { fetchTokenIconSvg, updateTaskTitle } from '@/lib/supabase';
 import { changeSvgColor, changeSvgSize } from '@/utils/svg';
 
+// TODO: Fix issue where size of task component changes when inline editing is active.
 // TODO: Create design for task pop-up modal.
 // TODO: Create a modal window for whenever a task gets clicked on.
 
