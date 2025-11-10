@@ -14,12 +14,15 @@
   <Modal v-if="taskData" v-model="taskOpen" :include-close-button="true">
     <h2>{{ taskData.title }}</h2>
     <p>{{ taskData.description }}</p>
+    <hr>
+    <LiveEditor v-model="taskData.notes" :text-box="true" placeholder="Add any notes for the task here..." />
   </Modal>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, toRaw, nextTick } from 'vue';
 import Modal from './Modal.vue';
+import LiveEditor from './LiveEditor.vue';
 import type { TaskType, TaskOutcomeType } from '@/types/common';
 import { fetchTokenIconSvg, updateTaskTitle } from '@/lib/supabase';
 import { changeSvgColor, changeSvgSize } from '@/utils/svg';
@@ -32,8 +35,9 @@ const props = defineProps<{
   task: TaskType
 }>();
 
-const taskOpen = ref<boolean>(false);
 const taskData = ref<TaskType>();
+const taskOpen = ref<boolean>(false);
+
 const isEditingTitle = ref<boolean>(false);
 const editedTitle = ref<string>('');
 const titleInput = ref<HTMLInputElement | null>(null);
@@ -70,15 +74,17 @@ function cancelEditing() {
 onMounted(async () => {
   taskData.value = structuredClone(toRaw(props.task));
   if (taskData.value.outcomes) {
-    await Promise.all(
-      taskData.value.outcomes.map(async (taskOutcome: TaskOutcomeType) => {
-        const svgText = await fetchTokenIconSvg(taskOutcome.icon_filename);
-        const coloredSvg = changeSvgColor(svgText, taskOutcome.icon_color);
-        const finalSvg = changeSvgSize(coloredSvg, 15);
+    // TODO: Figure out whether the Promise.all makes the task object not render until icons are
+    // found.
+    // await Promise.all(
+    taskData.value.outcomes.map(async (taskOutcome: TaskOutcomeType) => {
+      const svgText = await fetchTokenIconSvg(taskOutcome.icon_filename);
+      const coloredSvg = changeSvgColor(svgText, taskOutcome.icon_color);
+      const finalSvg = changeSvgSize(coloredSvg, 15);
 
-        taskOutcome.icon = finalSvg;
-      })
-    );
+      taskOutcome.icon = finalSvg;
+    })
+    // );
   }
 })
 
@@ -129,7 +135,7 @@ onMounted(async () => {
 
 .token-count-text {
   display: contents;
-  font-size: 1.3em;
+  font-size: 1.25em;
   font-weight: bold;
 }
 
