@@ -102,7 +102,7 @@ onBeforeUnmount(() => {
 }
 
 .tiptap p.is-editor-empty:first-child::before {
-  color: #adb5bd;
+  color: rgba(0, 0, 0, 0.27);
   content: attr(data-placeholder);
   float: left;
   height: 0;

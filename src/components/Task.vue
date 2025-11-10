@@ -11,7 +11,7 @@
       </div>
     </div>
   </div>
-  <Modal v-if="taskData" v-model="taskOpen" :include-close-button="true">
+  <Modal v-if="taskData" v-model="taskOpen" :include-close-button="false">
     <h2>{{ taskData.title }}</h2>
     <p>{{ taskData.description }}</p>
     <hr>
