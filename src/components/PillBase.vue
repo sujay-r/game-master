@@ -28,7 +28,7 @@ const customColors = computed(() => {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  padding: 0.25em 1em;
+  padding: 0.6em 1em;
   max-height: 1.1em;
   font-size: 0.95em;
   background: #e0e0e0;
