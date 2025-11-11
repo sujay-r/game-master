@@ -4,6 +4,8 @@
       <div class="pill-contents">
         <span v-html="dueDateIcon" class="icon-container"></span>
         <p class="pill-text">{{ displayText }}</p>
+        <span v-if="selectedDate" class="deselect-button" @click.self.stop
+          @click.self="clearDateSelection">&times;</span>
       </div>
     </PillBase>
     <div v-if="isCalendarShowing" class="date-picker-container" :style="{ width: overlayWidth + 'px' }">
@@ -60,13 +62,16 @@ function selectDate(value: any) {
   document.removeEventListener('click', handleClickOutside);
 }
 
+function clearDateSelection() {
+  selectedDate.value = null;
+}
+
 function positionOverlay() {
   const pillRect = pillContainer.value?.getBoundingClientRect();
   overlayWidth.value = pillRect?.width;
 }
 
 function handleClickOutside(event: any) {
-  console.log(event);
   if (pillContainer.value && !pillContainer.value.contains(event.target)) {
     isCalendarShowing.value = false;
     document.removeEventListener('click', handleClickOutside);
@@ -121,6 +126,7 @@ onBeforeUnmount(() => {
   padding: 0;
 
   margin-left: 3px;
+  margin-right: 3px;
 }
 
 .date-picker-container {
@@ -129,5 +135,9 @@ onBeforeUnmount(() => {
   left: 0;
   margin-top: 8px;
   z-index: 9999;
+}
+
+.deselect-button {
+  margin-top: 1px;
 }
 </style>
