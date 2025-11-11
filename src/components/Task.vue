@@ -14,7 +14,9 @@
   <Modal v-if="taskData" v-model="taskOpen" :include-close-button="false">
     <h2>{{ taskData.title }}</h2>
     <p>{{ taskData.description }}</p>
-    <hr>
+    <div class="metadata-pills">
+      <DatePill color="#A9D5C7" :date="taskData.dueDate" fallback-text="Set due date" />
+    </div>
     <LiveEditor v-model="taskData.notes" :text-box="true" placeholder="Add any notes for the task here..." />
   </Modal>
 </template>
@@ -23,6 +25,7 @@
 import { onMounted, ref, toRaw, nextTick } from 'vue';
 import Modal from './Modal.vue';
 import LiveEditor from './LiveEditor.vue';
+import DatePill from './DatePill.vue';
 import type { TaskType, TaskOutcomeType } from '@/types/common';
 import { fetchTokenIconSvg, updateTaskTitle } from '@/lib/supabase';
 import { changeSvgColor, changeSvgSize } from '@/utils/svg';
@@ -143,6 +146,10 @@ onMounted(async () => {
   display: contents;
   margin: 0;
   padding: 0;
+}
+
+.metadata-pills {
+  margin-bottom: 0.5em;
 }
 
 .task-checkbox {

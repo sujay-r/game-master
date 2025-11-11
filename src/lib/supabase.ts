@@ -158,7 +158,15 @@ async function fetchTasksWithOutcomes() {
       const tokens = await fetchTokens(tokenTypes)
 
       return {
-        ...rest, outcomes: TaskOutcome.map((outcome: { token_type: string, quantity: number }) => {
+        title: item.title,
+        description: item.description,
+        status: item.status,
+        notes: item.notes,
+        id: item.id,
+        questId: item.quest_id,
+        createdAt: new Date(item.created_at),
+        dueDate: item.due_date ? new Date(item.due_date) : null,
+        outcomes: TaskOutcome.map((outcome: { token_type: string, quantity: number }) => {
           const token = tokens.find(t => t.token_type === outcome.token_type)
 
           return {
@@ -188,7 +196,15 @@ async function fetchTaskWithOutcomes(taskId: number) {
       const tokens = await fetchTokens(tokenTypes)
 
       return {
-        ...rest, outcomes: TaskOutcome.map((outcome: { token_type: string, quantity: number }) => {
+        title: item.title,
+        description: item.description,
+        status: item.status,
+        notes: item.notes,
+        id: item.id,
+        questId: item.quest_id,
+        createdAt: new Date(item.created_at),
+        dueDate: item.due_date ? new Date(item.due_date) : null,
+        outcomes: TaskOutcome.map((outcome: { token_type: string, quantity: number }) => {
           const token = tokens.find(t => t.token_type === outcome.token_type)
 
           return {
@@ -221,5 +237,14 @@ async function updateTaskTitle(taskId: number, newTitle: string) {
   }
 }
 
+async function updateTaskDueDate(taskId: number, newDate: string) {
+  try {
+    await updateTaskField(taskId, 'due_date', newDate);
+  }
+  catch (err) {
+    console.error(err);
+  }
+}
 
-export { client, fetchStatsWithEffects, fetchStatValue, addStatusEffect, deleteStatusEffect, updateStatValue, fetchTokenIconSvg, fetchTasksWithOutcomes, fetchTaskWithOutcomes, updateTaskTitle }
+
+export { client, fetchStatsWithEffects, fetchStatValue, addStatusEffect, deleteStatusEffect, updateStatValue, fetchTokenIconSvg, fetchTasksWithOutcomes, fetchTaskWithOutcomes, updateTaskTitle, updateTaskDueDate }
