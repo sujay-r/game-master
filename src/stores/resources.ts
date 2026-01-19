@@ -6,6 +6,10 @@ interface StatStoreState {
   stats: StatType[]
 }
 
+interface IconStoreState {
+  icons: {}
+}
+
 const useStatStore = defineStore("stats", {
   state: (): StatStoreState => ({
     stats: []
@@ -36,4 +40,11 @@ const useStatStore = defineStore("stats", {
   }
 })
 
-export { useStatStore }
+const useIconStore = defineStore("icons", {
+  state: (): IconStoreState => ({
+    icons: {}
+  }),
+  actions: {}
+})
+
+export { useStatStore, useIconStore }
