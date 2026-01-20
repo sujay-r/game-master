@@ -20,8 +20,7 @@
 import { VueDatePicker } from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css'
 import PillBase from './PillBase.vue';
-import { changeSvgColor, changeSvgSize } from '@/utils/svg';
-import { fetchTokenIconSvg } from '@/lib/supabase';
+import { useIconStore } from '@/stores/resources';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
 const props = defineProps<{
@@ -36,6 +35,8 @@ const overlayWidth = ref<number | undefined>(0);
 
 const selectedDate = ref<Date | null>();
 const isCalendarShowing = ref<boolean>(false);
+
+const icons = useIconStore();
 
 var dueDateIcon = ref<string>();
 const displayText = computed(() => {
@@ -83,11 +84,7 @@ onMounted(async () => {
 
   selectedDate.value = props.date ? props.date : null;
 
-  // TODO: Cache all the icons in a dedicated icon pinia store
-  // to avoid making API calls unnecessarily.
-  dueDateIcon.value = await fetchTokenIconSvg('due_date.svg');
-  dueDateIcon.value = changeSvgColor(dueDateIcon.value, "#424242");
-  dueDateIcon.value = changeSvgSize(dueDateIcon.value, 13);
+  dueDateIcon.value = await icons.getIcon('due_date.svg', "#424242", 13);
 })
 
 onBeforeUnmount(() => {

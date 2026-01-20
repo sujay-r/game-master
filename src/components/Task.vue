@@ -27,8 +27,8 @@ import Modal from './Modal.vue';
 import LiveEditor from './LiveEditor.vue';
 import DatePill from './DatePill.vue';
 import type { TaskType, TaskOutcomeType } from '@/types/common';
-import { fetchTokenIconSvg, updateTaskTitle } from '@/lib/supabase';
-import { changeSvgColor, changeSvgSize } from '@/utils/svg';
+import { useIconStore } from '@/stores/resources';
+import { updateTaskTitle } from '@/lib/supabase';
 
 // TODO: Fix issue where size of task component changes when inline editing is active.
 // TODO: Create design for task pop-up modal.
@@ -44,6 +44,8 @@ const taskOpen = ref<boolean>(false);
 const isEditingTitle = ref<boolean>(false);
 const editedTitle = ref<string>('');
 const titleInput = ref<HTMLInputElement | null>(null);
+
+const icons = useIconStore();
 
 function editTitle() {
   isEditingTitle.value = true;
@@ -81,11 +83,7 @@ onMounted(async () => {
     // found.
     // await Promise.all(
     taskData.value.outcomes.map(async (taskOutcome: TaskOutcomeType) => {
-      const svgText = await fetchTokenIconSvg(taskOutcome.icon_filename);
-      const coloredSvg = changeSvgColor(svgText, taskOutcome.icon_color);
-      const finalSvg = changeSvgSize(coloredSvg, 15);
-
-      taskOutcome.icon = finalSvg;
+      taskOutcome.icon = await icons.getIcon(taskOutcome.icon_filename, taskOutcome.icon_color, 15);
     })
     // );
   }

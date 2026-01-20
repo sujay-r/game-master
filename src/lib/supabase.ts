@@ -127,7 +127,7 @@ async function deleteStatusEffect(effectId: number) {
   }
 }
 
-async function fetchTokenIconSvg(iconName: string): Promise<string> {
+async function fetchIconSvg(iconName: string): Promise<string> {
   const { data, error } = await client.storage.from("icons").download(iconName);
   if (error) {
     throw error
@@ -247,4 +247,4 @@ async function updateTaskDueDate(taskId: number, newDate: string) {
 }
 
 
-export { client, fetchStatsWithEffects, fetchStatValue, addStatusEffect, deleteStatusEffect, updateStatValue, fetchTokenIconSvg, fetchTasksWithOutcomes, fetchTaskWithOutcomes, updateTaskTitle, updateTaskDueDate }
+export { client, fetchStatsWithEffects, fetchStatValue, addStatusEffect, deleteStatusEffect, updateStatValue, fetchIconSvg, fetchTasksWithOutcomes, fetchTaskWithOutcomes, updateTaskTitle, updateTaskDueDate }
