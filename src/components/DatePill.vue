@@ -30,6 +30,10 @@ const props = defineProps<{
   fallbackText: string,
 }>();
 
+const emits = defineEmits<{
+  (e: 'update:date', value: Date | null): void
+}>();
+
 const pillContainer = ref<HTMLElement>();
 const overlayWidth = ref<number | undefined>(0);
 
@@ -58,6 +62,7 @@ async function showCalendar() {
 
 function selectDate(value: any) {
   selectedDate.value = value;
+  emits('update:date', value);
   isCalendarShowing.value = false;
 
   document.removeEventListener('click', handleClickOutside);

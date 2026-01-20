@@ -1,7 +1,9 @@
 <template>
-  <div v-if="taskData" class="task-container" @click="taskOpen = true">
+  <div v-if="taskData" class="task-container" :class="taskStatusClass" @click="taskOpen = true">
     <input type="checkbox" class="task-checkbox" @click.self.stop>
-    <p v-if="!isEditingTitle" class="task-title" @click.self.stop @click.self="editTitle">{{ taskData.title }}</p>
+    <p v-if="!isEditingTitle" class="task-title" :class="{
+      'task-completed-text': taskData.status === TaskStatus.Done
+    }" @click.self.stop @click.self="editTitle">{{ taskData.title }}</p>
     <input v-else type="text" class='task-title' v-model="editedTitle" @click.self.stop @keyup.enter="saveTitle"
       @blur="cancelEditing" @keyup.esc="cancelEditing" ref="titleInput" />
     <div class="token-section">
@@ -15,20 +17,21 @@
     <h2>{{ taskData.title }}</h2>
     <p>{{ taskData.description }}</p>
     <div class="metadata-pills">
-      <DatePill color="#A9D5C7" :date="taskData.dueDate ?? null" fallback-text="Set due date" />
+      <DatePill color="#A9D5C7" :date="taskData.dueDate ?? null" fallback-text="Set due date"
+        @update:date="onDueDateChanged" />
     </div>
     <LiveEditor v-model="taskData.notes" :text-box="true" placeholder="Add any notes for the task here..." />
   </Modal>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, toRaw, nextTick } from 'vue';
+import { onMounted, ref, toRaw, nextTick, computed } from 'vue';
 import Modal from './Modal.vue';
 import LiveEditor from './LiveEditor.vue';
 import DatePill from './DatePill.vue';
-import type { TaskType, TaskOutcomeType } from '@/types/common';
+import { type TaskType, type TaskOutcomeType, TaskStatus } from '@/types/common';
 import { useIconStore } from '@/stores/resources';
-import { updateTaskTitle } from '@/lib/supabase';
+import { updateTaskDueDate, updateTaskTitle } from '@/lib/supabase';
 
 // TODO: Fix issue where size of task component changes when inline editing is active.
 // TODO: Create design for task pop-up modal.
@@ -46,6 +49,25 @@ const editedTitle = ref<string>('');
 const titleInput = ref<HTMLInputElement | null>(null);
 
 const icons = useIconStore();
+
+const taskStatusClass = computed(() => {
+  if (!taskData.value) return '';
+  switch (taskData.value.status) {
+    case TaskStatus.Done: return 'task-completed';
+    default: return '';
+  }
+})
+
+function onDueDateChanged(newDate: Date | null) {
+  if (newDate) {
+    if (taskData.value) {
+      taskData.value.dueDate = newDate;
+      if (taskData.value.id) {
+        updateTaskDueDate(taskData.value.id, newDate.toLocaleDateString('en-CA'));
+      }
+    }
+  }
+}
 
 function editTitle() {
   isEditingTitle.value = true;
@@ -109,6 +131,14 @@ onMounted(async () => {
 
 .task-container:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 3px 8px rgba(0, 0, 0, 0.10);
+}
+
+.task-completed {
+  opacity: 0.6;
+}
+
+.task-completed-text {
+  text-decoration: line-through;
 }
 
 .task-title {
