@@ -21,6 +21,7 @@
         <label for="statSelect" class="stat-add-input-label">Affects which stats: </label>
         <MultiselectDropdown :options="stats.stats" v-model="tempStatusEffectSelectedStats" />
       </div>
+      <p class="error-message">{{ addStatusEffectFeedbackText }}</p>
       <div class="stat-add-input-button">
         <button class="stat-button longer-button" @click="createNewStatusEffect">Add</button>
       </div>
@@ -51,6 +52,7 @@ const modalOpen = ref<boolean>(false);
 const tempStatusEffectText = ref<string>("");
 const tempStatusEffectBuffBool = ref<boolean>(false);
 const tempStatusEffectSelectedStats = ref<StatType[]>([])
+const addStatusEffectFeedbackText = ref<string>("");
 
 const hudTitleURL = new URL('@/assets/imgs/TheHUD.png', import.meta.url).href
 
@@ -65,10 +67,19 @@ const createNewStatusEffect = async () => {
     text: tempStatusEffectText.value,
     buff: tempStatusEffectBuffBool.value
   }
-  await addStatusEffect(newStatusEffect, tempStatusEffectSelectedStats.value);
-  resetStatusEffectInputFields();
-  modalOpen.value = false;
-  await stats.fetchStatsFromDb();
+  try {
+    await addStatusEffect(newStatusEffect, tempStatusEffectSelectedStats.value);
+    resetStatusEffectInputFields();
+    modalOpen.value = false;
+    await stats.fetchStatsFromDb();
+  }
+  catch (err) {
+    if (err instanceof Error) {
+      addStatusEffectFeedbackText.value = err.message;
+    } else {
+      addStatusEffectFeedbackText.value = String(err);
+    }
+  }
 }
 
 
@@ -76,6 +87,7 @@ const resetStatusEffectInputFields = () => {
   tempStatusEffectText.value = "";
   tempStatusEffectBuffBool.value = false;
   tempStatusEffectSelectedStats.value = [];
+  addStatusEffectFeedbackText.value = "";
 }
 
 </script>
@@ -207,6 +219,12 @@ const resetStatusEffectInputFields = () => {
 .longer-button {
   width: 6em;
 }
+
+.error-message {
+  font-weight: bold;
+  color: #A2324C;
+}
+
 
 @media (max-width: 900px) {
   .stat-container {

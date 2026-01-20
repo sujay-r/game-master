@@ -85,18 +85,13 @@ async function insertAffectedStatusInTable(affectedStatuses: any) {
 }
 
 async function addStatusEffect(statusEffect: StatusEffectType, stats: StatType[]) {
-  try {
-    const insertedId = await insertStatusEffectInTable(statusEffect)
+  const insertedId = await insertStatusEffectInTable(statusEffect)
 
-    const affectedStatuses = stats.map(item => ({
-      stat_id: item.id,
-      effect_id: insertedId
-    }))
-    await insertAffectedStatusInTable(affectedStatuses)
-  }
-  catch (err) {
-    console.error("Error while adding status effect: ", err)
-  }
+  const affectedStatuses = stats.map(item => ({
+    stat_id: item.id,
+    effect_id: insertedId
+  }))
+  await insertAffectedStatusInTable(affectedStatuses)
 }
 
 async function deleteAffectedStatusFromTable(effectId: number) {
