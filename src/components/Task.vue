@@ -1,6 +1,6 @@
 <template>
   <div v-if="taskData" class="task-container" :class="taskStatusClass" @click="taskOpen = true">
-    <input type="checkbox" class="task-checkbox" @click.self.stop>
+    <input type="checkbox" class="task-checkbox" v-model="isCompleted" @click.self.stop>
     <p v-if="!isEditingTitle" class="task-title" :class="{
       'task-completed-text': taskData.status === TaskStatus.Done
     }" @click.self.stop @click.self="editTitle">{{ taskData.title }}</p>
@@ -25,13 +25,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, toRaw, nextTick, computed } from 'vue';
+import { onMounted, ref, toRaw, nextTick, computed, watch } from 'vue';
 import Modal from './Modal.vue';
 import LiveEditor from './LiveEditor.vue';
 import DatePill from './DatePill.vue';
 import { type TaskType, type TaskOutcomeType, TaskStatus } from '@/types/common';
 import { useIconStore } from '@/stores/resources';
-import { updateTaskDueDate, updateTaskTitle } from '@/lib/supabase';
+import { updateTaskDueDate, updateTaskTitle, markTaskDone } from '@/lib/supabase';
 
 // TODO: Fix issue where size of task component changes when inline editing is active.
 // TODO: Create design for task pop-up modal.
@@ -43,12 +43,31 @@ const props = defineProps<{
 
 const taskData = ref<TaskType>();
 const taskOpen = ref<boolean>(false);
+const isCompleted = ref<boolean>(false);
 
 const isEditingTitle = ref<boolean>(false);
 const editedTitle = ref<string>('');
 const titleInput = ref<HTMLInputElement | null>(null);
 
 const icons = useIconStore();
+
+// TODO: Make task checkbox unclickable once task is marked done.
+watch(isCompleted, async (newVal) => {
+  if (taskData.value) {
+    if (!(taskData.value.status === TaskStatus.Done)) {
+      taskData.value.status = newVal ? TaskStatus.Done : TaskStatus.Todo;
+
+      if (taskData.value.id) {
+        await markTaskDone(taskData.value);
+      }
+      else {
+        console.error("Cannot update task because id not found.");
+      }
+    } else {
+      console.warn("Task already marked complete. Cannot undo it now.");
+    }
+  }
+});
 
 const taskStatusClass = computed(() => {
   if (!taskData.value) return '';
@@ -100,6 +119,7 @@ function cancelEditing() {
 
 onMounted(async () => {
   taskData.value = structuredClone(toRaw(props.task));
+  isCompleted.value = taskData.value.status === TaskStatus.Done;
   if (taskData.value.outcomes) {
     // TODO: Figure out whether the Promise.all makes the task object not render until icons are
     // found.

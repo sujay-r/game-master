@@ -1,4 +1,4 @@
-import type { StatType, StatusEffectType } from "@/types/common";
+import { TaskStatus, type StatType, type StatusEffectType, type TaskType } from "@/types/common";
 import { createClient } from "@supabase/supabase-js";
 
 
@@ -145,6 +145,20 @@ async function fetchTokens(tokens: string[]) {
   return data
 }
 
+async function updateTokenField(tokenType: string, fieldName: string, newValue: any) {
+  const { error } = await client.from("Token").update({ [fieldName]: newValue }).eq('token_type', tokenType)
+  if (error) {
+    throw error
+  }
+}
+
+async function deleteOutcomesForTask(taskId: number) {
+  const { error } = await client.from("TaskOutcome").delete().eq('task_id', taskId);
+  if (error) {
+    throw error;
+  }
+}
+
 async function fetchTasksWithOutcomes() {
   const { data, error } = await client.from("Task").select("*, TaskOutcome(*)")
   if (error) {
@@ -246,5 +260,41 @@ async function updateTaskDueDate(taskId: number, newDate: string) {
   }
 }
 
+async function updateTaskStatus(taskId: number, newStatus: TaskStatus) {
+  try {
+    await updateTaskField(taskId, 'status', newStatus);
+  }
+  catch (err) {
+    console.error(err);
+  }
+}
 
-export { client, fetchStatsWithEffects, fetchStatValue, addStatusEffect, deleteStatusEffect, updateStatValue, fetchIconSvg, fetchTasksWithOutcomes, fetchTaskWithOutcomes, updateTaskTitle, updateTaskDueDate }
+async function markTaskDone(task: TaskType) {
+  try {
+    if (task.id) {
+      await updateTaskStatus(task.id, TaskStatus.Done);
+      const outcomes = task.outcomes;
+      const tokenTypes = outcomes?.map(outcome => outcome.token_type);
+
+      if (tokenTypes) {
+        const tokens = await fetchTokens(tokenTypes);
+
+        tokens.forEach(async (token, index) => {
+          const outcome = outcomes?.find(o => o.token_type === token.token_type);
+          await updateTokenField(token.token_type, 'quantity', token.quantity + outcome?.quantity);
+        })
+
+        await deleteOutcomesForTask(task.id);
+      }
+
+    } else {
+      throw new Error("No task ID found for task: " + task.title);
+    }
+  }
+  catch (err) {
+    console.error(err);
+  }
+}
+
+
+export { client, fetchStatsWithEffects, fetchStatValue, addStatusEffect, deleteStatusEffect, updateStatValue, fetchIconSvg, fetchTasksWithOutcomes, fetchTaskWithOutcomes, updateTaskTitle, updateTaskDueDate, updateTaskStatus, markTaskDone }
