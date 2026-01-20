@@ -15,7 +15,7 @@
     <h2>{{ taskData.title }}</h2>
     <p>{{ taskData.description }}</p>
     <div class="metadata-pills">
-      <DatePill color="#A9D5C7" :date="taskData.dueDate" fallback-text="Set due date" />
+      <DatePill color="#A9D5C7" :date="taskData.dueDate ?? null" fallback-text="Set due date" />
     </div>
     <LiveEditor v-model="taskData.notes" :text-box="true" placeholder="Add any notes for the task here..." />
   </Modal>
