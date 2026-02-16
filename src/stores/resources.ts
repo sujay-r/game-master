@@ -1,7 +1,7 @@
-import { defineStore } from "pinia";
-import type { StatType } from "@/types/common";
-import { fetchStatsWithEffects, fetchStatValue, fetchIconSvg } from "@/lib/supabase";
-import { changeSvgColor, changeSvgSize } from '@/utils/svg';
+import { defineStore } from 'pinia'
+import type { StatType, TokenType } from '@/types/common'
+import { fetchStatsWithEffects, fetchStatValue, fetchIconSvg, fetchAllTokens } from '@/lib/supabase'
+import { changeSvgColor, changeSvgSize } from '@/utils/svg'
 
 interface StatStoreState {
   stats: StatType[]
@@ -11,61 +11,94 @@ interface IconStoreState {
   icons: Record<string, string>
 }
 
-const useStatStore = defineStore("stats", {
+interface TokenStoreState {
+  tokens: TokenType[]
+  loading: boolean
+}
+
+const useStatStore = defineStore('stats', {
   state: (): StatStoreState => ({
-    stats: []
+    stats: [],
   }),
   actions: {
     async fetchStatsFromDb() {
       try {
-        this.stats = await fetchStatsWithEffects();
+        this.stats = await fetchStatsWithEffects()
       } catch (err) {
-        console.error("Error while fetching stats from the database: ", err);
+        console.error('Error while fetching stats from the database: ', err)
       }
     },
     async fetchStatValueFromDb(statId: number) {
       try {
-        const data = await fetchStatValue(statId);
+        const data = await fetchStatValue(statId)
 
         if (data) {
-          const statIndex = this.stats.findIndex(stat => stat.id === statId)
+          const statIndex = this.stats.findIndex((stat) => stat.id === statId)
           if (statIndex !== -1) {
-            this.stats[statIndex].value = data.value;
+            this.stats[statIndex].value = data.value
           }
         }
+      } catch (err) {
+        console.error('Error while fetching stat from db: ', err)
       }
-      catch (err) {
-        console.error("Error while fetching stat from db: ", err);
-      }
-    }
-  }
+    },
+  },
 })
 
-const useIconStore = defineStore("icons", {
+const useIconStore = defineStore('icons', {
   state: (): IconStoreState => ({
-    icons: {}
+    icons: {},
   }),
   actions: {
     async getIcon(filename: string, color: string, size: number) {
       // TODO: Modify the if block to also change the color and size of the svg text.
       if (this.icons[filename]) {
-        return this.icons[filename];
+        return this.icons[filename]
       }
 
       try {
-        const svgText = await fetchIconSvg(filename);
-        const coloredSvg = changeSvgColor(svgText, color);
-        const finalSvg = changeSvgSize(coloredSvg, size);
+        const svgText = await fetchIconSvg(filename)
+        const coloredSvg = changeSvgColor(svgText, color)
+        const finalSvg = changeSvgSize(coloredSvg, size)
 
-        this.icons[filename] = finalSvg;
-        return finalSvg;
+        this.icons[filename] = finalSvg
+        return finalSvg
+      } catch (err) {
+        console.error('Error fetching icon ' + filename + ': ' + err)
+        return undefined
       }
-      catch (err) {
-        console.error("Error fetching icon " + filename + ": " + err);
-        return undefined;
-      }
-    }
-  }
+    },
+  },
 })
 
-export { useStatStore, useIconStore }
+const useTokenStore = defineStore('tokens', {
+  state: (): TokenStoreState => ({
+    tokens: [],
+    loading: false,
+  }),
+  actions: {
+    async fetchTokensFromDb() {
+      this.loading = true
+      try {
+        const data = await fetchAllTokens()
+        this.tokens = data
+      } catch (err) {
+        console.error('Error while fetching tokens from the database: ', err)
+        throw err
+      } finally {
+        this.loading = false
+      }
+    },
+    getTokenByType(tokenType: string): TokenType | undefined {
+      return this.tokens.find((token) => token.token_type === tokenType)
+    },
+    updateTokenQuantity(tokenType: string, newQuantity: number) {
+      const tokenIndex = this.tokens.findIndex((token) => token.token_type === tokenType)
+      if (tokenIndex !== -1) {
+        this.tokens[tokenIndex].quantity = newQuantity
+      }
+    },
+  },
+})
+
+export { useStatStore, useIconStore, useTokenStore }

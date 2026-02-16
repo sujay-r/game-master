@@ -138,6 +138,15 @@ async function fetchTokens(tokens: string[]) {
   return data
 }
 
+async function fetchAllTokens() {
+  const { data, error } = await client.from('Token').select('*')
+  if (error) {
+    throw error
+  }
+
+  return data
+}
+
 async function updateTokenField(tokenType: string, fieldName: string, newValue: any) {
   const { error } = await client
     .from('Token')
@@ -314,6 +323,7 @@ export {
   deleteStatusEffect,
   updateStatValue,
   fetchIconSvg,
+  fetchAllTokens,
   fetchTasksWithOutcomes,
   fetchTaskWithOutcomes,
   updateTaskTitle,

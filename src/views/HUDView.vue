@@ -15,9 +15,14 @@
       <HeadingFleur heading-text="Add Status Effect" heading-size="1.8em" :clean="false" />
       <div class="input-grid">
         <label for="effectName" class="stat-add-input-label">Effect: </label>
-        <input type="text" id="effectName" v-model="tempStatusEffectText" placeholder="Enter status effect here">
+        <input
+          type="text"
+          id="effectName"
+          v-model="tempStatusEffectText"
+          placeholder="Enter status effect here"
+        />
         <label for="effectBuff" class="stat-add-input-label">Buff?</label>
-        <input type="checkbox" id="effectBuff" v-model="tempStatusEffectBuffBool">
+        <input type="checkbox" id="effectBuff" v-model="tempStatusEffectBuffBool" />
         <label for="statSelect" class="stat-add-input-label">Affects which stats: </label>
         <MultiselectDropdown :options="stats.stats" v-model="tempStatusEffectSelectedStats" />
       </div>
@@ -29,57 +34,58 @@
 
   <!-- Quests section -->
   <HeadingFleur heading-text="Quests" heading-size="3.9em" :clean="true" />
+  <div class="token-count-wrapper">
+    <TokenCountDisplay />
+  </div>
 </template>
 
 <script setup lang="ts">
-import HUDStat from '@/components/HUDStat.vue';
-import Modal from '@/components/Modal.vue';
-import HKTitle from '@/components/HKTitle.vue';
-import HeadingFleur from '@/components/HeadingFleur.vue';
-import MultiselectDropdown from '@/components/MultiselectDropdown.vue';
-import { useStatStore } from '@/stores/resources';
-import { addStatusEffect } from '@/lib/supabase';
-import { ref, onMounted } from 'vue';
-import type { StatType, StatusEffectType } from '@/types/common';
+import HUDStat from '@/components/HUDStat.vue'
+import Modal from '@/components/Modal.vue'
+import HKTitle from '@/components/HKTitle.vue'
+import HeadingFleur from '@/components/HeadingFleur.vue'
+import MultiselectDropdown from '@/components/MultiselectDropdown.vue'
+import TokenCountDisplay from '@/components/TokenCountDisplay.vue'
+import { useStatStore } from '@/stores/resources'
+import { addStatusEffect } from '@/lib/supabase'
+import { ref, onMounted } from 'vue'
+import type { StatType, StatusEffectType } from '@/types/common'
 
 // TODO: Make the Stat/Quest heading size responsive (including the fleur).
 // TODO: Make Add Status Effect Modal responsive.
 // TODO: Add validation to prevent blank status effects from being added.
 
-const stats = useStatStore();
-const modalOpen = ref<boolean>(false);
-const tempStatusEffectText = ref<string>("");
-const tempStatusEffectBuffBool = ref<boolean>(false);
+const stats = useStatStore()
+const modalOpen = ref<boolean>(false)
+const tempStatusEffectText = ref<string>('')
+const tempStatusEffectBuffBool = ref<boolean>(false)
 const tempStatusEffectSelectedStats = ref<StatType[]>([])
 
 const hudTitleURL = new URL('@/assets/imgs/TheHUD.png', import.meta.url).href
 
 onMounted(() => {
   if (!stats.stats.length) {
-    stats.fetchStatsFromDb();
+    stats.fetchStatsFromDb()
   }
 })
 
 const createNewStatusEffect = async () => {
   const newStatusEffect: StatusEffectType = {
     text: tempStatusEffectText.value,
-    buff: tempStatusEffectBuffBool.value
+    buff: tempStatusEffectBuffBool.value,
   }
-  await addStatusEffect(newStatusEffect, tempStatusEffectSelectedStats.value);
-  resetStatusEffectInputFields();
-  modalOpen.value = false;
-  await stats.fetchStatsFromDb();
+  await addStatusEffect(newStatusEffect, tempStatusEffectSelectedStats.value)
+  resetStatusEffectInputFields()
+  modalOpen.value = false
+  await stats.fetchStatsFromDb()
 }
-
 
 const resetStatusEffectInputFields = () => {
-  tempStatusEffectText.value = "";
-  tempStatusEffectBuffBool.value = false;
-  tempStatusEffectSelectedStats.value = [];
+  tempStatusEffectText.value = ''
+  tempStatusEffectBuffBool.value = false
+  tempStatusEffectSelectedStats.value = []
 }
-
 </script>
-
 
 <style scoped>
 .loading-message {
@@ -98,9 +104,9 @@ const resetStatusEffectInputFields = () => {
 }
 
 .stat-button {
-  background-color: #32A287;
+  background-color: #32a287;
   border-radius: 20px;
-  font-family: "Perpetua", serif;
+  font-family: 'Perpetua', serif;
   font-size: 1.1em;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
   color: #fff;
@@ -114,11 +120,11 @@ const resetStatusEffectInputFields = () => {
 }
 
 .stat-button:hover {
-  background-color: #4BAB91;
+  background-color: #4bab91;
 }
 
 .stat-button:active {
-  background-color: #2D826D;
+  background-color: #2d826d;
 }
 
 .stat-add {
@@ -144,9 +150,9 @@ const resetStatusEffectInputFields = () => {
   row-gap: 1.5em;
 }
 
-.input-grid input[type="text"] {
+.input-grid input[type='text'] {
   background: transparent;
-  border: 1px solid #C7C7C7;
+  border: 1px solid #c7c7c7;
   border-radius: 8px;
   padding: 0.5em 1em;
   font-size: 1em;
@@ -157,15 +163,15 @@ const resetStatusEffectInputFields = () => {
   box-shadow: none;
 }
 
-.input-grid input[type="text"]:focus {
-  border-color: #4BAB91;
+.input-grid input[type='text']:focus {
+  border-color: #4bab91;
 }
 
-.input-grid input[type="checkbox"] {
+.input-grid input[type='checkbox'] {
   appearance: none;
   width: 1.2em;
   height: 1.2em;
-  border: 1.5px solid #C7C7C7;
+  border: 1.5px solid #c7c7c7;
   border-radius: 5px;
   background: transparent;
   margin-top: 4px;
@@ -176,12 +182,12 @@ const resetStatusEffectInputFields = () => {
   transition: border-color 0.2s;
 }
 
-.input-grid input[type="checkbox"]:checked {
-  background-color: #32A287;
-  border-color: #4BAB91;
+.input-grid input[type='checkbox']:checked {
+  background-color: #32a287;
+  border-color: #4bab91;
 }
 
-.input-grid input[type="checkbox"]:checked::after {
+.input-grid input[type='checkbox']:checked::after {
   content: '';
   display: block;
   position: absolute;
@@ -229,5 +235,12 @@ const resetStatusEffectInputFields = () => {
   .input-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.token-count-wrapper {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100;
 }
 </style>
