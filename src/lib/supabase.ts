@@ -1,6 +1,5 @@
-import { TaskStatus, type StatType, type StatusEffectType, type TaskType } from "@/types/common";
-import { createClient } from "@supabase/supabase-js";
-
+import { TaskStatus, type StatType, type StatusEffectType, type TaskType } from '@/types/common'
+import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_PROJECT_URL
 const supabaseApiKey = import.meta.env.VITE_SUPABASE_API_KEY
@@ -9,7 +8,7 @@ const client = createClient(supabaseUrl, supabaseApiKey)
 
 async function fetchStatsWithEffects(): Promise<StatType[]> {
   try {
-    const { data, error } = await client.from("Stat").select("*, StatusEffect(*)")
+    const { data, error } = await client.from('Stat').select('*, StatusEffect(*)')
 
     if (error) {
       throw error
@@ -17,50 +16,48 @@ async function fetchStatsWithEffects(): Promise<StatType[]> {
     if (!data) {
       return []
     }
-    return data.map(item => {
+    return data.map((item) => {
       const { StatusEffect, ...rest } = item
       return {
         ...rest,
-        effects: StatusEffect
+        effects: StatusEffect,
       }
     })
   } catch (err) {
-    console.error("Error fetching stats: ", err)
+    console.error('Error fetching stats: ', err)
     throw err
   }
 }
 
 async function fetchStatValue(statId: number) {
   try {
-    const { data, error } = await client.from('Stat').select('value').eq('id', statId).single();
+    const { data, error } = await client.from('Stat').select('value').eq('id', statId).single()
 
     if (error) {
       throw error
     }
 
     return data
-  }
-  catch (err) {
-    console.error("Error while fetching stat value: ", err);
+  } catch (err) {
+    console.error('Error while fetching stat value: ', err)
   }
 }
 
 async function updateStatValue(statId: number, newValue: number) {
   try {
-    const { error } = await client.from('Stat').update({ value: newValue }).eq('id', statId);
+    const { error } = await client.from('Stat').update({ value: newValue }).eq('id', statId)
 
     if (error) {
       throw error
     }
-  }
-  catch (err) {
-    console.error("Error while updating stat value: ", err);
+  } catch (err) {
+    console.error('Error while updating stat value: ', err)
   }
 }
 
 async function insertStatusEffectInTable(statusEffect: StatusEffectType): Promise<number> {
   try {
-    const { data, error } = await client.from("StatusEffect").insert(statusEffect).select()
+    const { data, error } = await client.from('StatusEffect').insert(statusEffect).select()
 
     if (error) {
       throw error
@@ -68,14 +65,14 @@ async function insertStatusEffectInTable(statusEffect: StatusEffectType): Promis
 
     return data[0].id
   } catch (err) {
-    console.error("Error while inserting status effect in table: ", err)
+    console.error('Error while inserting status effect in table: ', err)
     throw err
   }
 }
 
 async function insertAffectedStatusInTable(affectedStatuses: any) {
   try {
-    const { error } = await client.from("AffectedStat").insert(affectedStatuses)
+    const { error } = await client.from('AffectedStat').insert(affectedStatuses)
     if (error) {
       throw error
     }
@@ -88,47 +85,43 @@ async function addStatusEffect(statusEffect: StatusEffectType, stats: StatType[]
   try {
     const insertedId = await insertStatusEffectInTable(statusEffect)
 
-    const affectedStatuses = stats.map(item => ({
+    const affectedStatuses = stats.map((item) => ({
       stat_id: item.id,
-      effect_id: insertedId
+      effect_id: insertedId,
     }))
     await insertAffectedStatusInTable(affectedStatuses)
-  }
-  catch (err) {
-    console.error("Error while adding status effect: ", err)
+  } catch (err) {
+    console.error('Error while adding status effect: ', err)
   }
 }
 
 async function deleteAffectedStatusFromTable(effectId: number) {
   try {
-    const response = await client.from("AffectedStat").delete().eq('effect_id', effectId);
-  }
-  catch (err) {
+    const response = await client.from('AffectedStat').delete().eq('effect_id', effectId)
+  } catch (err) {
     throw err
   }
 }
 
 async function deleteStatusEffectFromTable(effectId: number) {
   try {
-    const response = await client.from("StatusEffect").delete().eq('id', effectId);
-  }
-  catch (err) {
+    const response = await client.from('StatusEffect').delete().eq('id', effectId)
+  } catch (err) {
     throw err
   }
 }
 
 async function deleteStatusEffect(effectId: number) {
   try {
-    await deleteAffectedStatusFromTable(effectId);
-    await deleteStatusEffectFromTable(effectId);
-  }
-  catch (err) {
-    console.error("Error while deleting status effect: ", err);
+    await deleteAffectedStatusFromTable(effectId)
+    await deleteStatusEffectFromTable(effectId)
+  } catch (err) {
+    console.error('Error while deleting status effect: ', err)
   }
 }
 
 async function fetchIconSvg(iconName: string): Promise<string> {
-  const { data, error } = await client.storage.from("icons").download(iconName);
+  const { data, error } = await client.storage.from('icons').download(iconName)
   if (error) {
     throw error
   }
@@ -137,7 +130,7 @@ async function fetchIconSvg(iconName: string): Promise<string> {
 }
 
 async function fetchTokens(tokens: string[]) {
-  const { data, error } = await client.from("Token").select("*").in("token_type", tokens)
+  const { data, error } = await client.from('Token').select('*').in('token_type', tokens)
   if (error) {
     throw error
   }
@@ -146,21 +139,24 @@ async function fetchTokens(tokens: string[]) {
 }
 
 async function updateTokenField(tokenType: string, fieldName: string, newValue: any) {
-  const { error } = await client.from("Token").update({ [fieldName]: newValue }).eq('token_type', tokenType)
+  const { error } = await client
+    .from('Token')
+    .update({ [fieldName]: newValue })
+    .eq('token_type', tokenType)
   if (error) {
     throw error
   }
 }
 
 async function deleteOutcomesForTask(taskId: number) {
-  const { error } = await client.from("TaskOutcome").delete().eq('task_id', taskId);
+  const { error } = await client.from('TaskOutcome').delete().eq('task_id', taskId)
   if (error) {
-    throw error;
+    throw error
   }
 }
 
 async function fetchTasksWithOutcomes() {
-  const { data, error } = await client.from("Task").select("*, TaskOutcome(*)")
+  const { data, error } = await client.from('Task').select('*, TaskOutcome(*)')
   if (error) {
     throw error
   }
@@ -180,25 +176,25 @@ async function fetchTasksWithOutcomes() {
         questId: item.quest_id,
         createdAt: new Date(item.created_at),
         dueDate: item.due_date ? new Date(item.due_date) : null,
-        outcomes: TaskOutcome.map((outcome: { token_type: string, quantity: number }) => {
-          const token = tokens.find(t => t.token_type === outcome.token_type)
+        outcomes: TaskOutcome.map((outcome: { token_type: string; quantity: number }) => {
+          const token = tokens.find((t) => t.token_type === outcome.token_type)
 
           return {
             token_type: outcome.token_type,
             quantity: outcome.quantity,
             icon_filename: token.icon_filename,
-            icon_color: token.icon_color
+            icon_color: token.icon_color,
           }
-        })
+        }),
       }
-    })
-  );
+    }),
+  )
 
   return results
 }
 
 async function fetchTaskWithOutcomes(taskId: number) {
-  const { data, error } = await client.from("Task").select("*, TaskOutcome(*)").eq('id', taskId)
+  const { data, error } = await client.from('Task').select('*, TaskOutcome(*)').eq('id', taskId)
   if (error) {
     throw error
   }
@@ -218,25 +214,28 @@ async function fetchTaskWithOutcomes(taskId: number) {
         questId: item.quest_id,
         createdAt: new Date(item.created_at),
         dueDate: item.due_date ? new Date(item.due_date) : null,
-        outcomes: TaskOutcome.map((outcome: { token_type: string, quantity: number }) => {
-          const token = tokens.find(t => t.token_type === outcome.token_type)
+        outcomes: TaskOutcome.map((outcome: { token_type: string; quantity: number }) => {
+          const token = tokens.find((t) => t.token_type === outcome.token_type)
 
           return {
             token_type: outcome.token_type,
             quantity: outcome.quantity,
             icon_filename: token.icon_filename,
-            icon_color: token.icon_color
+            icon_color: token.icon_color,
           }
-        })
+        }),
       }
-    })
-  );
+    }),
+  )
 
-  return results[0];
+  return results[0]
 }
 
 async function updateTaskField(taskId: number, fieldName: string, newValue: any) {
-  const { error } = await client.from("Task").update({ [fieldName]: newValue }).eq('id', taskId)
+  const { error } = await client
+    .from('Task')
+    .update({ [fieldName]: newValue })
+    .eq('id', taskId)
   if (error) {
     throw error
   }
@@ -244,57 +243,83 @@ async function updateTaskField(taskId: number, fieldName: string, newValue: any)
 
 async function updateTaskTitle(taskId: number, newTitle: string) {
   try {
-    await updateTaskField(taskId, 'title', newTitle);
-  }
-  catch (err) {
-    console.error(err);
+    await updateTaskField(taskId, 'title', newTitle)
+  } catch (err) {
+    console.error(err)
   }
 }
 
 async function updateTaskDueDate(taskId: number, newDate: string) {
   try {
-    await updateTaskField(taskId, 'due_date', newDate);
+    await updateTaskField(taskId, 'due_date', newDate)
+  } catch (err) {
+    console.error(err)
   }
-  catch (err) {
-    console.error(err);
+}
+
+async function updateTaskNotes(taskId: number, newNotes: string) {
+  try {
+    await updateTaskField(taskId, 'notes', newNotes)
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+async function updateTaskDescription(taskId: number, newDescription: string) {
+  try {
+    await updateTaskField(taskId, 'description', newDescription)
+  } catch (err) {
+    console.error(err)
   }
 }
 
 async function updateTaskStatus(taskId: number, newStatus: TaskStatus) {
   try {
-    await updateTaskField(taskId, 'status', newStatus);
-  }
-  catch (err) {
-    console.error(err);
+    await updateTaskField(taskId, 'status', newStatus)
+  } catch (err) {
+    console.error(err)
   }
 }
 
 async function markTaskDone(task: TaskType) {
   try {
     if (task.id) {
-      await updateTaskStatus(task.id, TaskStatus.Done);
-      const outcomes = task.outcomes;
-      const tokenTypes = outcomes?.map(outcome => outcome.token_type);
+      await updateTaskStatus(task.id, TaskStatus.Done)
+      const outcomes = task.outcomes
+      const tokenTypes = outcomes?.map((outcome) => outcome.token_type)
 
       if (tokenTypes) {
-        const tokens = await fetchTokens(tokenTypes);
+        const tokens = await fetchTokens(tokenTypes)
 
         tokens.forEach(async (token, index) => {
-          const outcome = outcomes?.find(o => o.token_type === token.token_type);
-          await updateTokenField(token.token_type, 'quantity', token.quantity + outcome?.quantity);
+          const outcome = outcomes?.find((o) => o.token_type === token.token_type)
+          await updateTokenField(token.token_type, 'quantity', token.quantity + outcome?.quantity)
         })
 
-        await deleteOutcomesForTask(task.id);
+        await deleteOutcomesForTask(task.id)
       }
-
     } else {
-      throw new Error("No task ID found for task: " + task.title);
+      throw new Error('No task ID found for task: ' + task.title)
     }
-  }
-  catch (err) {
-    console.error(err);
+  } catch (err) {
+    console.error(err)
   }
 }
 
-
-export { client, fetchStatsWithEffects, fetchStatValue, addStatusEffect, deleteStatusEffect, updateStatValue, fetchIconSvg, fetchTasksWithOutcomes, fetchTaskWithOutcomes, updateTaskTitle, updateTaskDueDate, updateTaskStatus, markTaskDone }
+export {
+  client,
+  fetchStatsWithEffects,
+  fetchStatValue,
+  addStatusEffect,
+  deleteStatusEffect,
+  updateStatValue,
+  fetchIconSvg,
+  fetchTasksWithOutcomes,
+  fetchTaskWithOutcomes,
+  updateTaskTitle,
+  updateTaskDueDate,
+  updateTaskNotes,
+  updateTaskDescription,
+  updateTaskStatus,
+  markTaskDone,
+}
