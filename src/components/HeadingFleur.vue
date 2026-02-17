@@ -16,7 +16,7 @@ const props = defineProps<{
 }>();
 
 const filePath = computed(() => {
-  var filename = props.clean ? "bottom_fleur_clean.png" : "bottom_fleur.png";
+  const filename = props.clean ? "bottom_fleur_clean.png" : "bottom_fleur.png";
   return new URL(`../assets/imgs/${filename}`, import.meta.url).href;
 });
 

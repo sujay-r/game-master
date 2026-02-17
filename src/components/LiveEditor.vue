@@ -3,60 +3,70 @@
 </template>
 
 <script setup lang="ts">
-import { Editor, EditorContent } from '@tiptap/vue-3';
-import StarterKit from '@tiptap/starter-kit';
-import { Placeholder } from '@tiptap/extensions';
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { Editor, EditorContent } from '@tiptap/vue-3'
+import StarterKit from '@tiptap/starter-kit'
+import { Placeholder } from '@tiptap/extensions'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps<{
-  modelValue: string | null,
-  placeholder?: string,
-  textBox: boolean,
-}>();
+  modelValue: string | null
+  placeholder?: string
+  textBox: boolean
+  disabled?: boolean
+}>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
-}>();
+}>()
 
-const editor = ref<Editor>();
+const editor = ref<Editor>()
 
 watch(
   () => props.modelValue,
   (value) => {
-    if (!editor.value) return;
+    if (!editor.value) return
 
-    const isSame = editor.value.getHTML() === value;
-    if (isSame) return;
+    const isSame = editor.value.getHTML() === value
+    if (isSame) return
 
-    editor.value.commands.setContent(value);
-  }
-);
+    editor.value.commands.setContent(value)
+  },
+)
+
+watch(
+  () => props.disabled,
+  (disabled) => {
+    if (editor.value) {
+      editor.value.setEditable(!disabled)
+    }
+  },
+)
 
 onMounted(() => {
-  const extensions: any[] = [StarterKit];
+  const extensions: any[] = [StarterKit]
   if (props.placeholder) {
     extensions.push(
       Placeholder.configure({
         placeholder: props.placeholder,
-      })
-    );
+      }),
+    )
   }
 
   editor.value = new Editor({
     extensions: extensions,
     content: props.modelValue,
+    editable: !props.disabled,
     onUpdate: ({ editor }) => {
-      emit('update:modelValue', editor.getHTML());
-    }
+      emit('update:modelValue', editor.getHTML())
+    },
   })
 })
 
 onBeforeUnmount(() => {
   if (editor.value) {
-    editor.value.destroy();
+    editor.value.destroy()
   }
 })
-
 </script>
 
 <style>
@@ -78,7 +88,7 @@ onBeforeUnmount(() => {
 
 .textbox-style:focus-within {
   background: #fff;
-  border-color: #4BAB91;
+  border-color: #4bab91;
 }
 
 .textbox-style .ProseMirror {

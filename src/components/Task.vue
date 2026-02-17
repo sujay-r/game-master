@@ -1,6 +1,12 @@
 <template>
   <div v-if="taskData" class="task-container" :class="taskStatusClass" @click="taskOpen = true">
-    <input type="checkbox" class="task-checkbox" v-model="isCompleted" @click.self.stop />
+    <input
+      type="checkbox"
+      class="task-checkbox"
+      v-model="isCompleted"
+      @click.self.stop
+      :disabled="isCompleted"
+    />
     <p
       v-if="!isEditingTitle"
       class="task-title"
@@ -72,6 +78,7 @@
         color="#A9D5C7"
         :date="taskData.dueDate ?? null"
         fallback-text="Set due date"
+        :disabled="isCompleted"
         @update:date="onDueDateChanged"
       />
     </div>
@@ -79,9 +86,14 @@
       v-model="taskData.notes"
       :text-box="true"
       placeholder="Add any notes for the task here..."
+      :disabled="isCompleted"
     />
-    <div v-if="hasUnsavedChanges" class="unsaved-warning">You have unsaved changes</div>
-    <button v-if="hasUnsavedChanges" class="save-button" @click="saveNotes">Save</button>
+    <div v-if="hasUnsavedChanges && !isCompleted" class="unsaved-warning">
+      You have unsaved changes
+    </div>
+    <button v-if="hasUnsavedChanges && !isCompleted" class="save-button" @click="saveNotes">
+      Save
+    </button>
   </Modal>
 </template>
 
@@ -123,7 +135,6 @@ const descriptionInput = ref<HTMLTextAreaElement | null>(null)
 
 const icons = useIconStore()
 
-// TODO: Make task checkbox unclickable once task is marked done.
 watch(isCompleted, async (newVal) => {
   if (taskData.value) {
     if (!(taskData.value.status === TaskStatus.Done)) {
@@ -166,6 +177,7 @@ function onDueDateChanged(newDate: Date | null) {
 }
 
 function editTitle() {
+  if (isCompleted.value) return
   isEditingTitle.value = true
   editedTitle.value = taskData.value?.title || ''
   nextTick(() => {
@@ -194,6 +206,7 @@ function cancelEditing() {
 }
 
 function editDescription() {
+  if (isCompleted.value) return
   isEditingDescription.value = true
   editedDescription.value = taskData.value?.description || ''
   nextTick(() => {
@@ -369,6 +382,11 @@ onMounted(async () => {
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
   pointer-events: none;
+}
+
+.task-checkbox:disabled {
+  cursor: default;
+  opacity: 0.7;
 }
 
 .unsaved-warning {
