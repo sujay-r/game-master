@@ -17,6 +17,28 @@ export enum TaskStatus {
   Done = 'DONE',
 }
 
+export enum QuestType {
+  Main = 'main',
+  Side = 'side',
+}
+
+export enum QuestStatus {
+  Active = 'active',
+  Completed = 'completed',
+  Todo = 'todo',
+}
+
+export interface Quest {
+  id: number
+  title: string
+  description?: string
+  type: QuestType
+  status: QuestStatus
+  createdAt: Date
+  updatedAt: Date
+  taskIds: number[]
+}
+
 export interface TokenType {
   token_type: string
   quantity: number

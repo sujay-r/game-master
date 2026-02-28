@@ -1,4 +1,12 @@
-import { TaskStatus, type StatType, type StatusEffectType, type TaskType } from '@/types/common'
+import {
+  QuestStatus,
+  QuestType,
+  TaskStatus,
+  type Quest,
+  type StatType,
+  type StatusEffectType,
+  type TaskType,
+} from '@/types/common'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_PROJECT_URL
@@ -315,6 +323,171 @@ async function markTaskDone(task: TaskType) {
   }
 }
 
+async function fetchQuests(): Promise<Quest[]> {
+  try {
+    const { data, error } = await client
+      .from('Quest')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      throw error
+    }
+
+    if (!data) {
+      return []
+    }
+
+    const quests = await Promise.all(
+      data.map(async (item) => {
+        const { data: tasksData } = await client.from('Task').select('id').eq('quest_id', item.id)
+
+        return {
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          type: item.type as QuestType,
+          status: item.status as QuestStatus,
+          createdAt: new Date(item.created_at),
+          updatedAt: new Date(item.updated_at),
+          taskIds: tasksData?.map((t) => t.id) || [],
+        }
+      }),
+    )
+
+    return quests
+  } catch (err) {
+    console.error('Error fetching quests: ', err)
+    throw err
+  }
+}
+
+async function createQuest(questData: {
+  title: string
+  description?: string
+  type: QuestType
+}): Promise<Quest> {
+  try {
+    const now = new Date().toISOString()
+    const { data, error } = await client
+      .from('Quest')
+      .insert({
+        title: questData.title,
+        description: questData.description || null,
+        type: questData.type,
+        status: QuestStatus.Todo,
+        created_at: now,
+        updated_at: now,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      type: data.type as QuestType,
+      status: data.status as QuestStatus,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at),
+      taskIds: [],
+    }
+  } catch (err) {
+    console.error('Error creating quest: ', err)
+    throw err
+  }
+}
+
+async function updateQuest(
+  questId: number,
+  updates: {
+    title?: string
+    description?: string
+    type?: QuestType
+    status?: QuestStatus
+  },
+): Promise<void> {
+  try {
+    const { error } = await client
+      .from('Quest')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', questId)
+
+    if (error) {
+      throw error
+    }
+  } catch (err) {
+    console.error('Error updating quest: ', err)
+    throw err
+  }
+}
+
+async function deleteQuest(questId: number, cascadeTasks: boolean): Promise<void> {
+  try {
+    if (cascadeTasks) {
+      const { data: tasks } = await client.from('Task').select('id').eq('quest_id', questId)
+      if (tasks && tasks.length > 0) {
+        const taskIds = tasks.map((t) => t.id)
+        await client.from('TaskOutcome').delete().in('task_id', taskIds)
+        await client.from('Task').delete().eq('quest_id', questId)
+      }
+    } else {
+      await client.from('Task').update({ quest_id: null }).eq('quest_id', questId)
+    }
+
+    const { error } = await client.from('Quest').delete().eq('id', questId)
+
+    if (error) {
+      throw error
+    }
+  } catch (err) {
+    console.error('Error deleting quest: ', err)
+    throw err
+  }
+}
+
+async function completeQuest(questId: number): Promise<void> {
+  try {
+    await updateQuest(questId, { status: QuestStatus.Completed })
+  } catch (err) {
+    console.error('Error completing quest: ', err)
+    throw err
+  }
+}
+
+async function assignTaskToQuest(taskId: number, questId: number): Promise<void> {
+  try {
+    const { error } = await client.from('Task').update({ quest_id: questId }).eq('id', taskId)
+
+    if (error) {
+      throw error
+    }
+  } catch (err) {
+    console.error('Error assigning task to quest: ', err)
+    throw err
+  }
+}
+
+async function removeTaskFromQuest(taskId: number): Promise<void> {
+  try {
+    const { error } = await client.from('Task').update({ quest_id: null }).eq('id', taskId)
+
+    if (error) {
+      throw error
+    }
+  } catch (err) {
+    console.error('Error removing task from quest: ', err)
+    throw err
+  }
+}
+
 export {
   client,
   fetchStatsWithEffects,
@@ -332,4 +505,11 @@ export {
   updateTaskDescription,
   updateTaskStatus,
   markTaskDone,
+  fetchQuests,
+  createQuest,
+  updateQuest,
+  deleteQuest,
+  completeQuest,
+  assignTaskToQuest,
+  removeTaskFromQuest,
 }

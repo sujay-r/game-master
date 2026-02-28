@@ -37,6 +37,22 @@
         <span class="icon-container" v-html="outcome.icon"></span>
       </div>
     </div>
+
+    <div v-if="questName" class="quest-badge">
+      <!-- TODO: Move icon to icon store -->
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="14px"
+        viewBox="0 -960 960 960"
+        width="14px"
+        fill="currentColor"
+      >
+        <path
+          d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-640v560h560v-560h-80v280l-100-60-100 60v-280H200Zm0 0v560-560Z"
+        />
+      </svg>
+      <span>{{ questName }}</span>
+    </div>
   </div>
   <Modal v-if="taskData" v-model="taskOpen" :include-close-button="false">
     <h2>{{ taskData.title }}</h2>
@@ -82,6 +98,15 @@
         @update:date="onDueDateChanged"
       />
     </div>
+
+    <div v-if="props.quests" class="assignment-section">
+      <TaskAssignmentDropdown
+        v-model="assignedQuestId"
+        :quests="props.quests"
+        label="Quest Assignment"
+      />
+    </div>
+
     <LiveEditor
       v-model="taskData.notes"
       :text-box="true"
@@ -102,8 +127,11 @@ import { onMounted, ref, toRaw, nextTick, computed, watch } from 'vue'
 import Modal from './Modal.vue'
 import LiveEditor from './LiveEditor.vue'
 import DatePill from './DatePill.vue'
-import { type TaskType, type TaskOutcomeType, TaskStatus } from '@/types/common'
+import TaskAssignmentDropdown from './TaskAssignmentDropdown.vue'
+import type { TaskType, TaskOutcomeType, Quest } from '@/types/common'
+import { TaskStatus } from '@/types/common'
 import { useIconStore } from '@/stores/resources'
+import { useQuestStore } from '@/stores/quests'
 import {
   updateTaskDueDate,
   updateTaskTitle,
@@ -118,6 +146,7 @@ import {
 
 const props = defineProps<{
   task: TaskType
+  quests?: Quest[]
 }>()
 
 const taskData = ref<TaskType>()
@@ -134,6 +163,29 @@ const editedDescription = ref<string>('')
 const descriptionInput = ref<HTMLTextAreaElement | null>(null)
 
 const icons = useIconStore()
+const questStore = useQuestStore()
+
+const questName = computed(() => {
+  if (!taskData.value?.questId) return null
+  const quest = props.quests?.find((q) => q.id === taskData.value?.questId)
+  return quest?.title || null
+})
+
+const assignedQuestId = computed({
+  get: () => taskData.value?.questId ?? null,
+  set: async (value) => {
+    if (!taskData.value?.id) return
+    const taskId = taskData.value.id
+
+    if (value === null) {
+      await questStore.removeTaskFromQuest(taskId)
+      taskData.value.questId = undefined
+    } else {
+      await questStore.assignTaskToQuest(taskId, value)
+      taskData.value.questId = value
+    }
+  },
+})
 
 watch(isCompleted, async (newVal) => {
   if (taskData.value) {
@@ -141,6 +193,8 @@ watch(isCompleted, async (newVal) => {
       taskData.value.status = newVal ? TaskStatus.Done : TaskStatus.Todo
 
       if (taskData.value.id) {
+        // TODO: Route all data updates through the pinia stores so UI can update independent of db
+        // updates. Start with token counts.
         await markTaskDone(taskData.value)
       } else {
         console.error('Cannot update task because id not found.')
@@ -320,6 +374,8 @@ onMounted(async () => {
 .token-section {
   position: absolute;
   right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -347,6 +403,27 @@ onMounted(async () => {
 
 .metadata-pills {
   margin-bottom: 0.5em;
+}
+
+.quest-badge {
+  position: absolute;
+  right: 20px;
+  bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8em;
+  color: #666;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+}
+
+.assignment-section {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
 }
 
 .task-checkbox {
