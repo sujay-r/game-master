@@ -6,6 +6,7 @@ import {
   type StatType,
   type StatusEffectType,
   type TaskType,
+  type TaskOutcomeType,
 } from '@/types/common'
 import { createClient } from '@supabase/supabase-js'
 
@@ -502,6 +503,82 @@ async function removeTaskFromQuest(taskId: number): Promise<void> {
   }
 }
 
+async function insertTaskOutcomes(taskId: number, outcomes: TaskOutcomeType[]): Promise<void> {
+  if (outcomes.length === 0) return
+
+  try {
+    // Extract only primitive values to avoid Proxy serialization issues
+    const outcomesData = outcomes.map((outcome) => {
+      const token_type = outcome.token_type
+      const quantity = parseInt(outcome.quantity as unknown as string, 10) || 1
+      return {
+        task_id: taskId,
+        token_type: token_type,
+        quantity: quantity,
+      }
+    })
+
+    const { error } = await client.from('TaskOutcome').insert(outcomesData)
+
+    if (error) {
+      throw error
+    }
+  } catch (err) {
+    console.error('Error inserting task outcomes: ', err)
+    throw err
+  }
+}
+
+async function insertTask(taskData: {
+  title: string
+  description: string
+  notes: string
+  status: TaskStatus
+  dueDate: Date | null
+  questId?: number
+  outcomes?: TaskOutcomeType[]
+}): Promise<TaskType> {
+  try {
+    const { data, error } = await client
+      .from('Task')
+      .insert({
+        title: taskData.title,
+        description: taskData.description,
+        notes: taskData.notes,
+        status: taskData.status,
+        due_date: taskData.dueDate?.toISOString() || null,
+        quest_id: taskData.questId || null,
+        created_at: new Date().toISOString(),
+      })
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    // Insert outcomes if provided
+    if (taskData.outcomes && taskData.outcomes.length > 0) {
+      await insertTaskOutcomes(data.id, taskData.outcomes)
+    }
+
+    return {
+      title: data.title,
+      description: data.description,
+      status: data.status as TaskStatus,
+      notes: data.notes,
+      id: data.id,
+      questId: data.quest_id,
+      createdAt: new Date(data.created_at),
+      dueDate: data.due_date ? new Date(data.due_date) : null,
+      outcomes: taskData.outcomes || [],
+    }
+  } catch (err) {
+    console.error('Error inserting task: ', err)
+    throw err
+  }
+}
+
 export {
   client,
   fetchStatsWithEffects,
@@ -527,4 +604,6 @@ export {
   updateQuestDescription,
   assignTaskToQuest,
   removeTaskFromQuest,
+  insertTask,
+  insertTaskOutcomes,
 }

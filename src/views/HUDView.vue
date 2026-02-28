@@ -37,6 +37,18 @@
   <div class="token-count-wrapper">
     <TokenCountDisplay />
   </div>
+
+  <!-- Quick Add Button -->
+  <QuickAddButton @click="openQuickAddTaskModal" />
+
+  <!-- Task Creation Modal -->
+  <TaskCreationModal
+    v-model="isTaskCreationModalOpen"
+    :quests="questStore.quests"
+    :tokens="tokenStore.tokens"
+    @created="handleTaskCreated"
+    @cancelled="handleTaskCreationCancelled"
+  />
 </template>
 
 <script setup lang="ts">
@@ -46,17 +58,23 @@ import HKTitle from '@/components/HKTitle.vue'
 import HeadingFleur from '@/components/HeadingFleur.vue'
 import MultiselectDropdown from '@/components/MultiselectDropdown.vue'
 import TokenCountDisplay from '@/components/TokenCountDisplay.vue'
-import { useStatStore } from '@/stores/resources'
-import { addStatusEffect } from '@/lib/supabase'
+import QuickAddButton from '@/components/QuickAddButton.vue'
+import TaskCreationModal from '@/components/TaskCreationModal.vue'
+import { useStatStore, useTokenStore } from '@/stores/resources'
+import { useQuestStore } from '@/stores/quests'
+import { addStatusEffect, fetchTasksWithOutcomes } from '@/lib/supabase'
 import { ref, onMounted } from 'vue'
-import type { StatType, StatusEffectType } from '@/types/common'
+import type { StatType, StatusEffectType, TaskStatus, TaskOutcomeType } from '@/types/common'
 
 // TODO: Make the Stat/Quest heading size responsive (including the fleur).
 // TODO: Make Add Status Effect Modal responsive.
 // TODO: Add validation to prevent blank status effects from being added.
 
 const stats = useStatStore()
+const questStore = useQuestStore()
+const tokenStore = useTokenStore()
 const modalOpen = ref<boolean>(false)
+const isTaskCreationModalOpen = ref(false)
 const tempStatusEffectText = ref<string>('')
 const tempStatusEffectBuffBool = ref<boolean>(false)
 const tempStatusEffectSelectedStats = ref<StatType[]>([])
@@ -67,7 +85,47 @@ onMounted(() => {
   if (!stats.stats.length) {
     stats.fetchStatsFromDb()
   }
+  if (!questStore.quests.length) {
+    loadQuests()
+  }
+  // Load tokens if not already loaded
+  if (tokenStore.tokens.length === 0) {
+    tokenStore.fetchTokensFromDb()
+  }
 })
+
+async function loadQuests() {
+  try {
+    const tasks = await fetchTasksWithOutcomes()
+    await questStore.loadQuests(tasks)
+  } catch (err) {
+    console.error('Error loading quests:', err)
+  }
+}
+
+function openQuickAddTaskModal() {
+  isTaskCreationModalOpen.value = true
+}
+
+async function handleTaskCreated(taskData: {
+  title: string
+  description: string
+  notes: string
+  status: TaskStatus
+  dueDate: Date | null
+  questId?: number
+  outcomes?: TaskOutcomeType[]
+}) {
+  try {
+    await questStore.createTask(taskData)
+  } catch (err) {
+    console.error('Failed to create task:', err)
+  }
+}
+
+function handleTaskCreationCancelled() {
+  // Modal closed without creating task
+}
 
 const createNewStatusEffect = async () => {
   const newStatusEffect: StatusEffectType = {
@@ -240,7 +298,10 @@ const resetStatusEffectInputFields = () => {
 .token-count-wrapper {
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  right: 76px;
   z-index: 100;
 }
+
+/* Quick add button positioning is handled by the component itself */
+/* It positions at bottom: 20px, right: 20px */
 </style>

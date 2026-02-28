@@ -136,6 +136,9 @@
     <div class="token-count-wrapper">
       <TokenCountDisplay />
     </div>
+
+    <!-- Quick Add Button -->
+    <QuickAddButton @click="openQuickAddTaskModal" />
   </div>
 
   <!-- Quest Modal (Create/Edit) -->
@@ -158,10 +161,20 @@
     @save-description="handleSaveQuestDescription"
     @open-task="handleOpenTaskFromQuest"
   />
+
+  <!-- Task Creation Modal -->
+  <TaskCreationModal
+    v-model="isTaskCreationModalOpen"
+    :quests="questStore.quests"
+    :tokens="tokenStore.tokens"
+    :initial-quest-id="taskCreationInitialQuestId"
+    @created="handleTaskCreated"
+    @cancelled="handleTaskCreationCancelled"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import HKTitle from '@/components/HKTitle.vue'
 import Task from '@/components/Task.vue'
 import QuestCard from '@/components/QuestCard.vue'
@@ -169,13 +182,17 @@ import QuestModal from '@/components/QuestModal.vue'
 import QuestDetailModal from '@/components/QuestDetailModal.vue'
 import DeleteQuestModal from '@/components/DeleteQuestModal.vue'
 import TokenCountDisplay from '@/components/TokenCountDisplay.vue'
+import QuickAddButton from '@/components/QuickAddButton.vue'
+import TaskCreationModal from '@/components/TaskCreationModal.vue'
 import { useQuestStore } from '@/stores/quests'
+import { useTokenStore } from '@/stores/resources'
 import { fetchTasksWithOutcomes } from '@/lib/supabase'
-import type { Quest, QuestType, TaskType } from '@/types/common'
+import type { Quest, QuestType, TaskType, TaskStatus, TaskOutcomeType } from '@/types/common'
 
 const questsTitleURL = new URL('@/assets/imgs/theQuests.png', import.meta.url).href
 
 const questStore = useQuestStore()
+const tokenStore = useTokenStore()
 
 // Filter and Sort State
 const currentFilter = ref<'all' | 'main' | 'side' | 'unassigned'>('all')
@@ -192,11 +209,13 @@ const filterTabs: Array<{ value: 'all' | 'main' | 'side' | 'unassigned'; label: 
 const isQuestModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 const isQuestDetailModalOpen = ref(false)
+const isTaskCreationModalOpen = ref(false)
 const editingQuest = ref<Quest | undefined>(undefined)
 const deletingQuest = ref<Quest | null>(null)
 const selectedQuestForDetail = ref<Quest | null>(null)
 const taskToOpenId = ref<number | null>(null)
 const shouldReopenQuestAfterTask = ref(false)
+const taskCreationInitialQuestId = ref<number | null>(null)
 
 // Computed
 const filteredQuests = computed(() => {
@@ -248,8 +267,34 @@ function openDeleteModal(quest: Quest) {
 }
 
 function openAddTaskModal(quest: Quest) {
-  // TODO: Implement task selection modal for adding existing tasks
-  console.log('Add task to quest:', quest.title)
+  taskCreationInitialQuestId.value = quest.id
+  isTaskCreationModalOpen.value = true
+}
+
+function openQuickAddTaskModal() {
+  taskCreationInitialQuestId.value = null
+  isTaskCreationModalOpen.value = true
+}
+
+async function handleTaskCreated(taskData: {
+  title: string
+  description: string
+  notes: string
+  status: TaskStatus
+  dueDate: Date | null
+  questId?: number
+  outcomes?: TaskOutcomeType[]
+}) {
+  try {
+    await questStore.createTask(taskData)
+    taskCreationInitialQuestId.value = null
+  } catch (err) {
+    console.error('Failed to create task:', err)
+  }
+}
+
+function handleTaskCreationCancelled() {
+  taskCreationInitialQuestId.value = null
 }
 
 async function handleSaveQuest(data: { title: string; description: string; type: QuestType }) {
@@ -309,6 +354,10 @@ function handleTaskModalClosed() {
 // Lifecycle
 onMounted(() => {
   loadData()
+  // Load tokens if not already loaded
+  if (tokenStore.tokens.length === 0) {
+    tokenStore.fetchTokensFromDb()
+  }
 })
 </script>
 
@@ -486,7 +535,10 @@ onMounted(() => {
 .token-count-wrapper {
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  right: 76px;
   z-index: 100;
 }
+
+/* Quick add button positioning is handled by the component itself */
+/* It positions at bottom: 20px, right: 20px */
 </style>

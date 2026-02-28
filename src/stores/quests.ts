@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import type { Quest, QuestType, TaskType } from '@/types/common'
-import { QuestStatus } from '@/types/common'
+import type { Quest, QuestType, TaskType, TaskOutcomeType } from '@/types/common'
+import { QuestStatus, TaskStatus } from '@/types/common'
 import {
   fetchQuests,
   createQuest as createQuestInDb,
@@ -9,6 +9,7 @@ import {
   completeQuest as completeQuestInDb,
   assignTaskToQuest as assignTaskToQuestInDb,
   removeTaskFromQuest as removeTaskFromQuestInDb,
+  insertTask,
 } from '@/lib/supabase'
 
 interface QuestStoreState {
@@ -166,6 +167,37 @@ const useQuestStore = defineStore('quests', {
       } catch (err) {
         this.error = err instanceof Error ? err.message : 'Failed to remove task from quest'
         console.error('Error removing task from quest: ', err)
+        throw err
+      }
+    },
+
+    // TODO: Move this action to an independent task store.
+    async createTask(taskData: {
+      title: string
+      description: string
+      notes: string
+      status: TaskStatus
+      dueDate: Date | null
+      questId?: number
+      outcomes?: TaskOutcomeType[]
+    }) {
+      try {
+        const newTask = await insertTask(taskData)
+        // Use unshift to add to beginning and trigger reactivity
+        this.tasks.unshift(newTask)
+
+        // If task is assigned to a quest, update the quest's taskIds
+        if (taskData.questId) {
+          const questIndex = this.quests.findIndex((q) => q.id === taskData.questId)
+          if (questIndex !== -1 && newTask.id) {
+            this.quests[questIndex].taskIds.unshift(newTask.id)
+          }
+        }
+
+        return newTask
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to create task'
+        console.error('Error creating task: ', err)
         throw err
       }
     },
