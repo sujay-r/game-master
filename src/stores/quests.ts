@@ -111,6 +111,20 @@ const useQuestStore = defineStore('quests', {
       }
     },
 
+    async updateQuestNotes(questId: number, notes: string) {
+      try {
+        await updateQuestInDb(questId, { notes })
+        const questIndex = this.quests.findIndex((q) => q.id === questId)
+        if (questIndex !== -1) {
+          this.quests[questIndex].notes = notes
+        }
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to update quest notes'
+        console.error('Error updating quest notes: ', err)
+        throw err
+      }
+    },
+
     async assignTaskToQuest(taskId: number, questId: number) {
       try {
         await assignTaskToQuestInDb(taskId, questId)

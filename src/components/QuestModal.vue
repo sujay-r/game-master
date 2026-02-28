@@ -1,5 +1,5 @@
 <template>
-  <Modal v-model="isOpen" :include-close-button="true" @close="cancel">
+  <Modal v-model="isOpen" :include-close-button="false" @close="cancel">
     <h2 class="modal-title">{{ isEditing ? 'Edit Quest' : 'Create New Quest' }}</h2>
 
     <form @submit.prevent="save" class="quest-form">

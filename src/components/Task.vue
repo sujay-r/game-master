@@ -141,12 +141,16 @@ import {
 } from '@/lib/supabase'
 
 // TODO: Fix issue where size of task component changes when inline editing is active.
-// TODO: Create design for task pop-up modal.
-// TODO: Create a modal window for whenever a task gets clicked on.
+// TODO: Add quick access button for creating tasks.
 
 const props = defineProps<{
   task: TaskType
   quests?: Quest[]
+  openModal?: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'modal-closed'): void
 }>()
 
 const taskData = ref<TaskType>()
@@ -310,10 +314,22 @@ function discardChanges() {
 }
 
 watch(taskOpen, (isOpen) => {
-  if (!isOpen && hasUnsavedChanges.value) {
-    discardChanges()
+  if (!isOpen) {
+    if (hasUnsavedChanges.value) {
+      discardChanges()
+    }
+    emit('modal-closed')
   }
 })
+
+watch(
+  () => props.openModal,
+  (shouldOpen) => {
+    if (shouldOpen && !taskOpen.value) {
+      taskOpen.value = true
+    }
+  },
+)
 
 onMounted(async () => {
   taskData.value = structuredClone(toRaw(props.task))

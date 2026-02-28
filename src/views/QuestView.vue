@@ -83,10 +83,11 @@
           :tasks="questStore.getQuestTasks(quest.id)"
           :is-expanded="questStore.isQuestExpanded(quest.id)"
           @toggle-expand="questStore.toggleQuestExpansion(quest.id)"
-          @edit="openEditModal(quest)"
-          @delete="openDeleteModal(quest)"
-          @complete="completeQuest(quest.id)"
-          @add-task="openAddTaskModal(quest)"
+          @edit="openEditModal"
+          @delete="openDeleteModal"
+          @complete="completeQuest"
+          @add-task="openAddTaskModal"
+          @open-quest="openQuestDetail"
         />
       </div>
     </div>
@@ -125,6 +126,8 @@
           :key="task.id"
           :task="task"
           :quests="questStore.quests"
+          :open-modal="taskToOpenId === task.id"
+          @modal-closed="handleTaskModalClosed"
         />
       </div>
     </div>
@@ -145,19 +148,30 @@
     :task-count="deletingQuest?.taskIds.length || 0"
     @confirm="handleDeleteQuest"
   />
+
+  <!-- Quest Detail Modal -->
+  <QuestDetailModal
+    v-model="isQuestDetailModalOpen"
+    :quest="selectedQuestForDetail"
+    :tasks="selectedQuestForDetail ? questStore.getQuestTasks(selectedQuestForDetail.id) : []"
+    @save-notes="handleSaveQuestNotes"
+    @save-description="handleSaveQuestDescription"
+    @open-task="handleOpenTaskFromQuest"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import HKTitle from '@/components/HKTitle.vue'
 import Task from '@/components/Task.vue'
 import QuestCard from '@/components/QuestCard.vue'
 import QuestModal from '@/components/QuestModal.vue'
+import QuestDetailModal from '@/components/QuestDetailModal.vue'
 import DeleteQuestModal from '@/components/DeleteQuestModal.vue'
 import TokenCountDisplay from '@/components/TokenCountDisplay.vue'
 import { useQuestStore } from '@/stores/quests'
 import { fetchTasksWithOutcomes } from '@/lib/supabase'
-import type { Quest, QuestType } from '@/types/common'
+import type { Quest, QuestType, TaskType } from '@/types/common'
 
 const questsTitleURL = new URL('@/assets/imgs/theQuests.png', import.meta.url).href
 
@@ -177,8 +191,12 @@ const filterTabs: Array<{ value: 'all' | 'main' | 'side' | 'unassigned'; label: 
 // Modal State
 const isQuestModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
+const isQuestDetailModalOpen = ref(false)
 const editingQuest = ref<Quest | undefined>(undefined)
 const deletingQuest = ref<Quest | null>(null)
+const selectedQuestForDetail = ref<Quest | null>(null)
+const taskToOpenId = ref<number | null>(null)
+const shouldReopenQuestAfterTask = ref(false)
 
 // Computed
 const filteredQuests = computed(() => {
@@ -251,6 +269,41 @@ async function handleDeleteQuest(cascadeTasks: boolean) {
 
 async function completeQuest(questId: number) {
   await questStore.completeQuest(questId)
+}
+
+function openQuestDetail(quest: Quest) {
+  selectedQuestForDetail.value = quest
+  isQuestDetailModalOpen.value = true
+}
+
+async function handleSaveQuestNotes(data: { questId: number; notes: string }) {
+  await questStore.updateQuestNotes(data.questId, data.notes)
+}
+
+async function handleSaveQuestDescription(data: { questId: number; description: string }) {
+  await questStore.updateQuest(data.questId, { description: data.description })
+}
+
+function handleOpenTaskFromQuest(task: TaskType) {
+  if (!task.id) return
+
+  shouldReopenQuestAfterTask.value = true
+  isQuestDetailModalOpen.value = false
+
+  // Set the task ID to open after the quest modal closes
+  taskToOpenId.value = task.id
+}
+
+function handleTaskModalClosed() {
+  if (shouldReopenQuestAfterTask.value && selectedQuestForDetail.value) {
+    shouldReopenQuestAfterTask.value = false
+    // Small delay for smooth transition
+    setTimeout(() => {
+      isQuestDetailModalOpen.value = true
+    }, 100)
+  }
+  // Clear the task to open after modal is closed
+  taskToOpenId.value = null
 }
 
 // Lifecycle

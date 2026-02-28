@@ -17,6 +17,9 @@
         </span>
         <h3 class="quest-title">{{ quest.title }}</h3>
         <span class="quest-type-badge" :class="quest.type">{{ typeLabel }}</span>
+        <button class="open-quest-btn" :class="quest.type" @click.stop="$emit('open-quest', quest)">
+          Open Quest
+        </button>
       </div>
 
       <div class="header-right">
@@ -30,24 +33,6 @@
             ></div>
           </div>
         </div>
-
-        <button
-          v-if="canComplete"
-          class="complete-button"
-          @click.stop="$emit('complete')"
-          title="Complete Quest"
-        >
-          <!-- TODO: Move this icon to the icons store as well -->
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            height="20px"
-            viewBox="0 -960 960 960"
-            width="20px"
-            fill="#fff"
-          >
-            <path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z" />
-          </svg>
-        </button>
 
         <span v-if="quest.status === 'completed'" class="completed-badge">
           <!-- TODO: Move this icon to the icons store as well -->
@@ -68,7 +53,6 @@
 
     <!-- Body -->
     <div v-if="isExpanded" class="quest-body">
-      <!-- TODO: Add markdown rendering to quest description -->
       <div v-if="quest.description" class="quest-description">
         {{ quest.description }}
       </div>
@@ -83,7 +67,7 @@
 
       <!-- Footer Actions -->
       <div class="quest-footer">
-        <button class="action-button add-task" @click="$emit('add-task')">
+        <button class="action-button add-task" @click="$emit('add-task', quest)">
           <!-- TODO: Move this icon to the icons store as well -->
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -98,8 +82,8 @@
         </button>
 
         <div class="footer-actions">
-          <button class="action-button edit" @click="$emit('edit')">
-          <!-- TODO: Move this icon to the icons store as well -->
+          <button class="action-button edit" @click="$emit('edit', quest)">
+            <!-- TODO: Move this icon to the icons store as well -->
             <svg
               xmlns="http://www.w3.org/2000/svg"
               height="18px"
@@ -114,8 +98,8 @@
             Edit
           </button>
 
-          <button class="action-button delete" @click="$emit('delete')">
-          <!-- TODO: Move this icon to the icons store as well -->
+          <button class="action-button delete" @click="$emit('delete', quest)">
+            <!-- TODO: Move this icon to the icons store as well -->
             <svg
               xmlns="http://www.w3.org/2000/svg"
               height="18px"
@@ -148,10 +132,11 @@ const props = defineProps<{
 
 defineEmits<{
   (e: 'toggle-expand'): void
-  (e: 'edit'): void
-  (e: 'delete'): void
-  (e: 'complete'): void
-  (e: 'add-task'): void
+  (e: 'edit', quest: Quest): void
+  (e: 'delete', quest: Quest): void
+  (e: 'complete', questId: number): void
+  (e: 'add-task', quest: Quest): void
+  (e: 'open-quest', quest: Quest): void
 }>()
 
 const typeLabels: Record<QuestType, string> = {
@@ -241,6 +226,48 @@ const canComplete = computed(() => {
   align-items: center;
   gap: 0.75rem;
   flex: 1;
+}
+
+.open-quest-btn {
+  opacity: 0;
+  padding: 0.25rem 0.625rem;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-family: 'Perpetua', serif;
+  font-size: 0.85em;
+  font-weight: 400;
+  /* font-style: italic; */
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: 0.5rem;
+}
+
+/* Show outline on card hover */
+.quest-card:hover .open-quest-btn.main {
+  opacity: 1;
+  border-color: #c9a227;
+  color: #c9a227;
+}
+
+.quest-card:hover .open-quest-btn.side {
+  opacity: 1;
+  border-color: #6b8cae;
+  color: #6b8cae;
+}
+
+/* Darken background on button hover */
+.open-quest-btn.main:hover {
+  background: rgba(201, 162, 39, 0.15);
+}
+
+.open-quest-btn.side:hover {
+  background: rgba(107, 140, 174, 0.15);
+}
+
+.open-quest-btn:active {
+  transform: translateY(0);
 }
 
 .expand-icon {

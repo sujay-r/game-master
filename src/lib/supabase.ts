@@ -346,6 +346,7 @@ async function fetchQuests(): Promise<Quest[]> {
           id: item.id,
           title: item.title,
           description: item.description,
+          notes: item.notes,
           type: item.type as QuestType,
           status: item.status as QuestStatus,
           createdAt: new Date(item.created_at),
@@ -365,6 +366,7 @@ async function fetchQuests(): Promise<Quest[]> {
 async function createQuest(questData: {
   title: string
   description?: string
+  notes?: string
   type: QuestType
 }): Promise<Quest> {
   try {
@@ -374,6 +376,7 @@ async function createQuest(questData: {
       .insert({
         title: questData.title,
         description: questData.description || null,
+        notes: questData.notes || null,
         type: questData.type,
         status: QuestStatus.Todo,
         created_at: now,
@@ -390,6 +393,7 @@ async function createQuest(questData: {
       id: data.id,
       title: data.title,
       description: data.description,
+      notes: data.notes,
       type: data.type as QuestType,
       status: data.status as QuestStatus,
       createdAt: new Date(data.created_at),
@@ -407,6 +411,7 @@ async function updateQuest(
   updates: {
     title?: string
     description?: string
+    notes?: string
     type?: QuestType
     status?: QuestStatus
   },
@@ -462,6 +467,15 @@ async function completeQuest(questId: number): Promise<void> {
   }
 }
 
+async function updateQuestDescription(questId: number, newDescription: string): Promise<void> {
+  try {
+    await updateQuest(questId, { description: newDescription })
+  } catch (err) {
+    console.error('Error updating quest description: ', err)
+    throw err
+  }
+}
+
 async function assignTaskToQuest(taskId: number, questId: number): Promise<void> {
   try {
     const { error } = await client.from('Task').update({ quest_id: questId }).eq('id', taskId)
@@ -510,6 +524,7 @@ export {
   updateQuest,
   deleteQuest,
   completeQuest,
+  updateQuestDescription,
   assignTaskToQuest,
   removeTaskFromQuest,
 }

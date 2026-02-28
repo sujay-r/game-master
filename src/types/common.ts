@@ -32,6 +32,7 @@ export interface Quest {
   id: number
   title: string
   description?: string
+  notes?: string
   type: QuestType
   status: QuestStatus
   createdAt: Date
