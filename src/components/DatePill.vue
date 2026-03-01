@@ -20,6 +20,7 @@
     </PillBase>
     <div
       v-if="isCalendarShowing"
+      ref="datePickerContainer"
       class="date-picker-container"
       :style="{ width: overlayWidth + 'px' }"
     >
@@ -54,6 +55,7 @@ const emits = defineEmits<{
 }>()
 
 const pillContainer = ref<HTMLElement>()
+const datePickerContainer = ref<HTMLElement>()
 const overlayWidth = ref<number | undefined>(0)
 
 const selectedDate = ref<Date | null>()
@@ -102,7 +104,10 @@ function positionOverlay() {
 }
 
 function handleClickOutside(event: any) {
-  if (pillContainer.value && !pillContainer.value.contains(event.target)) {
+  const clickedOutsidePill = !pillContainer.value?.contains(event.target)
+  const clickedOutsideCalendar = !datePickerContainer.value?.contains(event.target)
+
+  if (clickedOutsidePill && clickedOutsideCalendar) {
     isCalendarShowing.value = false
     document.removeEventListener('click', handleClickOutside)
   }

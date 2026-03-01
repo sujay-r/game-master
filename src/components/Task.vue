@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <div v-if="questName" class="quest-badge">
+    <div v-if="questName && showQuestBadge" class="quest-badge">
       <!-- TODO: Move icon to icon store -->
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -89,7 +89,7 @@
         </svg>
       </span>
     </div>
-    <div class="metadata-pills">
+    <div class="metadata-pills" @click.stop>
       <DatePill
         color="#A9D5C7"
         :date="taskData.dueDate ?? null"
@@ -173,11 +173,17 @@ import {
 // TODO: Fix issue where size of task component changes when inline editing is active.
 // TODO: Add quick access button for creating tasks.
 
-const props = defineProps<{
-  task: TaskType
-  quests?: Quest[]
-  openModal?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    task: TaskType
+    quests?: Quest[]
+    openModal?: boolean
+    showQuestBadge?: boolean
+  }>(),
+  {
+    showQuestBadge: true,
+  },
+)
 
 const emit = defineEmits<{
   (e: 'modal-closed'): void
@@ -186,6 +192,7 @@ const emit = defineEmits<{
 
 const taskData = ref<TaskType>()
 const originalNotes = ref<string>('')
+const originalDescription = ref<string>('')
 const originalOutcomes = ref<TaskOutcomeType[]>([])
 const editedOutcomes = ref<TaskOutcomeType[]>([])
 const taskOpen = ref<boolean>(false)
@@ -255,9 +262,10 @@ const taskStatusClass = computed(() => {
 const hasUnsavedChanges = computed(() => {
   if (!taskData.value) return false
   const notesChanged = taskData.value.notes !== originalNotes.value
+  const descriptionChanged = taskData.value.description !== originalDescription.value
   const outcomesChanged =
     JSON.stringify(editedOutcomes.value) !== JSON.stringify(originalOutcomes.value)
-  return notesChanged || outcomesChanged
+  return notesChanged || descriptionChanged || outcomesChanged
 })
 
 function onDueDateChanged(newDate: Date | null) {
@@ -317,7 +325,12 @@ async function saveDescription() {
   if (newDescription !== taskData.value.description) {
     taskData.value.description = newDescription
     if (taskData.value.id) {
-      updateTaskDescription(taskData.value.id, newDescription)
+      try {
+        await updateTaskDescription(taskData.value.id, newDescription)
+        originalDescription.value = newDescription
+      } catch (err) {
+        console.error('Error saving description:', err)
+      }
     } else {
       console.error(`Task ID not found for ${taskData.value.title}. Can't update description.`)
     }
@@ -377,6 +390,11 @@ async function saveAllChanges() {
       await saveNotes()
     }
 
+    // Save description if changed
+    if (taskData.value.description !== originalDescription.value) {
+      await saveDescription()
+    }
+
     // Save outcomes if changed
     if (JSON.stringify(editedOutcomes.value) !== JSON.stringify(originalOutcomes.value)) {
       await saveOutcomes()
@@ -389,6 +407,7 @@ async function saveAllChanges() {
 function discardChanges() {
   if (taskData.value) {
     taskData.value.notes = originalNotes.value
+    taskData.value.description = originalDescription.value
     editedOutcomes.value = [...originalOutcomes.value]
   }
 }
@@ -441,6 +460,8 @@ onMounted(async () => {
   taskData.value = structuredClone(toRaw(props.task))
   originalNotes.value = taskData.value.notes || ''
   taskData.value.notes = originalNotes.value
+  originalDescription.value = taskData.value.description || ''
+  taskData.value.description = originalDescription.value
   isCompleted.value = taskData.value.status === TaskStatus.Done
   if (taskData.value.outcomes) {
     await loadOutcomeIcons(taskData.value.outcomes)

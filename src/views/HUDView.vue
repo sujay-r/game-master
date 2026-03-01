@@ -33,7 +33,73 @@
   </Modal>
 
   <!-- Quests section -->
-  <HeadingFleur heading-text="Quests" heading-size="3.9em" :clean="true" />
+  <HeadingFleur heading-text="Today's Tasks" heading-size="3.9em" :clean="true" />
+
+  <!-- Tasks Container -->
+  <div class="tasks-container">
+    <!-- Loading State -->
+    <p v-if="questStore.loading" class="loading-message">Loading tasks...</p>
+
+    <!-- Error State -->
+    <div v-else-if="questStore.error" class="error-message">
+      <p>{{ questStore.error }}</p>
+      <button class="retry-button" @click="loadQuests">Retry</button>
+    </div>
+
+    <!-- Empty State -->
+    <div v-else-if="!hasAnyTasks" class="empty-state">
+      <p>No tasks scheduled for today</p>
+    </div>
+
+    <!-- Task Sections -->
+    <div v-else class="task-sections">
+      <!-- Overdue Section -->
+      <div v-if="overdueTasks.length" class="task-section overdue-section">
+        <h4 class="section-title overdue-title">
+          Overdue
+          <span class="overdue-count">({{ overdueTasks.length }})</span>
+        </h4>
+        <TaskGroup :tasks="overdueTasks" :quests="questStore.quests" @delete="handleTaskDelete" />
+      </div>
+
+      <!-- Due Today Section -->
+      <div v-if="todaysTasks.length" class="task-section">
+        <!-- h4 class="section-title">
+          Due Today
+          <span class="task-count">({{ todaysTasks.length }})</span>
+        </h4 -->
+        <TaskGroup :tasks="todaysTasks" :quests="questStore.quests" @delete="handleTaskDelete" />
+      </div>
+
+      <!-- Completed Section (Collapsible) -->
+      <div v-if="completedTasks.length" class="task-section completed-section">
+        <div class="section-header" @click="toggleCompletedSection">
+          <h4 class="section-title">
+            Completed
+            <span class="task-count">({{ completedTasks.length }})</span>
+          </h4>
+          <span class="toggle-icon" :class="{ expanded: showCompleted }">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="20px"
+              viewBox="0 -960 960 960"
+              width="20px"
+              fill="currentColor"
+            >
+              <path d="M480-344 240-584l56-56 184 184 184-184 56 56-240 240Z" />
+            </svg>
+          </span>
+        </div>
+        <TaskGroup
+          v-show="showCompleted"
+          :tasks="completedTasks"
+          :quests="questStore.quests"
+          @delete="handleTaskDelete"
+        />
+      </div>
+    </div>
+  </div>
+
   <div class="token-count-wrapper">
     <TokenCountDisplay />
   </div>
@@ -60,11 +126,14 @@ import MultiselectDropdown from '@/components/MultiselectDropdown.vue'
 import TokenCountDisplay from '@/components/TokenCountDisplay.vue'
 import QuickAddButton from '@/components/QuickAddButton.vue'
 import TaskCreationModal from '@/components/TaskCreationModal.vue'
+import TaskGroup from '@/components/TaskGroup.vue'
 import { useStatStore, useTokenStore } from '@/stores/resources'
 import { useQuestStore } from '@/stores/quests'
 import { addStatusEffect, fetchTasksWithOutcomes } from '@/lib/supabase'
-import { ref, onMounted } from 'vue'
-import type { StatType, StatusEffectType, TaskStatus, TaskOutcomeType } from '@/types/common'
+import { ref, onMounted, computed, watch } from 'vue'
+import { isSameDay, isBefore } from '@/utils/date'
+import { TaskStatus } from '@/types/common'
+import type { StatType, StatusEffectType, TaskOutcomeType } from '@/types/common'
 
 // TODO: Make the Stat/Quest heading size responsive (including the fleur).
 // TODO: Make Add Status Effect Modal responsive.
@@ -80,6 +149,62 @@ const tempStatusEffectBuffBool = ref<boolean>(false)
 const tempStatusEffectSelectedStats = ref<StatType[]>([])
 
 const hudTitleURL = new URL('@/assets/imgs/TheHUD.png', import.meta.url).href
+const COMPLETED_SECTION_KEY = 'hud-completed-visible'
+
+// Completed section visibility (persisted in localStorage)
+const showCompleted = ref<boolean>(
+  JSON.parse(localStorage.getItem(COMPLETED_SECTION_KEY) ?? 'true'),
+)
+
+watch(showCompleted, (newValue) => {
+  localStorage.setItem(COMPLETED_SECTION_KEY, JSON.stringify(newValue))
+})
+
+function toggleCompletedSection() {
+  showCompleted.value = !showCompleted.value
+}
+
+// Today's date for filtering
+const today = computed(() => new Date())
+
+// Filter tasks by date and status
+const overdueTasks = computed(() =>
+  questStore.tasks.filter(
+    (task) =>
+      task.dueDate && isBefore(task.dueDate, today.value) && task.status !== TaskStatus.Done,
+  ),
+)
+
+const todaysTasks = computed(() =>
+  questStore.tasks.filter(
+    (task) =>
+      task.dueDate && isSameDay(task.dueDate, today.value) && task.status !== TaskStatus.Done,
+  ),
+)
+
+const completedTasks = computed(() =>
+  questStore.tasks.filter(
+    (task) =>
+      task.status === TaskStatus.Done &&
+      task.dueDate &&
+      (isSameDay(task.dueDate, today.value) || isBefore(task.dueDate, today.value)),
+  ),
+)
+
+const hasAnyTasks = computed(
+  () =>
+    overdueTasks.value.length > 0 ||
+    todaysTasks.value.length > 0 ||
+    completedTasks.value.length > 0,
+)
+
+async function handleTaskDelete(taskId: number) {
+  try {
+    await questStore.deleteTask(taskId)
+  } catch (err) {
+    console.error('Failed to delete task:', err)
+  }
+}
 
 onMounted(() => {
   if (!stats.stats.length) {
@@ -306,4 +431,118 @@ const resetStatusEffectInputFields = () => {
 
 /* Quick add button positioning is handled by the component itself */
 /* It positions at bottom: 20px, right: 20px */
+
+/* Today's Tasks Section Styles */
+.tasks-container {
+  max-width: 60rem;
+  margin: 0 auto 2rem auto;
+  padding: 0 1rem;
+}
+
+.error-message {
+  text-align: center;
+  color: #c62828;
+  padding: 1rem;
+}
+
+.retry-button {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #32a287;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Perpetua', serif;
+}
+
+.retry-button:hover {
+  background: #2d826d;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+.task-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.task-section {
+  background: transparent;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.overdue-section {
+  border-left: 4px solid #dc143c;
+}
+
+.section-title {
+  font-family: Trajan, 'Perpetua', serif;
+  font-size: 1em;
+  color: #424242;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.overdue-title {
+  color: #dc143c;
+}
+
+.task-count,
+.overdue-count {
+  font-size: 0.85em;
+  color: #666;
+  font-weight: normal;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  margin-bottom: 1rem;
+}
+
+.section-header:hover {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 6px;
+  margin: -0.25rem -0.5rem 0.75rem -0.5rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.toggle-icon {
+  display: flex;
+  align-items: center;
+  color: #666;
+  transition: transform 0.2s;
+}
+
+.toggle-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.completed-section {
+  background: transparent;
+}
+
+@media (max-width: 900px) {
+  .tasks-container {
+    max-width: 100%;
+    padding: 0 0.5rem;
+  }
+
+  .task-section {
+    padding: 0.75rem;
+  }
+}
 </style>
