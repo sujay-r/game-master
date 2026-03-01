@@ -64,10 +64,6 @@
 
       <!-- Due Today Section -->
       <div v-if="todaysTasks.length" class="task-section">
-        <!-- h4 class="section-title">
-          Due Today
-          <span class="task-count">({{ todaysTasks.length }})</span>
-        </h4 -->
         <TaskGroup :tasks="todaysTasks" :quests="questStore.quests" @delete="handleTaskDelete" />
       </div>
 
