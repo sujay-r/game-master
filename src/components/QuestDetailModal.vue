@@ -92,8 +92,7 @@
         >
           <span class="toggle-icon">{{ showCompleted ? '▼' : '▶' }}</span>
           <span
-            >{{ completedTasks.length }} completed task
-            {{ completedTasks.length === 1 ? '' : 's' }}</span
+            >{{ completedTasks.length }} completed task{{ completedTasks.length === 1 ? '' : 's' }}</span
           >
         </div>
 
