@@ -58,7 +58,12 @@
       </div>
 
       <div v-if="tasks.length > 0" class="tasks-container">
-        <Task v-for="task in tasks" :key="task.id" :task="task" />
+        <Task
+          v-for="task in tasks"
+          :key="task.id"
+          :task="task"
+          @delete="emit('task-delete', $event)"
+        />
       </div>
 
       <div v-else class="empty-tasks">
@@ -130,13 +135,14 @@ const props = defineProps<{
   isExpanded: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'toggle-expand'): void
   (e: 'edit', quest: Quest): void
   (e: 'delete', quest: Quest): void
   (e: 'complete', questId: number): void
   (e: 'add-task', quest: Quest): void
   (e: 'open-quest', quest: Quest): void
+  (e: 'task-delete', taskId: number): void
 }>()
 
 const typeLabels: Record<QuestType, string> = {

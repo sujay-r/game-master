@@ -579,6 +579,23 @@ async function insertTask(taskData: {
   }
 }
 
+async function deleteTask(taskId: number): Promise<void> {
+  try {
+    // Delete outcomes first (cascade)
+    await deleteOutcomesForTask(taskId)
+
+    // Then delete the task
+    const { error } = await client.from('Task').delete().eq('id', taskId)
+
+    if (error) {
+      throw error
+    }
+  } catch (err) {
+    console.error('Error deleting task: ', err)
+    throw err
+  }
+}
+
 export {
   client,
   fetchStatsWithEffects,
@@ -606,4 +623,5 @@ export {
   removeTaskFromQuest,
   insertTask,
   insertTaskOutcomes,
+  deleteTask,
 }

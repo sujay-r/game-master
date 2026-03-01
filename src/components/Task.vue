@@ -116,10 +116,34 @@
     <div v-if="hasUnsavedChanges && !isCompleted" class="unsaved-warning">
       You have unsaved changes
     </div>
-    <button v-if="hasUnsavedChanges && !isCompleted" class="save-button" @click="saveNotes">
-      Save
-    </button>
+    <div class="modal-footer">
+      <button class="delete-button" @click="isDeleteModalOpen = true" title="Delete task">
+        <!-- TODO: Move to icons store -->
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="18px"
+          viewBox="0 -960 960 960"
+          width="18px"
+          fill="currentColor"
+        >
+          <path
+            d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"
+          />
+        </svg>
+        Delete
+      </button>
+      <button v-if="hasUnsavedChanges && !isCompleted" class="save-button" @click="saveNotes">
+        Save
+      </button>
+    </div>
   </Modal>
+
+  <!-- Delete Task Modal -->
+  <DeleteTaskModal
+    v-model="isDeleteModalOpen"
+    :task-title="taskData?.title || ''"
+    @confirm="handleDelete"
+  />
 </template>
 
 <script setup lang="ts">
@@ -128,6 +152,7 @@ import Modal from './Modal.vue'
 import LiveEditor from './LiveEditor.vue'
 import DatePill from './DatePill.vue'
 import TaskAssignmentDropdown from './TaskAssignmentDropdown.vue'
+import DeleteTaskModal from './DeleteTaskModal.vue'
 import type { TaskType, TaskOutcomeType, Quest } from '@/types/common'
 import { TaskStatus } from '@/types/common'
 import { useIconStore } from '@/stores/resources'
@@ -151,6 +176,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'modal-closed'): void
+  (e: 'delete', taskId: number): void
 }>()
 
 const taskData = ref<TaskType>()
@@ -165,6 +191,7 @@ const titleInput = ref<HTMLInputElement | null>(null)
 const isEditingDescription = ref<boolean>(false)
 const editedDescription = ref<string>('')
 const descriptionInput = ref<HTMLTextAreaElement | null>(null)
+const isDeleteModalOpen = ref<boolean>(false)
 
 const icons = useIconStore()
 const questStore = useQuestStore()
@@ -310,6 +337,13 @@ async function saveNotes() {
 function discardChanges() {
   if (taskData.value) {
     taskData.value.notes = originalNotes.value
+  }
+}
+
+function handleDelete() {
+  if (taskData.value?.id) {
+    emit('delete', taskData.value.id)
+    taskOpen.value = false
   }
 }
 
@@ -568,5 +602,40 @@ onMounted(async () => {
   background: #fff;
   border-radius: 4px;
   box-shadow: 0 0 0 1.5px #4bab91;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.delete-button {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.875rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875em;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    transform 0.1s;
+  background: #ffebee;
+  color: #c62828;
+}
+
+.delete-button:hover {
+  background: #ffcdd2;
+  transform: translateY(-1px);
+}
+
+.delete-button:active {
+  transform: translateY(0);
 }
 </style>

@@ -88,6 +88,7 @@
           @complete="completeQuest"
           @add-task="openAddTaskModal"
           @open-quest="openQuestDetail"
+          @task-delete="handleTaskDelete"
         />
       </div>
     </div>
@@ -128,6 +129,7 @@
           :quests="questStore.quests"
           :open-modal="taskToOpenId === task.id"
           @modal-closed="handleTaskModalClosed"
+          @delete="handleTaskDelete"
         />
       </div>
     </div>
@@ -349,6 +351,14 @@ function handleTaskModalClosed() {
   }
   // Clear the task to open after modal is closed
   taskToOpenId.value = null
+}
+
+async function handleTaskDelete(taskId: number) {
+  try {
+    await questStore.deleteTask(taskId)
+  } catch (err) {
+    console.error('Failed to delete task:', err)
+  }
 }
 
 // Lifecycle

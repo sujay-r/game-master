@@ -10,6 +10,7 @@ import {
   assignTaskToQuest as assignTaskToQuestInDb,
   removeTaskFromQuest as removeTaskFromQuestInDb,
   insertTask,
+  deleteTask as deleteTaskInDb,
 } from '@/lib/supabase'
 
 interface QuestStoreState {
@@ -198,6 +199,34 @@ const useQuestStore = defineStore('quests', {
       } catch (err) {
         this.error = err instanceof Error ? err.message : 'Failed to create task'
         console.error('Error creating task: ', err)
+        throw err
+      }
+    },
+
+    // TODO: Check if this needs to be in the separate tasks store or not.
+    async deleteTask(taskId: number) {
+      try {
+        await deleteTaskInDb(taskId)
+
+        // Remove task from local array
+        const taskIndex = this.tasks.findIndex((t) => t.id === taskId)
+        if (taskIndex !== -1) {
+          const questId = this.tasks[taskIndex].questId
+          this.tasks.splice(taskIndex, 1)
+
+          // Remove taskId from quest's taskIds if assigned
+          if (questId) {
+            const questIndex = this.quests.findIndex((q) => q.id === questId)
+            if (questIndex !== -1) {
+              this.quests[questIndex].taskIds = this.quests[questIndex].taskIds.filter(
+                (id) => id !== taskId,
+              )
+            }
+          }
+        }
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to delete task'
+        console.error('Error deleting task: ', err)
         throw err
       }
     },
