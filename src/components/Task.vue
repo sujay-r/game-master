@@ -162,7 +162,6 @@ import {
   updateTaskTitle,
   updateTaskNotes,
   updateTaskDescription,
-  markTaskDone,
 } from '@/lib/supabase'
 
 // TODO: Fix issue where size of task component changes when inline editing is active.
@@ -224,9 +223,7 @@ watch(isCompleted, async (newVal) => {
       taskData.value.status = newVal ? TaskStatus.Done : TaskStatus.Todo
 
       if (taskData.value.id) {
-        // TODO: Route all data updates through the pinia stores so UI can update independent of db
-        // updates. Start with token counts.
-        await markTaskDone(taskData.value)
+        await questStore.completeTask(taskData.value.id)
       } else {
         console.error('Cannot update task because id not found.')
       }

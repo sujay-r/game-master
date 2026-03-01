@@ -11,7 +11,9 @@ import {
   removeTaskFromQuest as removeTaskFromQuestInDb,
   insertTask,
   deleteTask as deleteTaskInDb,
+  markTaskDone,
 } from '@/lib/supabase'
+import { useTokenStore } from '@/stores/resources'
 
 interface QuestStoreState {
   quests: Quest[]
@@ -227,6 +229,39 @@ const useQuestStore = defineStore('quests', {
       } catch (err) {
         this.error = err instanceof Error ? err.message : 'Failed to delete task'
         console.error('Error deleting task: ', err)
+        throw err
+      }
+    },
+
+    async completeTask(taskId: number) {
+      try {
+        const task = this.tasks.find((t) => t.id === taskId)
+        if (!task) {
+          throw new Error('Task not found in store')
+        }
+
+        // Update database first
+        await markTaskDone(task)
+
+        // Update local task status to trigger UI reactivity
+        task.status = TaskStatus.Done
+
+        // Update token quantities in the token store to reflect rewards
+        const tokenStore = useTokenStore()
+        if (task.outcomes) {
+          for (const outcome of task.outcomes) {
+            const token = tokenStore.getTokenByType(outcome.token_type)
+            if (token) {
+              const newQuantity = token.quantity + Number(outcome.quantity)
+              tokenStore.updateTokenQuantity(outcome.token_type, newQuantity)
+            }
+          }
+        }
+
+        return task
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to complete task'
+        console.error('Error completing task: ', err)
         throw err
       }
     },
