@@ -2,7 +2,7 @@
   <FloatingDisplay>
     <div class="token-count-container">
       <div v-for="token in displayTokens" :key="token.token_type" class="token-item">
-        <span class="icon-container" v-html="token.icon"></span>
+        <span class="icon-container" v-html="tokenIcons[token.token_type]"></span>
         <span class="token-count">{{ token.quantity }}</span>
       </div>
     </div>
@@ -10,13 +10,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import FloatingDisplay from './FloatingDisplay.vue'
 import { useIconStore, useTokenStore } from '@/stores/resources'
 import type { TokenType } from '@/types/common'
 
 const tokenStore = useTokenStore()
 const iconStore = useIconStore()
+
+const tokenIcons = ref<Record<string, string>>({})
 
 const displayTokens = computed(() => {
   return tokenStore.tokens
@@ -33,20 +35,32 @@ const displayTokens = computed(() => {
     })
 })
 
+async function loadTokenIcons(tokens: TokenType[]) {
+  const iconPromises = tokens.map(async (token: TokenType) => {
+    if (!tokenIcons.value[token.token_type]) {
+      const icon = await iconStore.getIcon(token.icon_filename, token.icon_color, 15)
+      if (icon) {
+        tokenIcons.value[token.token_type] = icon
+      }
+    }
+  })
+  await Promise.all(iconPromises)
+}
+
 onMounted(async () => {
   if (tokenStore.tokens.length === 0) {
     await tokenStore.fetchTokensFromDb()
   }
-
-  // Load icons for all tokens
-  await Promise.all(
-    tokenStore.tokens.map(async (token: TokenType) => {
-      if (!token.icon) {
-        token.icon = await iconStore.getIcon(token.icon_filename, token.icon_color, 15)
-      }
-    }),
-  )
+  await loadTokenIcons(tokenStore.tokens)
 })
+
+watch(
+  () => tokenStore.tokens,
+  async (newTokens) => {
+    await loadTokenIcons(newTokens)
+  },
+  { deep: true },
+)
 </script>
 
 <style scoped>
