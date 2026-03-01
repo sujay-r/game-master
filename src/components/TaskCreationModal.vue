@@ -73,6 +73,7 @@ import TaskAssignmentDropdown from './TaskAssignmentDropdown.vue'
 import OutcomeBuilder from './OutcomeBuilder.vue'
 import type { Quest, TaskStatus, TaskOutcomeType } from '@/types/common'
 import { useTokenStore } from '@/stores/resources'
+import { stripHtml } from '@/utils/html'
 
 interface FormData {
   title: string
@@ -152,7 +153,7 @@ function handleSubmit() {
 
   const taskData = {
     title: formData.value.title.trim(),
-    description: formData.value.description,
+    description: stripHtml(formData.value.description),
     notes: formData.value.notes,
     status: 'TODO' as TaskStatus,
     dueDate: formData.value.dueDate ? new Date(formData.value.dueDate) : null,
