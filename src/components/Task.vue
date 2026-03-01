@@ -107,6 +107,10 @@
       />
     </div>
 
+    <div v-if="tokenStore.tokens.length > 0" class="outcomes-section">
+      <OutcomeBuilder v-model="editedOutcomes" :tokens="tokenStore.tokens" />
+    </div>
+
     <LiveEditor
       v-model="taskData.notes"
       :text-box="true"
@@ -132,7 +136,7 @@
         </svg>
         Delete
       </button>
-      <button v-if="hasUnsavedChanges && !isCompleted" class="save-button" @click="saveNotes">
+      <button v-if="hasUnsavedChanges && !isCompleted" class="save-button" @click="saveAllChanges">
         Save
       </button>
     </div>
@@ -153,15 +157,17 @@ import LiveEditor from './LiveEditor.vue'
 import DatePill from './DatePill.vue'
 import TaskAssignmentDropdown from './TaskAssignmentDropdown.vue'
 import DeleteTaskModal from './DeleteTaskModal.vue'
+import OutcomeBuilder from './OutcomeBuilder.vue'
 import type { TaskType, TaskOutcomeType, Quest } from '@/types/common'
 import { TaskStatus } from '@/types/common'
-import { useIconStore } from '@/stores/resources'
+import { useIconStore, useTokenStore } from '@/stores/resources'
 import { useQuestStore } from '@/stores/quests'
 import {
   updateTaskDueDate,
   updateTaskTitle,
   updateTaskNotes,
   updateTaskDescription,
+  updateTaskOutcomes,
 } from '@/lib/supabase'
 
 // TODO: Fix issue where size of task component changes when inline editing is active.
@@ -180,6 +186,8 @@ const emit = defineEmits<{
 
 const taskData = ref<TaskType>()
 const originalNotes = ref<string>('')
+const originalOutcomes = ref<TaskOutcomeType[]>([])
+const editedOutcomes = ref<TaskOutcomeType[]>([])
 const taskOpen = ref<boolean>(false)
 const isCompleted = ref<boolean>(false)
 
@@ -194,6 +202,7 @@ const isDeleteModalOpen = ref<boolean>(false)
 
 const icons = useIconStore()
 const questStore = useQuestStore()
+const tokenStore = useTokenStore()
 
 const questName = computed(() => {
   if (!taskData.value?.questId) return null
@@ -244,7 +253,11 @@ const taskStatusClass = computed(() => {
 })
 
 const hasUnsavedChanges = computed(() => {
-  return taskData.value !== undefined && taskData.value.notes !== originalNotes.value
+  if (!taskData.value) return false
+  const notesChanged = taskData.value.notes !== originalNotes.value
+  const outcomesChanged =
+    JSON.stringify(editedOutcomes.value) !== JSON.stringify(originalOutcomes.value)
+  return notesChanged || outcomesChanged
 })
 
 function onDueDateChanged(newDate: Date | null) {
@@ -331,9 +344,61 @@ async function saveNotes() {
   }
 }
 
+async function saveOutcomes() {
+  if (!taskData.value?.id) {
+    console.error('Cannot save outcomes - task ID not found')
+    return
+  }
+
+  // Only save if outcomes have actually changed
+  if (JSON.stringify(editedOutcomes.value) === JSON.stringify(originalOutcomes.value)) {
+    return
+  }
+
+  try {
+    await updateTaskOutcomes(taskData.value.id, editedOutcomes.value)
+    originalOutcomes.value = [...editedOutcomes.value]
+    taskData.value.outcomes = [...editedOutcomes.value]
+    await loadOutcomeIcons(taskData.value.outcomes)
+  } catch (err) {
+    console.error('Error saving outcomes:', err)
+  }
+}
+
+async function saveAllChanges() {
+  if (!taskData.value?.id) {
+    console.error('Cannot save changes - task ID not found')
+    return
+  }
+
+  try {
+    // Save notes if changed
+    if (taskData.value.notes !== originalNotes.value) {
+      await saveNotes()
+    }
+
+    // Save outcomes if changed
+    if (JSON.stringify(editedOutcomes.value) !== JSON.stringify(originalOutcomes.value)) {
+      await saveOutcomes()
+    }
+  } catch (err) {
+    console.error('Error saving changes:', err)
+  }
+}
+
 function discardChanges() {
   if (taskData.value) {
     taskData.value.notes = originalNotes.value
+    editedOutcomes.value = [...originalOutcomes.value]
+  }
+}
+
+async function loadOutcomeIcons(outcomes: TaskOutcomeType[]) {
+  // Load icons for outcomes that are missing the icon property
+  for (const outcome of outcomes) {
+    if (!outcome.icon && outcome.icon_filename) {
+      outcome.icon = await icons.getIcon(outcome.icon_filename, outcome.icon_color, 15)
+    }
   }
 }
 
@@ -362,19 +427,25 @@ watch(
   },
 )
 
+watch(
+  () => taskData.value?.outcomes,
+  (outcomes) => {
+    if (outcomes) {
+      loadOutcomeIcons(outcomes)
+    }
+  },
+  { deep: true },
+)
+
 onMounted(async () => {
   taskData.value = structuredClone(toRaw(props.task))
   originalNotes.value = taskData.value.notes || ''
   taskData.value.notes = originalNotes.value
   isCompleted.value = taskData.value.status === TaskStatus.Done
   if (taskData.value.outcomes) {
-    // TODO: Figure out whether the Promise.all makes the task object not render until icons are
-    // found.
-    // await Promise.all(
-    taskData.value.outcomes.map(async (taskOutcome: TaskOutcomeType) => {
-      taskOutcome.icon = await icons.getIcon(taskOutcome.icon_filename, taskOutcome.icon_color, 15)
-    })
-    // );
+    await loadOutcomeIcons(taskData.value.outcomes)
+    originalOutcomes.value = [...taskData.value.outcomes]
+    editedOutcomes.value = [...taskData.value.outcomes]
   }
 })
 </script>
@@ -467,6 +538,13 @@ onMounted(async () => {
 }
 
 .assignment-section {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+}
+
+.outcomes-section {
   margin-bottom: 1rem;
   padding: 1rem;
   background: rgba(0, 0, 0, 0.02);

@@ -291,6 +291,21 @@ async function updateTaskDescription(taskId: number, newDescription: string) {
   }
 }
 
+async function updateTaskOutcomes(taskId: number, outcomes: TaskOutcomeType[]): Promise<void> {
+  try {
+    // Delete existing outcomes
+    await deleteOutcomesForTask(taskId)
+
+    // Insert new outcomes if any
+    if (outcomes.length > 0) {
+      await insertTaskOutcomes(taskId, outcomes)
+    }
+  } catch (err) {
+    console.error('Error updating task outcomes:', err)
+    throw err
+  }
+}
+
 async function updateTaskStatus(taskId: number, newStatus: TaskStatus) {
   try {
     await updateTaskField(taskId, 'status', newStatus)
@@ -612,6 +627,7 @@ export {
   updateTaskNotes,
   updateTaskDescription,
   updateTaskStatus,
+  updateTaskOutcomes,
   markTaskDone,
   fetchQuests,
   createQuest,

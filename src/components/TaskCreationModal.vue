@@ -51,7 +51,7 @@
         </div>
 
         <div class="form-group">
-          <OutcomeBuilder v-model="formData.outcomes" :tokens="tokens" />
+          <OutcomeBuilder v-model="formData.outcomes" :tokens="tokenStore.tokens" />
         </div>
 
         <div class="form-actions">
@@ -71,7 +71,8 @@ import Modal from './Modal.vue'
 import LiveEditor from './LiveEditor.vue'
 import TaskAssignmentDropdown from './TaskAssignmentDropdown.vue'
 import OutcomeBuilder from './OutcomeBuilder.vue'
-import type { Quest, TaskStatus, TokenType, TaskOutcomeType } from '@/types/common'
+import type { Quest, TaskStatus, TaskOutcomeType } from '@/types/common'
+import { useTokenStore } from '@/stores/resources'
 
 interface FormData {
   title: string
@@ -85,7 +86,6 @@ interface FormData {
 const props = defineProps<{
   modelValue: boolean
   quests: Quest[]
-  tokens: TokenType[]
   initialQuestId?: number | null
 }>()
 
@@ -107,6 +107,7 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(props.modelValue)
+const tokenStore = useTokenStore()
 
 const defaultFormData: FormData = {
   title: '',
