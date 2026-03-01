@@ -57,17 +57,42 @@
         {{ quest.description }}
       </div>
 
-      <div v-if="tasks.length > 0" class="tasks-container">
+      <!-- Active Tasks -->
+      <div v-if="activeTasks.length > 0" class="tasks-container">
         <Task
-          v-for="task in tasks"
+          v-for="task in activeTasks"
           :key="task.id"
           :task="task"
           @delete="emit('task-delete', $event)"
         />
       </div>
 
-      <div v-else class="empty-tasks">
+      <div v-else-if="completedTasks.length === 0" class="empty-tasks">
         <p>No tasks in this quest yet</p>
+      </div>
+
+      <!-- Completed Tasks Toggle -->
+      <div
+        v-if="completedTasks.length > 0"
+        class="completed-tasks-toggle"
+        @click="showCompleted = !showCompleted"
+      >
+        <span class="toggle-icon">{{ showCompleted ? '▼' : '▶' }}</span>
+        <span
+          >{{ completedTasks.length }} completed task{{
+            completedTasks.length === 1 ? '' : 's'
+          }}</span
+        >
+      </div>
+
+      <!-- Completed Tasks List -->
+      <div v-if="showCompleted && completedTasks.length > 0" class="completed-tasks-list">
+        <Task
+          v-for="task in completedTasks"
+          :key="task.id"
+          :task="task"
+          @delete="emit('task-delete', $event)"
+        />
       </div>
 
       <!-- Footer Actions -->
@@ -125,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { Quest, TaskType, QuestType } from '@/types/common'
 import Task from './Task.vue'
 
@@ -145,6 +170,8 @@ const emit = defineEmits<{
   (e: 'task-delete', taskId: number): void
 }>()
 
+const showCompleted = ref(false)
+
 const typeLabels: Record<QuestType, string> = {
   main: 'Main',
   side: 'Side',
@@ -163,6 +190,14 @@ const progress = computed(() => {
 
 const canComplete = computed(() => {
   return progress.value.percentage === 100 && props.quest.status !== 'completed'
+})
+
+const activeTasks = computed(() => {
+  return props.tasks.filter((t) => t.status !== 'DONE')
+})
+
+const completedTasks = computed(() => {
+  return props.tasks.filter((t) => t.status === 'DONE')
 })
 </script>
 
@@ -483,5 +518,31 @@ const canComplete = computed(() => {
 
 .action-button.delete:hover {
   background: #ffcdd2;
+}
+
+.completed-tasks-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  margin-top: 0.5rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9em;
+  color: #666;
+  transition: background 0.15s;
+}
+
+.completed-tasks-toggle:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.toggle-icon {
+  font-size: 0.8em;
+}
+
+.completed-tasks-list {
+  margin-top: 0.5rem;
 }
 </style>
