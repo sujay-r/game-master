@@ -155,10 +155,12 @@ const resetStatusEffectInputFields = () => {
   text-align: left;
   max-width: 60rem;
   display: grid;
-  margin-left: 35%;
-  grid-template-columns: 1fr 1fr;
+  margin: 0 auto;
+  justify-content: center;
+  grid-template-columns: auto auto;
+  justify-items: center;
   row-gap: 2em;
-  column-gap: 35%;
+  column-gap: 4rem;
 }
 
 .stat-button {
@@ -174,7 +176,9 @@ const resetStatusEffectInputFields = () => {
 }
 
 .stat-add-button-container {
-  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  margin-top: 2.5rem;
 }
 
 .stat-button:hover {
@@ -187,8 +191,6 @@ const resetStatusEffectInputFields = () => {
 
 .stat-add {
   display: flex;
-  margin-top: 2.5rem;
-  margin-left: 47%;
 }
 
 .stat-add-container {
