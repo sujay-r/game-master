@@ -85,7 +85,7 @@
           @toggle-expand="questStore.toggleQuestExpansion(quest.id)"
           @edit="openEditModal"
           @delete="openDeleteModal"
-          @complete="completeQuest"
+          @request-complete="openCompleteModal"
           @add-task="openAddTaskModal"
           @open-quest="openQuestDetail"
           @task-delete="handleTaskDelete"
@@ -171,6 +171,14 @@
     @created="handleTaskCreated"
     @cancelled="handleTaskCreationCancelled"
   />
+
+  <!-- Complete Quest Modal -->
+  <CompleteQuestModal
+    v-model="showCompleteModal"
+    :quest-title="questToComplete?.title || ''"
+    @confirm="handleCompleteQuest"
+    @cancel="showCompleteModal = false"
+  />
 </template>
 
 <script setup lang="ts">
@@ -181,13 +189,21 @@ import QuestCard from '@/components/QuestCard.vue'
 import QuestModal from '@/components/QuestModal.vue'
 import QuestDetailModal from '@/components/QuestDetailModal.vue'
 import DeleteQuestModal from '@/components/DeleteQuestModal.vue'
+import CompleteQuestModal from '@/components/CompleteQuestModal.vue'
 import TokenCountDisplay from '@/components/TokenCountDisplay.vue'
 import QuickAddButton from '@/components/QuickAddButton.vue'
 import TaskCreationModal from '@/components/TaskCreationModal.vue'
 import { useQuestStore } from '@/stores/quests'
 import { useTokenStore } from '@/stores/resources'
 import { fetchTasksWithOutcomes } from '@/lib/supabase'
-import type { Quest, QuestType, TaskType, TaskStatus, TaskOutcomeType } from '@/types/common'
+import {
+  QuestStatus,
+  type Quest,
+  type QuestType,
+  type TaskType,
+  type TaskStatus,
+  type TaskOutcomeType,
+} from '@/types/common'
 
 const questsTitleURL = new URL('@/assets/imgs/theQuests.png', import.meta.url).href
 
@@ -216,6 +232,8 @@ const isQuestDetailModalOpen = ref(false)
 const isTaskCreationModalOpen = ref(false)
 const editingQuest = ref<Quest | undefined>(undefined)
 const deletingQuest = ref<Quest | null>(null)
+const questToComplete = ref<Quest | null>(null)
+const showCompleteModal = ref(false)
 const selectedQuestForDetail = ref<Quest | null>(null)
 const taskToOpenId = ref<number | null>(null)
 const shouldReopenQuestAfterTask = ref(false)
@@ -223,15 +241,16 @@ const taskCreationInitialQuestId = ref<number | null>(null)
 
 // Computed
 const filteredQuests = computed(() => {
-  let quests = questStore.quests
+  // Filter out completed quests
+  let quests = questStore.quests.filter((q) => q.status !== QuestStatus.Completed)
 
   // Filter by type
   if (currentFilter.value === 'main') {
-    quests = questStore.questsByType('main' as QuestType)
+    quests = quests.filter((q) => q.type === 'main')
   } else if (currentFilter.value === 'side') {
-    quests = questStore.questsByType('side' as QuestType)
+    quests = quests.filter((q) => q.type === 'side')
   } else if (currentFilter.value === 'lifeAdmin') {
-    quests = questStore.questsByType('lifeAdmin' as QuestType)
+    quests = quests.filter((q) => q.type === 'lifeAdmin')
   }
 
   // Sort
@@ -326,8 +345,17 @@ async function handleDeleteQuest(cascadeTasks: boolean) {
   }
 }
 
-async function completeQuest(questId: number) {
-  await questStore.completeQuest(questId)
+function openCompleteModal(quest: Quest) {
+  questToComplete.value = quest
+  showCompleteModal.value = true
+}
+
+async function handleCompleteQuest() {
+  if (questToComplete.value) {
+    await questStore.completeQuest(questToComplete.value.id)
+    showCompleteModal.value = false
+    questToComplete.value = null
+  }
 }
 
 function openQuestDetail(quest: Quest) {
