@@ -342,6 +342,16 @@ const completedTasks = computed(() => {
   background: rgba(107, 140, 174, 0.15);
 }
 
+.quest-card:hover .open-quest-btn.lifeAdmin {
+  opacity: 1;
+  border-color: #20b2aa;
+  color: #20b2aa;
+}
+
+.open-quest-btn.lifeAdmin:hover {
+  background: rgba(32, 178, 170, 0.15);
+}
+
 .open-quest-btn:active {
   transform: translateY(0);
 }
