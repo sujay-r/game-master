@@ -4,7 +4,7 @@
       :color="color"
       :font-color="fontColor"
       :class="{ clickable: !disabled }"
-      @click="!disabled && showCalendar"
+      @click="showCalendar"
     >
       <div class="pill-contents">
         <span v-html="dueDateIcon" class="icon-container"></span>
@@ -75,6 +75,10 @@ const displayText = computed(() => {
 })
 
 async function showCalendar() {
+  if (props.disabled) {
+    return
+  }
+
   isCalendarShowing.value = true
 
   await nextTick()
@@ -119,6 +123,8 @@ onMounted(async () => {
   selectedDate.value = props.date ? props.date : null
 
   dueDateIcon.value = await icons.getIcon('due_date.svg', '#424242', 13)
+
+  console.log("Date picker disabled: " + props.disabled)
 })
 
 onBeforeUnmount(() => {
