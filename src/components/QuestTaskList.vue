@@ -1,7 +1,7 @@
 <template>
   <div class="quest-task-group">
     <div class="quest-header">
-      <span class="quest-badge" :class="quest.type">{{ quest.type }}</span>
+      <span class="quest-badge" :class="quest.type">{{ typeLabel }}</span>
       <span class="quest-name">{{ quest.title }}</span>
     </div>
     <div class="quest-tasks">
@@ -17,10 +17,11 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import Task from './Task.vue'
-import type { TaskType, Quest } from '@/types/common'
+import type { TaskType, Quest, QuestType } from '@/types/common'
 
-defineProps<{
+const props = defineProps<{
   quest: Quest
   tasks: TaskType[]
 }>()
@@ -28,6 +29,14 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'delete', taskId: number): void
 }>()
+
+const typeLabels: Record<QuestType, string> = {
+  main: 'Main',
+  side: 'Side',
+  lifeAdmin: 'Life Admin',
+}
+
+const typeLabel = computed(() => typeLabels[props.quest.type])
 
 function handleDelete(taskId: number) {
   emit('delete', taskId)

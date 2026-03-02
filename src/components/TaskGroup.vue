@@ -22,6 +22,17 @@
       />
     </div>
 
+    <!-- Life Admin Quest Tasks - Grouped by Quest -->
+    <div v-if="lifeAdminQuestTasks.length" class="quest-category lifeAdmin">
+      <QuestTaskList
+        v-for="(tasks, questId) in groupByQuest(lifeAdminQuestTasks)"
+        :key="questId"
+        :quest="getQuest(Number(questId))!"
+        :tasks="tasks"
+        @delete="handleDelete"
+      />
+    </div>
+
     <!-- Unassigned Tasks - No Grouping -->
     <div v-if="unassignedTasks.length" class="unassigned-category">
       <h5 class="category-label">Unassigned</h5>
@@ -60,6 +71,14 @@ const sideQuestTasks = computed(() =>
     if (!task.questId) return false
     const quest = props.quests.find((q) => q.id === task.questId)
     return quest?.type === ('side' as QuestType)
+  }),
+)
+
+const lifeAdminQuestTasks = computed(() =>
+  props.tasks.filter((task) => {
+    if (!task.questId) return false
+    const quest = props.quests.find((q) => q.id === task.questId)
+    return quest?.type === ('lifeAdmin' as QuestType)
   }),
 )
 
