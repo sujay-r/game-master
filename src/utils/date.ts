@@ -1,8 +1,13 @@
 export const isSameDay = (date1: Date, date2: Date | string): boolean =>
   new Date(date1).toDateString() === new Date(date2).toDateString()
 
-export const isBefore = (date1: Date, date2: Date | string): boolean =>
-  new Date(date1) < new Date(date2)
+export const isBefore = (date1: Date, date2: Date | string): boolean => {
+  const d1 = new Date(date1)
+  d1.setHours(0, 0, 0, 0)
+  const d2 = new Date(date2)
+  d2.setHours(0, 0, 0, 0)
+  return d1 < d2
+}
 
 export const getDaysOverdue = (dueDate: Date): number => {
   const today = new Date()
