@@ -268,12 +268,11 @@ const hasUnsavedChanges = computed(() => {
 })
 
 function onDueDateChanged(newDate: Date | null) {
-  if (newDate) {
-    if (taskData.value) {
-      taskData.value.dueDate = newDate
-      if (taskData.value.id) {
-        updateTaskDueDate(taskData.value.id, newDate.toLocaleDateString('en-CA'))
-      }
+  if (taskData.value) {
+    taskData.value.dueDate = newDate
+    if (taskData.value.id) {
+      const dateString = newDate ? newDate.toLocaleDateString('en-CA') : null
+      updateTaskDueDate(taskData.value.id, dateString)
     }
   }
 }

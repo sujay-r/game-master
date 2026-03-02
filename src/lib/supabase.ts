@@ -269,7 +269,7 @@ async function updateTaskTitle(taskId: number, newTitle: string) {
   }
 }
 
-async function updateTaskDueDate(taskId: number, newDate: string) {
+async function updateTaskDueDate(taskId: number, newDate: string | null) {
   try {
     await updateTaskField(taskId, 'due_date', newDate)
   } catch (err) {

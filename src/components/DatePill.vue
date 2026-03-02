@@ -100,6 +100,7 @@ function selectDate(value: any) {
 
 function clearDateSelection() {
   selectedDate.value = null
+  emits('update:date', null)
 }
 
 function positionOverlay() {
@@ -123,8 +124,6 @@ onMounted(async () => {
   selectedDate.value = props.date ? props.date : null
 
   dueDateIcon.value = await icons.getIcon('due_date.svg', '#424242', 13)
-
-  console.log("Date picker disabled: " + props.disabled)
 })
 
 onBeforeUnmount(() => {
