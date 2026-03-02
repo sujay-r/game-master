@@ -47,12 +47,14 @@
 import { computed } from 'vue'
 import Task from './Task.vue'
 import QuestTaskList from './QuestTaskList.vue'
+import { useQuestStore } from '@/stores/quests'
 import type { TaskType, Quest, QuestType } from '@/types/common'
 
 const props = defineProps<{
   tasks: TaskType[]
-  quests: Quest[]
 }>()
+
+const questStore = useQuestStore()
 
 const emit = defineEmits<{
   (e: 'delete', taskId: number): void
@@ -61,7 +63,7 @@ const emit = defineEmits<{
 const mainQuestTasks = computed(() =>
   props.tasks.filter((task) => {
     if (!task.questId) return false
-    const quest = props.quests.find((q) => q.id === task.questId)
+    const quest = questStore.quests.find((q) => q.id === task.questId)
     return quest?.type === ('main' as QuestType)
   }),
 )
@@ -69,7 +71,7 @@ const mainQuestTasks = computed(() =>
 const sideQuestTasks = computed(() =>
   props.tasks.filter((task) => {
     if (!task.questId) return false
-    const quest = props.quests.find((q) => q.id === task.questId)
+    const quest = questStore.quests.find((q) => q.id === task.questId)
     return quest?.type === ('side' as QuestType)
   }),
 )
@@ -77,7 +79,7 @@ const sideQuestTasks = computed(() =>
 const lifeAdminQuestTasks = computed(() =>
   props.tasks.filter((task) => {
     if (!task.questId) return false
-    const quest = props.quests.find((q) => q.id === task.questId)
+    const quest = questStore.quests.find((q) => q.id === task.questId)
     return quest?.type === ('lifeAdmin' as QuestType)
   }),
 )
@@ -100,7 +102,7 @@ function groupByQuest(tasks: TaskType[]): Record<number, TaskType[]> {
 }
 
 function getQuest(questId: number): Quest | undefined {
-  return props.quests.find((q) => q.id === questId)
+  return questStore.quests.find((q) => q.id === questId)
 }
 
 function handleDelete(taskId: number) {

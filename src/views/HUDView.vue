@@ -59,12 +59,12 @@
           Overdue
           <span class="overdue-count">({{ overdueTasks.length }})</span>
         </h4>
-        <TaskGroup :tasks="overdueTasks" :quests="questStore.quests" @delete="handleTaskDelete" />
+        <TaskGroup :tasks="overdueTasks" @delete="handleTaskDelete" />
       </div>
 
       <!-- Due Today Section -->
       <div v-if="todaysTasks.length" class="task-section">
-        <TaskGroup :tasks="todaysTasks" :quests="questStore.quests" @delete="handleTaskDelete" />
+        <TaskGroup :tasks="todaysTasks" @delete="handleTaskDelete" />
       </div>
 
       <!-- Completed Section (Collapsible) -->
@@ -86,12 +86,7 @@
             </svg>
           </span>
         </div>
-        <TaskGroup
-          v-show="showCompleted"
-          :tasks="completedTasks"
-          :quests="questStore.quests"
-          @delete="handleTaskDelete"
-        />
+        <TaskGroup v-show="showCompleted" :tasks="completedTasks" @delete="handleTaskDelete" />
       </div>
     </div>
   </div>

@@ -5,13 +5,7 @@
       <span class="quest-name">{{ quest.title }}</span>
     </div>
     <div class="quest-tasks">
-      <Task
-        v-for="task in tasks"
-        :key="task.id"
-        :task="task"
-        :show-quest-badge="false"
-        @delete="handleDelete"
-      />
+      <Task v-for="task in tasks" :key="task.id" :task="task" @delete="handleDelete" />
     </div>
   </div>
 </template>

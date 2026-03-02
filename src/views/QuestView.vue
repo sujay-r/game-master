@@ -126,7 +126,6 @@
           v-for="task in questStore.unassignedTasks"
           :key="task.id"
           :task="task"
-          :quests="questStore.quests"
           :open-modal="taskToOpenId === task.id"
           @modal-closed="handleTaskModalClosed"
           @delete="handleTaskDelete"

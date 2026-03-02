@@ -99,10 +99,10 @@
       />
     </div>
 
-    <div v-if="props.quests" class="assignment-section">
+    <div v-if="questStore.quests.length > 0" class="assignment-section">
       <TaskAssignmentDropdown
         v-model="assignedQuestId"
-        :quests="props.quests"
+        :quests="questStore.quests"
         label="Quest Assignment"
       />
     </div>
@@ -158,7 +158,7 @@ import DatePill from './DatePill.vue'
 import TaskAssignmentDropdown from './TaskAssignmentDropdown.vue'
 import DeleteTaskModal from './DeleteTaskModal.vue'
 import OutcomeBuilder from './OutcomeBuilder.vue'
-import type { TaskType, TaskOutcomeType, Quest } from '@/types/common'
+import type { TaskType, TaskOutcomeType } from '@/types/common'
 import { TaskStatus } from '@/types/common'
 import { useIconStore, useTokenStore } from '@/stores/resources'
 import { useQuestStore } from '@/stores/quests'
@@ -176,12 +176,11 @@ import {
 const props = withDefaults(
   defineProps<{
     task: TaskType
-    quests?: Quest[]
     openModal?: boolean
     showQuestBadge?: boolean
   }>(),
   {
-    showQuestBadge: true,
+    showQuestBadge: false,
   },
 )
 
@@ -213,7 +212,7 @@ const tokenStore = useTokenStore()
 
 const questName = computed(() => {
   if (!taskData.value?.questId) return null
-  const quest = props.quests?.find((q) => q.id === taskData.value?.questId)
+  const quest = questStore.quests.find((q) => q.id === taskData.value?.questId)
   return quest?.title || null
 })
 
