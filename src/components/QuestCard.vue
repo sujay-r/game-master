@@ -175,6 +175,7 @@ const showCompleted = ref(false)
 const typeLabels: Record<QuestType, string> = {
   main: 'Main',
   side: 'Side',
+  lifeAdmin: 'Life Admin',
 }
 
 const typeLabel = computed(() => typeLabels[props.quest.type])
@@ -246,6 +247,19 @@ const completedTasks = computed(() => {
 .quest-side:hover {
   box-shadow:
     0 4px 16px rgba(107, 140, 174, 0.25),
+    0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.quest-lifeAdmin {
+  border-color: #20b2aa;
+  box-shadow:
+    0 2px 8px rgba(32, 178, 170, 0.15),
+    0 1.5px 4px rgba(0, 0, 0, 0.06);
+}
+
+.quest-lifeAdmin:hover {
+  box-shadow:
+    0 4px 16px rgba(32, 178, 170, 0.25),
     0 3px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -345,6 +359,11 @@ const completedTasks = computed(() => {
 
 .quest-type-badge.side {
   background: #6b8cae;
+  color: #fff;
+}
+
+.quest-type-badge.lifeAdmin {
+  background: #20b2aa;
   color: #fff;
 }
 

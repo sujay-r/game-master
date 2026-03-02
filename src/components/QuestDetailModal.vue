@@ -92,7 +92,9 @@
         >
           <span class="toggle-icon">{{ showCompleted ? '▼' : '▶' }}</span>
           <span
-            >{{ completedTasks.length }} completed task{{ completedTasks.length === 1 ? '' : 's' }}</span
+            >{{ completedTasks.length }} completed task{{
+              completedTasks.length === 1 ? '' : 's'
+            }}</span
           >
         </div>
 
@@ -151,6 +153,7 @@ const showCompleted = ref(false)
 const typeLabels: Record<QuestType, string> = {
   main: 'Main',
   side: 'Side',
+  lifeAdmin: 'Life Admin',
 }
 
 const statusLabels: Record<QuestStatus, string> = {
@@ -351,6 +354,11 @@ onMounted(() => {
 
 .pill.side {
   background: #6b8cae;
+  color: #fff;
+}
+
+.pill.lifeAdmin {
+  background: #20b2aa;
   color: #fff;
 }
 

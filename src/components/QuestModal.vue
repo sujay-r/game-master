@@ -34,6 +34,7 @@
         <select id="quest-type" v-model="formData.type">
           <option :value="QuestTypeEnum.Main">Main Quest</option>
           <option :value="QuestTypeEnum.Side">Side Quest</option>
+          <option :value="QuestTypeEnum.LifeAdmin">Life Admin</option>
         </select>
       </div>
 

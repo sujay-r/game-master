@@ -20,6 +20,7 @@ export enum TaskStatus {
 export enum QuestType {
   Main = 'main',
   Side = 'side',
+  LifeAdmin = 'lifeAdmin',
 }
 
 export enum QuestStatus {

@@ -66,6 +66,11 @@ function handleDelete(taskId: number) {
   color: #424242;
 }
 
+.quest-badge.lifeAdmin {
+  background: #20b2aa;
+  color: #fff;
+}
+
 .quest-name {
   font-family: Trajan, 'Perpetua', serif;
   font-weight: 600;

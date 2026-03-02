@@ -92,6 +92,18 @@
         <span class="quest-indicator side"></span>
         <span class="quest-name">{{ quest.title }}</span>
       </div>
+
+      <div v-if="lifeAdminQuests.length > 0" class="dropdown-section-title">Life Admin</div>
+      <div
+        v-for="quest in lifeAdminQuests"
+        :key="quest.id"
+        class="dropdown-item"
+        :class="{ selected: currentQuestId === quest.id }"
+        @click="selectQuest(quest.id)"
+      >
+        <span class="quest-indicator lifeAdmin"></span>
+        <span class="quest-name">{{ quest.title }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -120,6 +132,10 @@ const currentQuestId = computed({
 const mainQuests = computed(() => props.quests.filter((q) => q.type === ('main' as QuestType)))
 
 const sideQuests = computed(() => props.quests.filter((q) => q.type === ('side' as QuestType)))
+
+const lifeAdminQuests = computed(() =>
+  props.quests.filter((q) => q.type === ('lifeAdmin' as QuestType)),
+)
 
 const currentQuest = computed(() => props.quests.find((q) => q.id === currentQuestId.value))
 
@@ -303,6 +319,10 @@ const vClickOutside = {
 
 .quest-indicator.side {
   background: #6b8cae;
+}
+
+.quest-indicator.lifeAdmin {
+  background: #20b2aa;
 }
 
 .quest-name {

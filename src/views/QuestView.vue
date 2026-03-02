@@ -196,13 +196,17 @@ const questStore = useQuestStore()
 const tokenStore = useTokenStore()
 
 // Filter and Sort State
-const currentFilter = ref<'all' | 'main' | 'side' | 'unassigned'>('all')
+const currentFilter = ref<'all' | 'main' | 'side' | 'lifeAdmin' | 'unassigned'>('all')
 const sortBy = ref<'created' | 'title' | 'progress'>('created')
 
-const filterTabs: Array<{ value: 'all' | 'main' | 'side' | 'unassigned'; label: string }> = [
+const filterTabs: Array<{
+  value: 'all' | 'main' | 'side' | 'lifeAdmin' | 'unassigned'
+  label: string
+}> = [
   { value: 'all', label: 'All' },
   { value: 'main', label: 'Main' },
   { value: 'side', label: 'Side' },
+  { value: 'lifeAdmin', label: 'Life Admin' },
   { value: 'unassigned', label: 'Unassigned' },
 ]
 
@@ -227,13 +231,15 @@ const filteredQuests = computed(() => {
     quests = questStore.questsByType('main' as QuestType)
   } else if (currentFilter.value === 'side') {
     quests = questStore.questsByType('side' as QuestType)
+  } else if (currentFilter.value === 'lifeAdmin') {
+    quests = questStore.questsByType('lifeAdmin' as QuestType)
   }
 
   // Sort
   return [...quests].sort((a, b) => {
-    // When showing all quests, prioritize main quests over side quests
+    // When showing all quests, prioritize main quests over side quests, then lifeAdmin
     if (currentFilter.value === 'all') {
-      const typeOrder = { main: 0, side: 1 }
+      const typeOrder = { main: 0, side: 1, lifeAdmin: 2 }
       const typeDiff = typeOrder[a.type] - typeOrder[b.type]
       if (typeDiff !== 0) return typeDiff
     }
