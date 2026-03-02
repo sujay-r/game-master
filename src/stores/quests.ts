@@ -243,8 +243,9 @@ const useQuestStore = defineStore('quests', {
         // Update database first
         await markTaskDone(task)
 
-        // Update local task status to trigger UI reactivity
+        // Update local task status and completedAt to trigger UI reactivity
         task.status = TaskStatus.Done
+        task.completedAt = new Date()
 
         // Update token quantities in the token store to reflect rewards
         const tokenStore = useTokenStore()

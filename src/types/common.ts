@@ -63,6 +63,7 @@ export interface TaskType {
   notes: string
   createdAt: Date
   dueDate?: Date | null
+  completedAt?: Date | null
   outcomes?: TaskOutcomeType[]
   id?: number
   questId?: number

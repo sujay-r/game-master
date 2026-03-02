@@ -182,8 +182,8 @@ const completedTasks = computed(() =>
   questStore.tasks.filter(
     (task) =>
       task.status === TaskStatus.Done &&
-      task.dueDate &&
-      (isSameDay(task.dueDate, today.value) || isBefore(task.dueDate, today.value)),
+      task.completedAt &&
+      isSameDay(task.completedAt, today.value),
   ),
 )
 

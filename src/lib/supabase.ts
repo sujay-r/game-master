@@ -194,6 +194,7 @@ async function fetchTasksWithOutcomes() {
         questId: item.quest_id,
         createdAt: new Date(item.created_at),
         dueDate: item.due_date ? new Date(item.due_date) : null,
+        completedAt: item.completed_at ? new Date(item.completed_at) : null,
         outcomes: TaskOutcome.map((outcome: { token_type: string; quantity: number }) => {
           const token = tokens.find((t) => t.token_type === outcome.token_type)
 
@@ -232,6 +233,7 @@ async function fetchTaskWithOutcomes(taskId: number) {
         questId: item.quest_id,
         createdAt: new Date(item.created_at),
         dueDate: item.due_date ? new Date(item.due_date) : null,
+        completedAt: item.completed_at ? new Date(item.completed_at) : null,
         outcomes: TaskOutcome.map((outcome: { token_type: string; quantity: number }) => {
           const token = tokens.find((t) => t.token_type === outcome.token_type)
 
@@ -306,6 +308,7 @@ async function updateTaskOutcomes(taskId: number, outcomes: TaskOutcomeType[]): 
   }
 }
 
+// TODO: Verify if this function is obsolete and delete if unneeded.
 async function updateTaskStatus(taskId: number, newStatus: TaskStatus) {
   try {
     await updateTaskField(taskId, 'status', newStatus)
@@ -317,7 +320,17 @@ async function updateTaskStatus(taskId: number, newStatus: TaskStatus) {
 async function markTaskDone(task: TaskType) {
   try {
     if (task.id) {
-      await updateTaskStatus(task.id, TaskStatus.Done)
+      const { error } = await client
+        .from('Task')
+        .update({
+          status: TaskStatus.Done,
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', task.id)
+      if (error) {
+        throw error
+      }
+
       const outcomes = task.outcomes
       const tokenTypes = outcomes?.map((outcome) => outcome.token_type)
 
@@ -554,6 +567,8 @@ async function insertTask(taskData: {
   outcomes?: TaskOutcomeType[]
 }): Promise<TaskType> {
   try {
+    const now = new Date().toISOString()
+    const isDone = taskData.status === TaskStatus.Done
     const { data, error } = await client
       .from('Task')
       .insert({
@@ -563,7 +578,8 @@ async function insertTask(taskData: {
         status: taskData.status,
         due_date: taskData.dueDate?.toISOString() || null,
         quest_id: taskData.questId || null,
-        created_at: new Date().toISOString(),
+        created_at: now,
+        completed_at: isDone ? now : null,
       })
       .select()
       .single()
@@ -586,6 +602,7 @@ async function insertTask(taskData: {
       questId: data.quest_id,
       createdAt: new Date(data.created_at),
       dueDate: data.due_date ? new Date(data.due_date) : null,
+      completedAt: data.completed_at ? new Date(data.completed_at) : null,
       outcomes: taskData.outcomes || [],
     }
   } catch (err) {
