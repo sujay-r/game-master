@@ -14,17 +14,23 @@
     <div class="stat-add-container">
       <HeadingFleur heading-text="Add Status Effect" heading-size="1.8em" :clean="false" />
       <div class="input-grid">
-        <label for="effectName" class="stat-add-input-label">Effect: </label>
-        <input
-          type="text"
-          id="effectName"
-          v-model="tempStatusEffectText"
-          placeholder="Enter status effect here"
-        />
-        <label for="effectBuff" class="stat-add-input-label">Buff?</label>
-        <input type="checkbox" id="effectBuff" v-model="tempStatusEffectBuffBool" />
-        <label for="statSelect" class="stat-add-input-label">Affects which stats: </label>
-        <MultiselectDropdown :options="stats.stats" v-model="tempStatusEffectSelectedStats" />
+        <div class="form-row">
+          <label for="effectName" class="stat-add-input-label">Effect: </label>
+          <input
+            type="text"
+            id="effectName"
+            v-model="tempStatusEffectText"
+            placeholder="Enter status effect here"
+          />
+        </div>
+        <div class="form-row checkbox-row">
+          <label for="effectBuff" class="stat-add-input-label">Buff?</label>
+          <input type="checkbox" id="effectBuff" v-model="tempStatusEffectBuffBool" />
+        </div>
+        <div class="form-row">
+          <label for="statSelect" class="stat-add-input-label">Affects which stats: </label>
+          <MultiselectDropdown :options="stats.stats" v-model="tempStatusEffectSelectedStats" />
+        </div>
       </div>
       <div class="stat-add-input-button">
         <button class="stat-button longer-button" @click="createNewStatusEffect">Add</button>
@@ -326,9 +332,27 @@ const resetStatusEffectInputFields = () => {
 }
 
 .input-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5em;
+}
+
+.form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  row-gap: 1.5em;
+  gap: 1rem;
+  align-items: center;
+}
+
+.form-row.checkbox-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.form-row.checkbox-row label {
+  margin: 0;
 }
 
 .input-grid input[type='text'] {
@@ -355,12 +379,10 @@ const resetStatusEffectInputFields = () => {
   border: 1.5px solid #c7c7c7;
   border-radius: 5px;
   background: transparent;
-  margin-top: 4px;
-  margin-right: 0.7em;
   position: relative;
-  vertical-align: middle;
   cursor: pointer;
   transition: border-color 0.2s;
+  flex-shrink: 0;
 }
 
 .input-grid input[type='checkbox']:checked {
@@ -414,7 +436,26 @@ const resetStatusEffectInputFields = () => {
   }
 
   .input-grid {
+    gap: 1rem;
+  }
+
+  .form-row {
     grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .form-row.checkbox-row {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .stat-add-input-label {
+    font-size: 1em;
+    margin: 0;
+  }
+
+  .input-grid input[type='text'] {
+    width: 100%;
   }
 }
 

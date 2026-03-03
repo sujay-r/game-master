@@ -32,7 +32,7 @@
       <!-- TODO: Make styling (colors) of these buttons more consistent with the overall webapp theme -->
       <div class="action-buttons">
         <button v-if="taskCount > 0" class="button keep-tasks" @click="confirmDelete(false)">
-        <!-- TODO: Move to icons store -->
+          <!-- TODO: Move to icons store -->
           <svg
             xmlns="http://www.w3.org/2000/svg"
             height="20px"
@@ -48,7 +48,7 @@
         </button>
 
         <button v-if="taskCount > 0" class="button delete-all" @click="confirmDelete(true)">
-        <!-- TODO: Move to icons store -->
+          <!-- TODO: Move to icons store -->
           <svg
             xmlns="http://www.w3.org/2000/svg"
             height="20px"
@@ -64,7 +64,7 @@
         </button>
 
         <button v-if="taskCount === 0" class="button delete-all" @click="confirmDelete(false)">
-        <!-- TODO: Move to icons store -->
+          <!-- TODO: Move to icons store -->
           <svg
             xmlns="http://www.w3.org/2000/svg"
             height="20px"
@@ -216,5 +216,52 @@ function close() {
 
 .button.cancel:hover {
   background: #d8d8d8;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .delete-modal-content {
+    padding: 0.25rem;
+  }
+
+  .modal-title {
+    font-size: 1.25em;
+  }
+
+  .confirmation-text {
+    font-size: 1em;
+  }
+
+  .task-warning {
+    padding: 0.875rem;
+  }
+
+  .button {
+    padding: 0.75rem 1rem;
+    font-size: 0.95em;
+  }
+}
+
+@media (max-width: 480px) {
+  .warning-icon svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .modal-title {
+    font-size: 1.1em;
+  }
+
+  .confirmation-text {
+    font-size: 0.9em;
+  }
+
+  .task-warning {
+    padding: 0.75rem;
+  }
+
+  .task-warning p {
+    font-size: 0.9em;
+  }
 }
 </style>

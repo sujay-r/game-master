@@ -592,4 +592,62 @@ onMounted(() => {
 .close-button:active {
   transform: translateY(0);
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .quest-detail-modal {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .quest-title {
+    font-size: 1.25em;
+  }
+
+  .metadata-pills {
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
+  .pill {
+    font-size: 0.8em;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .task-item {
+    padding: 0.625rem 0.875rem;
+  }
+
+  .section-label {
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 480px) {
+  .quest-title {
+    font-size: 1.1em;
+  }
+
+  .metadata-pills {
+    gap: 0.35rem;
+  }
+
+  .pill {
+    font-size: 0.75em;
+    padding: 0.35rem 0.625rem;
+  }
+
+  .task-item {
+    padding: 0.5rem 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .task-title {
+    font-size: 0.95em;
+  }
+
+  .description-container {
+    padding: 0.625rem 0.875rem;
+  }
+}
 </style>

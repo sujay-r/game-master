@@ -173,6 +173,7 @@ function handleSubmit() {
   max-height: 85vh;
   overflow-y: auto;
   padding-right: 18px;
+  padding-bottom: 2rem;
 }
 
 /* Custom scrollbar styling */
@@ -310,5 +311,61 @@ function handleSubmit() {
 
 .btn-secondary:active {
   transform: translateY(0);
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .task-creation-modal {
+    min-width: auto;
+    width: 100%;
+    max-width: 100%;
+    padding-right: 0;
+    padding-bottom: 3rem;
+    margin-bottom: 1rem;
+    max-height: 75vh;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .form-group.half {
+    width: 100%;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+  }
+
+  .modal-title {
+    font-size: 1.25em;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .task-creation-modal {
+    max-height: 85vh;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-label {
+    font-size: 0.8em;
+  }
+
+  .form-input {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.95em;
+  }
 }
 </style>

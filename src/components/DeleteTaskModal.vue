@@ -150,4 +150,39 @@ function close() {
 .button.cancel:hover {
   background: #d8d8d8;
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .delete-modal-content {
+    padding: 0.25rem;
+  }
+
+  .modal-title {
+    font-size: 1.25em;
+  }
+
+  .confirmation-text {
+    font-size: 1em;
+  }
+
+  .button {
+    padding: 0.75rem 1rem;
+    font-size: 0.95em;
+  }
+}
+
+@media (max-width: 480px) {
+  .warning-icon svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .modal-title {
+    font-size: 1.1em;
+  }
+
+  .confirmation-text {
+    font-size: 0.9em;
+  }
+}
 </style>
