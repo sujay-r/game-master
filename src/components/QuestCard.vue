@@ -372,6 +372,10 @@ const completedTasks = computed(() => {
   font-weight: bold;
   margin: 0;
   color: #424242;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .quest-type-badge {
@@ -594,5 +598,110 @@ const completedTasks = computed(() => {
 
 .completed-tasks-list {
   margin-top: 0.5rem;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .quest-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .header-left {
+    display: contents;
+  }
+
+  .expand-icon {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .quest-title {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 1em;
+  }
+
+  .quest-type-badge {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .open-quest-btn {
+    display: none;
+  }
+
+  .header-right {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .progress-section {
+    flex: 1;
+    justify-content: flex-start;
+  }
+
+  .progress-bar {
+    display: none;
+  }
+
+  .progress-text {
+    font-size: 0.9em;
+    min-width: auto;
+    text-align: left;
+  }
+
+  .complete-button {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+  }
+
+  .completed-badge svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .quest-header {
+    padding: 0.625rem 0.875rem;
+    gap: 0.4rem;
+  }
+
+  .quest-title {
+    font-size: 0.95em;
+  }
+
+  .quest-type-badge {
+    font-size: 0.6em;
+    padding: 0.2em 0.5em;
+  }
+
+  .progress-text {
+    font-size: 0.85em;
+  }
+
+  .complete-button {
+    width: 26px;
+    height: 26px;
+  }
+
+  .complete-button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .quest-body {
+    padding: 0 0.875rem 1rem;
+  }
 }
 </style>
