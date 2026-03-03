@@ -145,7 +145,7 @@
                 d="M120-120v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm584-528 56-56-56-56-56 56 56 56Z"
               />
             </svg>
-            Edit
+            <span>Edit</span>
           </button>
 
           <button class="action-button delete" @click="$emit('delete', quest)">
@@ -161,7 +161,7 @@
                 d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"
               />
             </svg>
-            Delete
+            <span>Delete</span>
           </button>
         </div>
       </div>
@@ -702,6 +702,42 @@ const completedTasks = computed(() => {
 
   .quest-body {
     padding: 0 0.875rem 1rem;
+  }
+
+  .quest-footer {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .action-button {
+    white-space: nowrap;
+    justify-content: center;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8em;
+  }
+
+  .action-button.add-task {
+    width: 100%;
+    font-size: 0.85em;
+  }
+
+  .footer-actions {
+    width: 100%;
+    justify-content: stretch;
+    gap: 0.75rem;
+  }
+
+  .footer-actions .action-button {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 375px) {
+  .footer-actions .action-button svg {
+    width: 18px;
+    height: 18px;
   }
 }
 </style>
