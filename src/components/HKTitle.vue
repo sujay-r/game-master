@@ -78,71 +78,69 @@ img.size-6 {
 @media (max-width: 430px) {
   img {
     margin: 0;
-    max-width: 100%;
-    height: auto;
-    width: 100%;
+    max-width: 100vw;
   }
   img.size-1 {
-    max-height: 160px;
+    max-height: 140px;
   }
   img.size-2 {
-    max-height: 130px;
+    max-height: 120px;
   }
   img.size-3 {
-    max-height: 110px;
+    max-height: 100px;
   }
   img.size-4 {
-    max-height: 90px;
+    max-height: 80px;
   }
   img.size-5 {
-    max-height: 70px;
+    max-height: 60px;
   }
   img.size-6 {
-    max-height: 45px;
+    max-height: 40px;
   }
 }
 
 /* Standard phones (iPhone 16 Pro, 15, 14 - 393px) */
 @media (max-width: 395px) {
   img.size-1 {
-    max-height: 140px;
+    max-height: 120px;
   }
   img.size-2 {
-    max-height: 115px;
-  }
-  img.size-3 {
-    max-height: 95px;
-  }
-  img.size-4 {
-    max-height: 75px;
-  }
-  img.size-5 {
-    max-height: 55px;
-  }
-  img.size-6 {
-    max-height: 38px;
-  }
-}
-
-/* Small phones (iPhone SE - 375px) */
-@media (max-width: 375px) {
-  img.size-1 {
-    max-height: 130px;
-  }
-  img.size-2 {
-    max-height: 105px;
+    max-height: 100px;
   }
   img.size-3 {
     max-height: 85px;
   }
   img.size-4 {
-    max-height: 68px;
+    max-height: 70px;
   }
   img.size-5 {
     max-height: 50px;
   }
   img.size-6 {
     max-height: 35px;
+  }
+}
+
+/* Small phones (iPhone SE - 375px) */
+@media (max-width: 375px) {
+  img.size-1 {
+    max-height: 110px;
+  }
+  img.size-2 {
+    max-height: 95px;
+  }
+  img.size-3 {
+    max-height: 80px;
+  }
+  img.size-4 {
+    max-height: 65px;
+  }
+  img.size-5 {
+    max-height: 48px;
+  }
+  img.size-6 {
+    max-height: 32px;
   }
 }
 </style>
