@@ -116,9 +116,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch, onMounted, toRaw } from 'vue'
+import { computed, nextTick, ref, watch, onMounted, toRaw, defineAsyncComponent } from 'vue'
 import Modal from './Modal.vue'
-import LiveEditor from './LiveEditor.vue'
+const LiveEditor = defineAsyncComponent(() => import('./LiveEditor.vue'))
 import type { Quest, QuestType, TaskType } from '@/types/common'
 import { QuestStatus, TaskStatus } from '@/types/common'
 import { updateQuestDescription } from '@/lib/supabase'

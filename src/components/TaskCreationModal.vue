@@ -66,9 +66,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, defineAsyncComponent } from 'vue'
 import Modal from './Modal.vue'
-import LiveEditor from './LiveEditor.vue'
+const LiveEditor = defineAsyncComponent(() => import('./LiveEditor.vue'))
 import TaskAssignmentDropdown from './TaskAssignmentDropdown.vue'
 import OutcomeBuilder from './OutcomeBuilder.vue'
 import type { Quest, TaskStatus, TaskOutcomeType } from '@/types/common'

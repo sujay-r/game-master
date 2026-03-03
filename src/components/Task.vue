@@ -151,9 +151,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, toRaw, nextTick, computed, watch } from 'vue'
+import { onMounted, ref, toRaw, nextTick, computed, watch, defineAsyncComponent } from 'vue'
 import Modal from './Modal.vue'
-import LiveEditor from './LiveEditor.vue'
+const LiveEditor = defineAsyncComponent(() => import('./LiveEditor.vue'))
 import DatePill from './DatePill.vue'
 import TaskAssignmentDropdown from './TaskAssignmentDropdown.vue'
 import DeleteTaskModal from './DeleteTaskModal.vue'
