@@ -1,6 +1,6 @@
 <template>
   <component :is="headingTag">
-    <img :src="img_path" alt="" :height="imgHeight" />
+    <img :src="img_path" alt="" :class="imgSizeClass" />
   </component>
 </template>
 
@@ -17,42 +17,108 @@ const headingTag = computed(() => {
   return `h${s}`
 })
 
-const sizeToHeight = [350, 300, 250, 200, 150, 100]
-const imgHeight = computed(() => {
+const imgSizeClass = computed(() => {
   const s = props.size && props.size >= 1 && props.size <= 6 ? props.size : 1
-  return sizeToHeight[s - 1] + 'px'
+  return `size-${s}`
 })
 </script>
 
 <style scoped>
 img {
-  max-height: 350px;
   height: auto;
+  width: auto;
   max-width: 100%;
   display: block;
   margin: 0 auto;
-  object-fit: contain;
 }
 
-/* Tablet and smaller desktops */
+/* Desktop sizes */
+img.size-1 {
+  max-height: 350px;
+}
+img.size-2 {
+  max-height: 300px;
+}
+img.size-3 {
+  max-height: 250px;
+}
+img.size-4 {
+  max-height: 200px;
+}
+img.size-5 {
+  max-height: 150px;
+}
+img.size-6 {
+  max-height: 100px;
+}
+
+/* Tablet (iPad Mini and smaller) */
 @media (max-width: 768px) {
-  img {
-    max-height: 35vh;
+  img.size-1 {
+    max-height: 280px;
+  }
+  img.size-2 {
+    max-height: 240px;
+  }
+  img.size-3 {
+    max-height: 200px;
+  }
+  img.size-4 {
+    max-height: 160px;
+  }
+  img.size-5 {
+    max-height: 120px;
+  }
+  img.size-6 {
+    max-height: 80px;
   }
 }
 
-/* Mobile devices */
+/* Mobile devices (iPhone Plus/Max) */
 @media (max-width: 480px) {
   img {
-    max-height: 25vh;
-    max-width: 95%;
+    margin: 0;
+    max-width: 100%;
+  }
+  img.size-1 {
+    max-height: 180px;
+  }
+  img.size-2 {
+    max-height: 150px;
+  }
+  img.size-3 {
+    max-height: 120px;
+  }
+  img.size-4 {
+    max-height: 100px;
+  }
+  img.size-5 {
+    max-height: 75px;
+  }
+  img.size-6 {
+    max-height: 50px;
   }
 }
 
-/* Small mobile devices */
-@media (max-width: 375px) {
-  img {
-    max-height: 20vh;
+/* Small mobile (iPhone SE/Standard) */
+@media (max-width: 390px) {
+  img.size-1 {
+    max-height: 140px;
+  }
+  img.size-2 {
+    max-height: 120px;
+  }
+  img.size-3 {
+    max-height: 100px;
+  }
+  img.size-4 {
+    max-height: 80px;
+  }
+  img.size-5 {
+    max-height: 60px;
+  }
+  img.size-6 {
+    max-height: 40px;
   }
 }
 </style>
