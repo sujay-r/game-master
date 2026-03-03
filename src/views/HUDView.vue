@@ -33,7 +33,12 @@
   </Modal>
 
   <!-- Quests section -->
-  <HeadingFleur heading-text="Today's Tasks" heading-size="3.9em" :clean="true" />
+  <HeadingFleur
+    heading-text="Today's Tasks"
+    heading-size="3.9em"
+    :clean="true"
+    class="todays-tasks-heading"
+  />
 
   <!-- Tasks Container -->
   <div class="tasks-container">
@@ -534,6 +539,23 @@ const resetStatusEffectInputFields = () => {
 
   .task-section {
     padding: 0.75rem;
+  }
+}
+
+/* Spacing for Today's Tasks heading */
+.todays-tasks-heading {
+  margin-top: 3rem;
+}
+
+@media (max-width: 768px) {
+  .todays-tasks-heading {
+    margin-top: 2.5rem;
+  }
+}
+
+@media (max-width: 430px) {
+  .todays-tasks-heading {
+    margin-top: 2rem;
   }
 }
 </style>
