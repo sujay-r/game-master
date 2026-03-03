@@ -443,6 +443,7 @@ onMounted(() => {
   font-family: Trajan, 'Perpetua', serif;
   font-size: 0.85em;
   font-weight: 600;
+  color: #424242;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -591,4 +592,68 @@ onMounted(() => {
 
 /* Quick add button positioning is handled by the component itself */
 /* It positions at bottom: 20px, right: 20px */
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .filter-tabs {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    padding-right: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .filter-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-button {
+    flex-shrink: 0;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8em;
+  }
+
+  .tab-button:last-child {
+    margin-right: 1rem;
+  }
+
+  .sort-control {
+    width: 100%;
+  }
+
+  .sort-select {
+    width: 100%;
+  }
+
+  .new-quest-button {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+    order: 3;
+  }
+}
+
+@media (max-width: 480px) {
+  .controls {
+    padding: 0 0.5rem;
+  }
+
+  .tab-button {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75em;
+  }
+
+  .new-quest-button {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8em;
+  }
+}
 </style>
