@@ -58,6 +58,10 @@ function close() {
   padding: 2rem 3.5rem;
   border-radius: 12px;
   min-width: 300px;
+  max-height: 85vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
   position: relative;
 }
@@ -124,19 +128,23 @@ function close() {
 /* Mobile Responsive Styles */
 @media (max-width: 768px) {
   .modal-content {
-    padding: 1.5rem;
+    padding: 1.5rem 1.5rem 2rem 1.5rem;
     margin: 1rem;
-    max-height: 90vh;
+    max-height: 80vh;
     max-width: calc(100vw - 2rem);
     min-width: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
 @media (max-width: 480px) {
   .modal-content {
-    padding: 1.25rem;
+    padding: 1.25rem 1.25rem 2rem 1.25rem;
     margin: 0.75rem;
     border-radius: 10px;
+    max-height: 80vh;
   }
 
   .modal-close {

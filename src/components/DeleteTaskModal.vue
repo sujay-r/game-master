@@ -82,6 +82,10 @@ function close() {
 .delete-modal-content {
   text-align: center;
   padding: 0.5rem;
+  max-height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .warning-icon {
@@ -155,6 +159,7 @@ function close() {
 @media (max-width: 768px) {
   .delete-modal-content {
     padding: 0.25rem;
+    max-height: 75vh;
   }
 
   .modal-title {

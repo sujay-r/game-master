@@ -5,14 +5,13 @@
       <li>
         <div class="bar-container">
           <div
-            class="progress-bar"
+            class="progress-bar desktop-progress-bar"
             @mouseenter="showEditIcon = true"
             @mouseleave="showEditIcon = false"
           >
             <div
               class="progress-fill"
               :style="{ width: stat.value + '%', background: fillColor }"
-              @touchstart="showEditIcon = !showEditIcon"
             ></div>
             <div class="hudstat-text">{{ statText }}</div>
             <svg
@@ -22,8 +21,8 @@
               width="18px"
               fill="#424242"
               v-if="!showEditBox && showEditIcon"
-              @click="showEditBox = true"
-              @touchstart.stop
+              @click="handleShowEditBox"
+              class="edit-icon"
             >
               <path
                 d="M120-120v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm584-528 56-56-56-56-56 56 56 56Z"
@@ -35,11 +34,21 @@
               class="stat-change-input"
               type="text"
               @keydown.enter="updateStat"
+              @blur="showEditBox = false"
+              ref="desktopInput"
             />
+          </div>
+          <!-- Mobile progress bar with edit trigger -->
+          <div class="progress-bar mobile-progress-bar" @click="openMobileEdit">
+            <div
+              class="progress-fill"
+              :style="{ width: stat.value + '%', background: fillColor }"
+            ></div>
+            <div class="hudstat-text">{{ statText }}</div>
           </div>
         </div>
       </li>
-      <li class="hudstat-effects" v-for="effect in props.effects">
+      <li class="hudstat-effects" v-for="effect in props.effects" :key="effect.id">
         <StatusEffect
           :effect="effect"
           v-if="effect.id !== undefined"
@@ -47,12 +56,20 @@
         />
       </li>
     </ul>
+    <!-- Mobile Edit Modal -->
+    <EditStatModal
+      v-model="showMobileModal"
+      :stat-name="stat.name"
+      :current-value="stat.value"
+      @save="handleMobileSave"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import StatusEffect from './StatusEffect.vue'
+import EditStatModal from './EditStatModal.vue'
 import { useStatStore } from '@/stores/resources'
 import { updateStatValue, deleteStatusEffect } from '@/lib/supabase'
 import type { StatType, StatusEffectType } from '@/types/common'
@@ -67,6 +84,8 @@ const props = defineProps<{
 const showEditIcon = ref<boolean>(false)
 const showEditBox = ref<boolean>(false)
 const tempNewValue = ref<number | null>()
+const showMobileModal = ref<boolean>(false)
+const desktopInput = ref<HTMLInputElement | null>(null)
 
 const stats = useStatStore()
 
@@ -95,14 +114,28 @@ const removeStatusEffect = async (effectId: number) => {
   await stats.fetchStatsFromDb()
 }
 
-async function updateStat(event: KeyboardEvent) {
-  if (tempNewValue.value) {
+async function updateStat() {
+  if (tempNewValue.value !== null && tempNewValue.value !== undefined) {
     await updateStatValue(props.stat.id, tempNewValue.value)
+    await stats.fetchStatValueFromDb(props.stat.id)
   }
-
-  stats.fetchStatValueFromDb(props.stat.id)
   tempNewValue.value = null
   showEditBox.value = false
+}
+
+async function openMobileEdit() {
+  showMobileModal.value = true
+}
+
+async function handleMobileSave(newValue: number) {
+  await updateStatValue(props.stat.id, newValue)
+  await stats.fetchStatValueFromDb(props.stat.id)
+}
+
+async function handleShowEditBox() {
+  showEditBox.value = true
+  await nextTick()
+  desktopInput.value?.focus()
 }
 </script>
 
@@ -199,5 +232,51 @@ async function updateStat(event: KeyboardEvent) {
 .stat-change-input:focus {
   border-bottom: solid 1px #9f9f9f;
   outline: none;
+}
+
+/* Desktop/Mobile toggle for progress bars */
+.mobile-progress-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .hudstat-container {
+    min-width: auto;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  /* Show mobile progress bar, hide desktop */
+  .desktop-progress-bar {
+    display: none;
+  }
+
+  .mobile-progress-bar {
+    display: flex;
+    min-width: 120px;
+    flex: 1;
+    cursor: pointer;
+  }
+
+  .stat-change-input {
+    width: 3em;
+    font-size: 1.1em;
+    padding: 0.25em;
+  }
+}
+
+@media (max-width: 480px) {
+  .hudstat-heading {
+    font-size: 1.2em;
+  }
+
+  .mobile-progress-bar {
+    min-width: 100px;
+    height: 16px;
+  }
+
+  .hudstat-text {
+    font-size: 1em;
+  }
 }
 </style>

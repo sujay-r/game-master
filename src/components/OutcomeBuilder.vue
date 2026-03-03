@@ -270,4 +270,40 @@ function updateOutcome(index: number, field: 'token_type' | 'quantity', value: s
   margin: 0.5rem 0 0 0;
   font-style: italic;
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .outcome-row {
+    gap: 0.4rem;
+  }
+
+  .add-outcome-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.85em;
+  }
+
+  .remove-btn {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .outcome-row {
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+
+  .outcome-row > *:first-child {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .remove-btn {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+}
 </style>

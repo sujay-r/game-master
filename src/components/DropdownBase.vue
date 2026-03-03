@@ -288,4 +288,50 @@ const vClickOutside = {
 .dropdown-item.selected {
   background: #e8f5e9;
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .dropdown-base {
+    position: relative;
+  }
+
+  .dropdown-menu {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90vw;
+    max-width: 350px;
+    z-index: 1000;
+  }
+
+  .dropdown-trigger {
+    padding: 0.75rem 1rem;
+    min-height: 44px;
+  }
+
+  .secondary-input {
+    width: 80px;
+    padding: 0.75rem 0.5rem;
+    min-height: 44px;
+  }
+
+  .dropdown-item {
+    padding: 0.75rem 1rem;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dropdown-menu {
+    width: 95vw;
+    max-width: none;
+    left: 2.5vw;
+    right: 2.5vw;
+    transform: none;
+  }
+
+  .option-label {
+    font-size: 0.9em;
+  }
+}
 </style>
