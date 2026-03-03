@@ -77,9 +77,32 @@ img.size-6 {
 /* Large phones (iPhone Plus/Max - 430px) */
 @media (max-width: 430px) {
   img {
-    margin: 0;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     max-width: 100vw;
   }
+  img.size-1 {
+    max-height: 160px;
+  }
+  img.size-2 {
+    max-height: 140px;
+  }
+  img.size-3 {
+    max-height: 115px;
+  }
+  img.size-4 {
+    max-height: 90px;
+  }
+  img.size-5 {
+    max-height: 68px;
+  }
+  img.size-6 {
+    max-height: 45px;
+  }
+}
+
+/* Standard phones (iPhone 16 Pro, 15, 14 - 393px) */
+@media (max-width: 395px) {
   img.size-1 {
     max-height: 140px;
   }
@@ -100,47 +123,25 @@ img.size-6 {
   }
 }
 
-/* Standard phones (iPhone 16 Pro, 15, 14 - 393px) */
-@media (max-width: 395px) {
-  img.size-1 {
-    max-height: 120px;
-  }
-  img.size-2 {
-    max-height: 100px;
-  }
-  img.size-3 {
-    max-height: 85px;
-  }
-  img.size-4 {
-    max-height: 70px;
-  }
-  img.size-5 {
-    max-height: 50px;
-  }
-  img.size-6 {
-    max-height: 35px;
-  }
-}
-
 /* Small phones (iPhone SE - 375px) */
 @media (max-width: 375px) {
   img.size-1 {
-    max-height: 110px;
+    max-height: 130px;
   }
   img.size-2 {
-    max-height: 95px;
+    max-height: 110px;
   }
   img.size-3 {
-    max-height: 80px;
+    max-height: 90px;
   }
   img.size-4 {
-    max-height: 65px;
+    max-height: 72px;
   }
   img.size-5 {
-    max-height: 48px;
+    max-height: 55px;
   }
   img.size-6 {
-    max-height: 32px;
+    max-height: 38px;
   }
 }
 </style>
