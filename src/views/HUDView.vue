@@ -113,7 +113,7 @@
   <!-- Task Creation Modal -->
   <TaskCreationModal
     v-model="isTaskCreationModalOpen"
-    :quests="questStore.quests"
+    :quests="questStore.activeQuests"
     :tokens="tokenStore.tokens"
     @created="handleTaskCreated"
     @cancelled="handleTaskCreationCancelled"
@@ -150,7 +150,7 @@ const isTaskCreationModalOpen = ref(false)
 const tempStatusEffectText = ref<string>('')
 const tempStatusEffectBuffBool = ref<boolean>(false)
 const tempStatusEffectSelectedStats = ref<StatType[]>([])
-const addStatusEffectFeedbackText = ref<string>("");
+const addStatusEffectFeedbackText = ref<string>('')
 
 const hudTitleURL = new URL('@/assets/imgs/TheHUD.png', import.meta.url).href
 const COMPLETED_SECTION_KEY = 'hud-completed-visible'
@@ -263,25 +263,24 @@ const createNewStatusEffect = async () => {
   }
 
   try {
-    await addStatusEffect(newStatusEffect, tempStatusEffectSelectedStats.value);
-    resetStatusEffectInputFields();
-    modalOpen.value = false;
-    await stats.fetchStatsFromDb();
-  }
-  catch (err) {
+    await addStatusEffect(newStatusEffect, tempStatusEffectSelectedStats.value)
+    resetStatusEffectInputFields()
+    modalOpen.value = false
+    await stats.fetchStatsFromDb()
+  } catch (err) {
     if (err instanceof Error) {
-      addStatusEffectFeedbackText.value = err.message;
+      addStatusEffectFeedbackText.value = err.message
     } else {
-      addStatusEffectFeedbackText.value = String(err);
+      addStatusEffectFeedbackText.value = String(err)
     }
   }
 }
 
 const resetStatusEffectInputFields = () => {
-  tempStatusEffectText.value = "";
-  tempStatusEffectBuffBool.value = false;
-  tempStatusEffectSelectedStats.value = [];
-  addStatusEffectFeedbackText.value = "";
+  tempStatusEffectText.value = ''
+  tempStatusEffectBuffBool.value = false
+  tempStatusEffectSelectedStats.value = []
+  addStatusEffectFeedbackText.value = ''
 }
 </script>
 
@@ -432,9 +431,8 @@ const resetStatusEffectInputFields = () => {
 
 .error-message {
   font-weight: bold;
-  color: #A2324C;
+  color: #a2324c;
 }
-
 
 @media (max-width: 900px) {
   .stat-container {

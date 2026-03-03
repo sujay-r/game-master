@@ -102,7 +102,7 @@
     <div v-if="questStore.quests.length > 0" class="assignment-section">
       <TaskAssignmentDropdown
         v-model="assignedQuestId"
-        :quests="questStore.quests"
+        :quests="questStore.activeQuests"
         label="Quest Assignment"
       />
     </div>

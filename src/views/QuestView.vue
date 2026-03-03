@@ -166,7 +166,7 @@
   <!-- Task Creation Modal -->
   <TaskCreationModal
     v-model="isTaskCreationModalOpen"
-    :quests="questStore.quests"
+    :quests="questStore.activeQuests"
     :initial-quest-id="taskCreationInitialQuestId"
     @created="handleTaskCreated"
     @cancelled="handleTaskCreationCancelled"
