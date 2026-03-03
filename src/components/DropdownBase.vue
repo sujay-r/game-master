@@ -39,7 +39,7 @@
         :key="option.value"
         class="dropdown-item"
         :class="{ selected: modelValue === option.value }"
-        @click="selectOption(option.value)"
+        @click.stop="selectOption(option.value)"
       >
         <span v-if="option.icon" class="option-icon" v-html="option.icon"></span>
         <span class="option-label">{{ option.label }}</span>
@@ -295,15 +295,6 @@ const vClickOutside = {
     position: relative;
   }
 
-  .dropdown-menu {
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90vw;
-    max-width: 350px;
-    z-index: 1000;
-  }
-
   .dropdown-trigger {
     padding: 0.75rem 1rem;
     min-height: 44px;
@@ -318,20 +309,6 @@ const vClickOutside = {
   .dropdown-item {
     padding: 0.75rem 1rem;
     min-height: 44px;
-  }
-}
-
-@media (max-width: 480px) {
-  .dropdown-menu {
-    width: 95vw;
-    max-width: none;
-    left: 2.5vw;
-    right: 2.5vw;
-    transform: none;
-  }
-
-  .option-label {
-    font-size: 0.9em;
   }
 }
 </style>

@@ -50,7 +50,7 @@
       <div
         class="dropdown-item unassigned"
         :class="{ selected: !currentQuestId }"
-        @click="selectQuest(null)"
+        @click.stop="selectQuest(null)"
       >
         <!-- TODO: Move to icons store -->
         <svg
@@ -75,7 +75,7 @@
         :key="quest.id"
         class="dropdown-item"
         :class="{ selected: currentQuestId === quest.id }"
-        @click="selectQuest(quest.id)"
+        @click.stop="selectQuest(quest.id)"
       >
         <span class="quest-indicator main"></span>
         <span class="quest-name">{{ quest.title }}</span>
@@ -87,7 +87,7 @@
         :key="quest.id"
         class="dropdown-item"
         :class="{ selected: currentQuestId === quest.id }"
-        @click="selectQuest(quest.id)"
+        @click.stop="selectQuest(quest.id)"
       >
         <span class="quest-indicator side"></span>
         <span class="quest-name">{{ quest.title }}</span>
@@ -99,7 +99,7 @@
         :key="quest.id"
         class="dropdown-item"
         :class="{ selected: currentQuestId === quest.id }"
-        @click="selectQuest(quest.id)"
+        @click.stop="selectQuest(quest.id)"
       >
         <span class="quest-indicator lifeAdmin"></span>
         <span class="quest-name">{{ quest.title }}</span>

@@ -64,6 +64,7 @@ function close() {
   -webkit-overflow-scrolling: touch;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
   position: relative;
+  contain: layout;
 }
 
 .modal-close {
@@ -136,6 +137,7 @@ function close() {
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    contain: layout;
   }
 }
 
