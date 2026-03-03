@@ -1,61 +1,578 @@
 <template>
-  <div class="task-container">
-    <input type="checkbox" class="task-checkbox">
-    <h5>{{ task.title }}</h5>
-    <div class="token-container">
-      <p v-for="token in taskOutcomes" :key="token.tokenType" style="margin-right: 5px">{{ token.tokenType }}: {{
-        token.quantity }}</p>
+  <div v-if="taskData" class="task-container" :class="taskStatusClass" @click="taskOpen = true">
+    <input
+      type="checkbox"
+      class="task-checkbox"
+      v-model="isCompleted"
+      @click.self.stop
+      :disabled="isCompleted"
+    />
+    <p
+      v-if="!isEditingTitle"
+      class="task-title"
+      :class="{
+        'task-completed-text': taskData.status === TaskStatus.Done,
+      }"
+      @click.self.stop
+      @click.self="editTitle"
+    >
+      {{ taskData.title }}
+    </p>
+    <input
+      v-else
+      type="text"
+      class="task-title"
+      v-model="editedTitle"
+      @click.self.stop
+      @keyup.enter="saveTitle"
+      @blur="cancelEditing"
+      @keyup.esc="cancelEditing"
+      ref="titleInput"
+    />
+    <div class="token-section">
+      <div v-for="outcome in taskData.outcomes" :key="outcome.token_type" class="token-container">
+        <span class="token-count-text" :style="`color: ${outcome.icon_color}`">{{
+          outcome.quantity
+        }}</span>
+        <span class="icon-container" v-html="outcome.icon"></span>
+      </div>
+    </div>
+
+    <div v-if="questName && showQuestBadge" class="quest-badge">
+      <!-- TODO: Move icon to icon store -->
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="14px"
+        viewBox="0 -960 960 960"
+        width="14px"
+        fill="currentColor"
+      >
+        <path
+          d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-640v560h560v-560h-80v280l-100-60-100 60v-280H200Zm0 0v560-560Z"
+        />
+      </svg>
+      <span>{{ questName }}</span>
     </div>
   </div>
+  <Modal v-if="taskData" v-model="taskOpen" :include-close-button="false">
+    <h2>{{ taskData.title }}</h2>
+    <div class="description-container" @click="editDescription">
+      <p
+        v-if="!isEditingDescription"
+        class="task-description"
+        :class="{ placeholder: !taskData.description }"
+      >
+        {{ taskData.description || 'Add a task description...' }}
+      </p>
+      <textarea
+        v-else
+        v-model="editedDescription"
+        @blur="saveDescription"
+        @keydown.enter.prevent="saveDescription"
+        @keydown.esc="cancelDescriptionEditing"
+        ref="descriptionInput"
+        class="description-textarea"
+        rows="3"
+        placeholder="Add a task description..."
+      ></textarea>
+      <span class="edit-icon" v-if="!isEditingDescription">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="18px"
+          viewBox="0 -960 960 960"
+          width="18px"
+          fill="#929292"
+        >
+          <path
+            d="M120-120v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm584-528 56-56-56-56-56 56 56 56Z"
+          />
+        </svg>
+      </span>
+    </div>
+    <div class="metadata-pills" @click.stop>
+      <DatePill
+        color="#A9D5C7"
+        :date="taskData.dueDate ?? null"
+        fallback-text="Set due date"
+        :disabled="isCompleted"
+        @update:date="onDueDateChanged"
+      />
+    </div>
+
+    <div v-if="questStore.quests.length > 0" class="assignment-section">
+      <TaskAssignmentDropdown
+        v-model="assignedQuestId"
+        :quests="questStore.quests"
+        label="Quest Assignment"
+      />
+    </div>
+
+    <div v-if="tokenStore.tokens.length > 0" class="outcomes-section">
+      <OutcomeBuilder v-model="editedOutcomes" :tokens="tokenStore.tokens" />
+    </div>
+
+    <LiveEditor
+      v-model="taskData.notes"
+      :text-box="true"
+      placeholder="Add any notes for the task here..."
+      :disabled="isCompleted"
+    />
+    <div v-if="hasUnsavedChanges && !isCompleted" class="unsaved-warning">
+      You have unsaved changes
+    </div>
+    <div class="modal-footer">
+      <button class="delete-button" @click="isDeleteModalOpen = true" title="Delete task">
+        <!-- TODO: Move to icons store -->
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="18px"
+          viewBox="0 -960 960 960"
+          width="18px"
+          fill="currentColor"
+        >
+          <path
+            d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"
+          />
+        </svg>
+        Delete
+      </button>
+      <button v-if="hasUnsavedChanges && !isCompleted" class="save-button" @click="saveAllChanges">
+        Save
+      </button>
+    </div>
+  </Modal>
+
+  <!-- Delete Task Modal -->
+  <DeleteTaskModal
+    v-model="isDeleteModalOpen"
+    :task-title="taskData?.title || ''"
+    @confirm="handleDelete"
+  />
 </template>
 
 <script setup lang="ts">
-import type { TaskType } from '@/types/common';
+import { onMounted, ref, toRaw, nextTick, computed, watch, defineAsyncComponent } from 'vue'
+import Modal from './Modal.vue'
+const LiveEditor = defineAsyncComponent(() => import('./LiveEditor.vue'))
+import DatePill from './DatePill.vue'
+import TaskAssignmentDropdown from './TaskAssignmentDropdown.vue'
+import DeleteTaskModal from './DeleteTaskModal.vue'
+import OutcomeBuilder from './OutcomeBuilder.vue'
+import type { TaskType, TaskOutcomeType } from '@/types/common'
+import { TaskStatus } from '@/types/common'
+import { useIconStore, useTokenStore } from '@/stores/resources'
+import { useQuestStore } from '@/stores/quests'
+import {
+  updateTaskDueDate,
+  updateTaskTitle,
+  updateTaskNotes,
+  updateTaskDescription,
+  updateTaskOutcomes,
+} from '@/lib/supabase'
 
-// TODO: Add icons for task outcomes.
-// TODO: Create a modal window for whenever a task gets clicked on.
+// TODO: Fix issue where size of task component changes when inline editing is active.
+// TODO: Add quick access button for creating tasks.
 
-const props = defineProps<{
-  task: TaskType
-}>();
-
-const taskOutcomes = [
+const props = withDefaults(
+  defineProps<{
+    task: TaskType
+    openModal?: boolean
+    showQuestBadge?: boolean
+  }>(),
   {
-    tokenType: "Care",
-    quantity: 2
+    showQuestBadge: false,
   },
-  {
-    tokenType: "Grind",
-    quantity: 4
+)
+
+const emit = defineEmits<{
+  (e: 'modal-closed'): void
+  (e: 'delete', taskId: number): void
+}>()
+
+const taskData = ref<TaskType>()
+const originalNotes = ref<string>('')
+const originalDescription = ref<string>('')
+const originalOutcomes = ref<TaskOutcomeType[]>([])
+const editedOutcomes = ref<TaskOutcomeType[]>([])
+const taskOpen = ref<boolean>(false)
+const isCompleted = ref<boolean>(false)
+
+const isEditingTitle = ref<boolean>(false)
+const editedTitle = ref<string>('')
+const titleInput = ref<HTMLInputElement | null>(null)
+
+const isEditingDescription = ref<boolean>(false)
+const editedDescription = ref<string>('')
+const descriptionInput = ref<HTMLTextAreaElement | null>(null)
+const isDeleteModalOpen = ref<boolean>(false)
+
+const icons = useIconStore()
+const questStore = useQuestStore()
+const tokenStore = useTokenStore()
+
+const questName = computed(() => {
+  if (!taskData.value?.questId) return null
+  const quest = questStore.quests.find((q) => q.id === taskData.value?.questId)
+  return quest?.title || null
+})
+
+const assignedQuestId = computed({
+  get: () => taskData.value?.questId ?? null,
+  set: async (value) => {
+    if (!taskData.value?.id) return
+    const taskId = taskData.value.id
+
+    if (value === null) {
+      await questStore.removeTaskFromQuest(taskId)
+      taskData.value.questId = undefined
+    } else {
+      await questStore.assignTaskToQuest(taskId, value)
+      taskData.value.questId = value
+    }
+  },
+})
+
+watch(isCompleted, async (newVal) => {
+  if (taskData.value) {
+    if (!(taskData.value.status === TaskStatus.Done)) {
+      taskData.value.status = newVal ? TaskStatus.Done : TaskStatus.Todo
+
+      if (taskData.value.id) {
+        await questStore.completeTask(taskData.value.id)
+      } else {
+        console.error('Cannot update task because id not found.')
+      }
+    } else {
+      console.warn('Task already marked complete. Cannot undo it now.')
+    }
   }
-]
+})
+
+const taskStatusClass = computed(() => {
+  if (!taskData.value) return ''
+  switch (taskData.value.status) {
+    case TaskStatus.Done:
+      return 'task-completed'
+    default:
+      return ''
+  }
+})
+
+const hasUnsavedChanges = computed(() => {
+  if (!taskData.value) return false
+  const notesChanged = taskData.value.notes !== originalNotes.value
+  const descriptionChanged = taskData.value.description !== originalDescription.value
+  const outcomesChanged =
+    JSON.stringify(editedOutcomes.value) !== JSON.stringify(originalOutcomes.value)
+  return notesChanged || descriptionChanged || outcomesChanged
+})
+
+function onDueDateChanged(newDate: Date | null) {
+  if (taskData.value) {
+    taskData.value.dueDate = newDate
+    if (taskData.value.id) {
+      const dateString = newDate ? newDate.toLocaleDateString('en-CA') : null
+      updateTaskDueDate(taskData.value.id, dateString)
+    }
+  }
+}
+
+function editTitle() {
+  if (isCompleted.value) return
+  isEditingTitle.value = true
+  editedTitle.value = taskData.value?.title || ''
+  nextTick(() => {
+    titleInput.value?.focus()
+  })
+}
+
+async function saveTitle() {
+  if (!taskData.value) return
+  const newTitle = editedTitle.value.trim()
+
+  if (newTitle && newTitle !== taskData.value.title) {
+    taskData.value.title = newTitle
+    if (taskData.value.id) {
+      updateTaskTitle(taskData.value.id, newTitle)
+    } else {
+      console.error(`Task ID not found for ${taskData.value.title}. Can't update title.`)
+    }
+  }
+
+  isEditingTitle.value = false
+}
+
+function cancelEditing() {
+  isEditingTitle.value = false
+}
+
+function editDescription() {
+  if (isCompleted.value) return
+  isEditingDescription.value = true
+  editedDescription.value = taskData.value?.description || ''
+  nextTick(() => {
+    descriptionInput.value?.focus()
+  })
+}
+
+async function saveDescription() {
+  if (!taskData.value) return
+
+  const newDescription = editedDescription.value.trim()
+
+  if (newDescription !== taskData.value.description) {
+    taskData.value.description = newDescription
+    if (taskData.value.id) {
+      try {
+        await updateTaskDescription(taskData.value.id, newDescription)
+        originalDescription.value = newDescription
+      } catch (err) {
+        console.error('Error saving description:', err)
+      }
+    } else {
+      console.error(`Task ID not found for ${taskData.value.title}. Can't update description.`)
+    }
+  }
+
+  isEditingDescription.value = false
+}
+
+function cancelDescriptionEditing() {
+  isEditingDescription.value = false
+}
+
+async function saveNotes() {
+  if (!taskData.value?.id) {
+    console.error('Cannot save notes - task ID not found')
+    return
+  }
+
+  try {
+    await updateTaskNotes(taskData.value.id, taskData.value.notes)
+    originalNotes.value = taskData.value.notes
+  } catch (err) {
+    console.error('Error saving notes:', err)
+  }
+}
+
+async function saveOutcomes() {
+  if (!taskData.value?.id) {
+    console.error('Cannot save outcomes - task ID not found')
+    return
+  }
+
+  // Only save if outcomes have actually changed
+  if (JSON.stringify(editedOutcomes.value) === JSON.stringify(originalOutcomes.value)) {
+    return
+  }
+
+  try {
+    await updateTaskOutcomes(taskData.value.id, editedOutcomes.value)
+    originalOutcomes.value = [...editedOutcomes.value]
+    taskData.value.outcomes = [...editedOutcomes.value]
+    await loadOutcomeIcons(taskData.value.outcomes)
+  } catch (err) {
+    console.error('Error saving outcomes:', err)
+  }
+}
+
+async function saveAllChanges() {
+  if (!taskData.value?.id) {
+    console.error('Cannot save changes - task ID not found')
+    return
+  }
+
+  try {
+    // Save notes if changed
+    if (taskData.value.notes !== originalNotes.value) {
+      await saveNotes()
+    }
+
+    // Save description if changed
+    if (taskData.value.description !== originalDescription.value) {
+      await saveDescription()
+    }
+
+    // Save outcomes if changed
+    if (JSON.stringify(editedOutcomes.value) !== JSON.stringify(originalOutcomes.value)) {
+      await saveOutcomes()
+    }
+  } catch (err) {
+    console.error('Error saving changes:', err)
+  }
+}
+
+function discardChanges() {
+  if (taskData.value) {
+    taskData.value.notes = originalNotes.value
+    taskData.value.description = originalDescription.value
+    editedOutcomes.value = [...originalOutcomes.value]
+  }
+}
+
+async function loadOutcomeIcons(outcomes: TaskOutcomeType[]) {
+  // Load icons for outcomes that are missing the icon property
+  for (const outcome of outcomes) {
+    if (!outcome.icon && outcome.icon_filename) {
+      outcome.icon = await icons.getIcon(outcome.icon_filename, outcome.icon_color, 15)
+    }
+  }
+}
+
+function handleDelete() {
+  if (taskData.value?.id) {
+    emit('delete', taskData.value.id)
+    taskOpen.value = false
+  }
+}
+
+watch(taskOpen, (isOpen) => {
+  if (!isOpen) {
+    if (hasUnsavedChanges.value) {
+      discardChanges()
+    }
+    emit('modal-closed')
+  }
+})
+
+watch(
+  () => props.openModal,
+  (shouldOpen) => {
+    if (shouldOpen && !taskOpen.value) {
+      taskOpen.value = true
+    }
+  },
+)
+
+watch(
+  () => taskData.value?.outcomes,
+  (outcomes) => {
+    if (outcomes) {
+      loadOutcomeIcons(outcomes)
+    }
+  },
+  { deep: true },
+)
+
+onMounted(async () => {
+  taskData.value = structuredClone(toRaw(props.task))
+  originalNotes.value = taskData.value.notes || ''
+  taskData.value.notes = originalNotes.value
+  originalDescription.value = taskData.value.description || ''
+  taskData.value.description = originalDescription.value
+  isCompleted.value = taskData.value.status === TaskStatus.Done
+  if (taskData.value.outcomes) {
+    await loadOutcomeIcons(taskData.value.outcomes)
+    originalOutcomes.value = [...taskData.value.outcomes]
+    editedOutcomes.value = [...taskData.value.outcomes]
+  }
+})
 </script>
 
 <style scoped>
 .task-container {
   position: relative;
-  background: #F7F7F4;
+  background: #f7f7f4;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1.5px 4px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 1.5px 4px rgba(0, 0, 0, 0.06);
   padding: 1rem 1.25rem;
   margin: 0.75rem 0;
-  display: flex;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto;
   align-items: center;
+  gap: 0.75rem;
   min-height: 48px;
   transition: box-shadow 0.2s;
+  cursor: pointer;
 }
 
 .task-container:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 3px 8px rgba(0, 0, 0, 0.10);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    0 3px 8px rgba(0, 0, 0, 0.1);
 }
 
-.token-container {
-  position: absolute;
-  right: 20px;
+.task-completed {
+  opacity: 0.6;
+}
+
+.task-completed-text {
+  text-decoration: line-through;
+}
+
+.task-title {
+  font-family: Trajan;
+  font-weight: bold;
+  font-size: 1em;
+  cursor: text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.token-section {
   display: flex;
   justify-content: flex-start;
   align-items: center;
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.token-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0.1em;
+}
+
+.token-count-text {
+  display: contents;
+  font-size: 1.25em;
+  font-weight: bold;
+}
+
+.icon-container {
+  display: contents;
+  margin: 0;
+  padding: 0;
+}
+
+.metadata-pills {
+  margin-bottom: 0.5em;
+}
+
+.quest-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8em;
+  color: #666;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: start;
+  margin-top: 0.5rem;
+}
+
+.assignment-section {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+}
+
+.outcomes-section {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
 }
 
 .task-checkbox {
@@ -65,17 +582,19 @@ const taskOutcomes = [
   border: 2px solid #bbb;
   border-radius: 4px;
   background: #fff;
-  margin-right: 1rem;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
   display: inline-block;
   vertical-align: middle;
   position: relative;
+  flex-shrink: 0;
 }
 
 .task-checkbox:checked {
-  background: #32A287;
-  border-color: #4BAB91;
+  background: #32a287;
+  border-color: #4bab91;
 }
 
 .task-checkbox:checked::after {
@@ -89,5 +608,222 @@ const taskOutcomes = [
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
   pointer-events: none;
+}
+
+.task-checkbox:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.unsaved-warning {
+  color: #dc143c;
+  font-size: 0.875em;
+  margin: 0.5em 0;
+}
+
+.save-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #32a287;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.save-button:hover {
+  background-color: #4bab91;
+}
+
+.save-button:active {
+  background-color: #2d826d;
+}
+
+.description-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.task-description {
+  flex: 1;
+  margin: 0;
+  line-height: 1.5;
+  color: #424242;
+}
+
+.task-description.placeholder {
+  color: #929292;
+  font-style: italic;
+}
+
+.edit-icon {
+  display: flex;
+  align-items: center;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.description-container:hover .edit-icon {
+  opacity: 1;
+}
+
+.edit-icon svg {
+  transition: fill 0.2s;
+}
+
+.description-container:hover .edit-icon svg {
+  fill: #424242;
+}
+
+.description-textarea {
+  flex: 1;
+  width: 100%;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  color: #424242;
+}
+
+.description-textarea::placeholder {
+  color: #929292;
+  font-style: italic;
+}
+
+.description-textarea:focus {
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1.5px #4bab91;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.delete-button {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.875rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875em;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    transform 0.1s;
+  background: #ffebee;
+  color: #c62828;
+}
+
+.delete-button:hover {
+  background: #ffcdd2;
+  transform: translateY(-1px);
+}
+
+.delete-button:active {
+  transform: translateY(0);
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .task-container {
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto;
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+  }
+
+  .task-checkbox {
+    width: 20px;
+    height: 20px;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .task-title {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 0.67em;
+    min-width: 0;
+  }
+
+  .token-section {
+    grid-column: 3;
+    grid-row: 1;
+    justify-content: flex-end;
+    font-size: 0.67em;
+  }
+
+  .token-section :deep(svg) {
+    width: 0.9em;
+    height: 0.9em;
+  }
+
+  .quest-badge {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .task-container {
+    padding: 0.625rem 0.875rem;
+    gap: 0.4rem;
+  }
+
+  .task-title {
+    font-size: 0.63em;
+  }
+
+  .token-section {
+    font-size: 0.63em;
+  }
+
+  .token-section :deep(svg) {
+    width: 0.85em;
+    height: 0.85em;
+  }
+
+  .token-count-text {
+    font-size: 1.1em;
+  }
+}
+
+@media (max-width: 375px) {
+  .task-container {
+    padding: 0.5rem 0.75rem;
+    gap: 0.35rem;
+  }
+
+  .task-title {
+    font-size: 0.6em;
+  }
+
+  .token-section {
+    font-size: 0.6em;
+  }
+
+  .token-section :deep(svg) {
+    width: 0.8em;
+    height: 0.8em;
+  }
+
+  .task-checkbox {
+    width: 18px;
+    height: 18px;
+  }
 }
 </style>

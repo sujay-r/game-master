@@ -1,6 +1,8 @@
-import HUDView from '@/views/HUDView.vue'
-import QuestView from '@/views/QuestView.vue'
+import { defineAsyncComponent } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
+
+const HUDView = defineAsyncComponent(() => import('@/views/HUDView.vue'))
+const QuestView = defineAsyncComponent(() => import('@/views/QuestView.vue'))
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

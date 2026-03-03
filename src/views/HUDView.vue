@@ -14,12 +14,23 @@
     <div class="stat-add-container">
       <HeadingFleur heading-text="Add Status Effect" heading-size="1.8em" :clean="false" />
       <div class="input-grid">
-        <label for="effectName" class="stat-add-input-label">Effect: </label>
-        <input type="text" id="effectName" v-model="tempStatusEffectText" placeholder="Enter status effect here">
-        <label for="effectBuff" class="stat-add-input-label">Buff?</label>
-        <input type="checkbox" id="effectBuff" v-model="tempStatusEffectBuffBool">
-        <label for="statSelect" class="stat-add-input-label">Affects which stats: </label>
-        <MultiselectDropdown :options="stats.stats" v-model="tempStatusEffectSelectedStats" />
+        <div class="form-row">
+          <label for="effectName" class="stat-add-input-label">Effect: </label>
+          <input
+            type="text"
+            id="effectName"
+            v-model="tempStatusEffectText"
+            placeholder="Enter status effect here"
+          />
+        </div>
+        <div class="form-row checkbox-row">
+          <label for="effectBuff" class="stat-add-input-label">Buff?</label>
+          <input type="checkbox" id="effectBuff" v-model="tempStatusEffectBuffBool" />
+        </div>
+        <div class="form-row">
+          <label for="statSelect" class="stat-add-input-label">Affects which stats: </label>
+          <MultiselectDropdown :options="stats.stats" v-model="tempStatusEffectSelectedStats" />
+        </div>
       </div>
       <p class="error-message">{{ addStatusEffectFeedbackText }}</p>
       <div class="stat-add-input-button">
@@ -29,44 +40,228 @@
   </Modal>
 
   <!-- Quests section -->
-  <HeadingFleur heading-text="Quests" heading-size="3.9em" :clean="true" />
+  <HeadingFleur
+    heading-text="Today's Tasks"
+    heading-size="3.9em"
+    :clean="true"
+    class="todays-tasks-heading"
+  />
+
+  <!-- Tasks Container -->
+  <div class="tasks-container">
+    <!-- Loading State -->
+    <p v-if="questStore.loading" class="loading-message">Loading tasks...</p>
+
+    <!-- Error State -->
+    <div v-else-if="questStore.error" class="error-message">
+      <p>{{ questStore.error }}</p>
+      <button class="retry-button" @click="loadQuests">Retry</button>
+    </div>
+
+    <!-- Empty State -->
+    <div v-else-if="!hasAnyTasks" class="empty-state">
+      <p>No tasks scheduled for today</p>
+    </div>
+
+    <!-- Task Sections -->
+    <div v-else class="task-sections">
+      <!-- Overdue Section -->
+      <div v-if="overdueTasks.length" class="task-section overdue-section">
+        <h4 class="section-title overdue-title">
+          Overdue
+          <span class="overdue-count">({{ overdueTasks.length }})</span>
+        </h4>
+        <TaskGroup :tasks="overdueTasks" @delete="handleTaskDelete" />
+      </div>
+
+      <!-- Due Today Section -->
+      <div v-if="todaysTasks.length" class="task-section">
+        <TaskGroup :tasks="todaysTasks" @delete="handleTaskDelete" />
+      </div>
+
+      <!-- Completed Section (Collapsible) -->
+      <div v-if="completedTasks.length" class="task-section completed-section">
+        <div class="section-header" @click="toggleCompletedSection">
+          <h4 class="section-title">
+            Completed
+            <span class="task-count">({{ completedTasks.length }})</span>
+          </h4>
+          <span class="toggle-icon" :class="{ expanded: showCompleted }">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="20px"
+              viewBox="0 -960 960 960"
+              width="20px"
+              fill="currentColor"
+            >
+              <path d="M480-344 240-584l56-56 184 184 184-184 56 56-240 240Z" />
+            </svg>
+          </span>
+        </div>
+        <TaskGroup v-show="showCompleted" :tasks="completedTasks" @delete="handleTaskDelete" />
+      </div>
+    </div>
+  </div>
+
+  <div class="token-count-wrapper">
+    <TokenCountDisplay />
+  </div>
+
+  <!-- Quick Add Button -->
+  <QuickAddButton @click="openQuickAddTaskModal" />
+
+  <!-- Task Creation Modal -->
+  <TaskCreationModal
+    v-model="isTaskCreationModalOpen"
+    :quests="questStore.quests"
+    :tokens="tokenStore.tokens"
+    @created="handleTaskCreated"
+    @cancelled="handleTaskCreationCancelled"
+  />
 </template>
 
 <script setup lang="ts">
-import HUDStat from '@/components/HUDStat.vue';
-import Modal from '@/components/Modal.vue';
-import HKTitle from '@/components/HKTitle.vue';
-import HeadingFleur from '@/components/HeadingFleur.vue';
-import MultiselectDropdown from '@/components/MultiselectDropdown.vue';
-import { useStatStore } from '@/stores/resources';
-import { addStatusEffect } from '@/lib/supabase';
-import { ref, onMounted } from 'vue';
-import type { StatType, StatusEffectType } from '@/types/common';
+import HUDStat from '@/components/HUDStat.vue'
+import Modal from '@/components/Modal.vue'
+import HKTitle from '@/components/HKTitle.vue'
+import HeadingFleur from '@/components/HeadingFleur.vue'
+import MultiselectDropdown from '@/components/MultiselectDropdown.vue'
+import TokenCountDisplay from '@/components/TokenCountDisplay.vue'
+import QuickAddButton from '@/components/QuickAddButton.vue'
+import TaskCreationModal from '@/components/TaskCreationModal.vue'
+import TaskGroup from '@/components/TaskGroup.vue'
+import { useStatStore, useTokenStore } from '@/stores/resources'
+import { useQuestStore } from '@/stores/quests'
+import { addStatusEffect, fetchTasksWithOutcomes } from '@/lib/supabase'
+import { ref, onMounted, computed, watch } from 'vue'
+import { isSameDay, isBefore } from '@/utils/date'
+import { TaskStatus } from '@/types/common'
+import type { StatType, StatusEffectType, TaskOutcomeType } from '@/types/common'
 
 // TODO: Make the Stat/Quest heading size responsive (including the fleur).
 // TODO: Make Add Status Effect Modal responsive.
 // TODO: Add validation to prevent blank status effects from being added.
 
-const stats = useStatStore();
-const modalOpen = ref<boolean>(false);
-const tempStatusEffectText = ref<string>("");
-const tempStatusEffectBuffBool = ref<boolean>(false);
+const stats = useStatStore()
+const questStore = useQuestStore()
+const tokenStore = useTokenStore()
+const modalOpen = ref<boolean>(false)
+const isTaskCreationModalOpen = ref(false)
+const tempStatusEffectText = ref<string>('')
+const tempStatusEffectBuffBool = ref<boolean>(false)
 const tempStatusEffectSelectedStats = ref<StatType[]>([])
 const addStatusEffectFeedbackText = ref<string>("");
 
 const hudTitleURL = new URL('@/assets/imgs/TheHUD.png', import.meta.url).href
+const COMPLETED_SECTION_KEY = 'hud-completed-visible'
+
+// Completed section visibility (persisted in localStorage)
+const showCompleted = ref<boolean>(
+  JSON.parse(localStorage.getItem(COMPLETED_SECTION_KEY) ?? 'true'),
+)
+
+watch(showCompleted, (newValue) => {
+  localStorage.setItem(COMPLETED_SECTION_KEY, JSON.stringify(newValue))
+})
+
+function toggleCompletedSection() {
+  showCompleted.value = !showCompleted.value
+}
+
+// Today's date for filtering
+const today = computed(() => new Date())
+
+// Filter tasks by date and status
+const overdueTasks = computed(() =>
+  questStore.tasks.filter(
+    (task) =>
+      task.dueDate && isBefore(task.dueDate, today.value) && task.status !== TaskStatus.Done,
+  ),
+)
+
+const todaysTasks = computed(() =>
+  questStore.tasks.filter(
+    (task) =>
+      task.dueDate && isSameDay(task.dueDate, today.value) && task.status !== TaskStatus.Done,
+  ),
+)
+
+const completedTasks = computed(() =>
+  questStore.tasks.filter(
+    (task) =>
+      task.status === TaskStatus.Done &&
+      task.completedAt &&
+      isSameDay(task.completedAt, today.value),
+  ),
+)
+
+const hasAnyTasks = computed(
+  () =>
+    overdueTasks.value.length > 0 ||
+    todaysTasks.value.length > 0 ||
+    completedTasks.value.length > 0,
+)
+
+async function handleTaskDelete(taskId: number) {
+  try {
+    await questStore.deleteTask(taskId)
+  } catch (err) {
+    console.error('Failed to delete task:', err)
+  }
+}
 
 onMounted(() => {
   if (!stats.stats.length) {
-    stats.fetchStatsFromDb();
+    stats.fetchStatsFromDb()
+  }
+  if (!questStore.quests.length) {
+    loadQuests()
+  }
+  // Load tokens if not already loaded
+  if (tokenStore.tokens.length === 0) {
+    tokenStore.fetchTokensFromDb()
   }
 })
+
+async function loadQuests() {
+  try {
+    const tasks = await fetchTasksWithOutcomes()
+    await questStore.loadQuests(tasks)
+  } catch (err) {
+    console.error('Error loading quests:', err)
+  }
+}
+
+function openQuickAddTaskModal() {
+  isTaskCreationModalOpen.value = true
+}
+
+async function handleTaskCreated(taskData: {
+  title: string
+  description: string
+  notes: string
+  status: TaskStatus
+  dueDate: Date | null
+  questId?: number
+  outcomes?: TaskOutcomeType[]
+}) {
+  try {
+    await questStore.createTask(taskData)
+  } catch (err) {
+    console.error('Failed to create task:', err)
+  }
+}
+
+function handleTaskCreationCancelled() {
+  // Modal closed without creating task
+}
 
 const createNewStatusEffect = async () => {
   const newStatusEffect: StatusEffectType = {
     text: tempStatusEffectText.value,
-    buff: tempStatusEffectBuffBool.value
+    buff: tempStatusEffectBuffBool.value,
   }
+
   try {
     await addStatusEffect(newStatusEffect, tempStatusEffectSelectedStats.value);
     resetStatusEffectInputFields();
@@ -82,16 +277,13 @@ const createNewStatusEffect = async () => {
   }
 }
 
-
 const resetStatusEffectInputFields = () => {
   tempStatusEffectText.value = "";
   tempStatusEffectBuffBool.value = false;
   tempStatusEffectSelectedStats.value = [];
   addStatusEffectFeedbackText.value = "";
 }
-
 </script>
-
 
 <style scoped>
 .loading-message {
@@ -103,16 +295,18 @@ const resetStatusEffectInputFields = () => {
   text-align: left;
   max-width: 60rem;
   display: grid;
-  margin-left: 35%;
-  grid-template-columns: 1fr 1fr;
+  margin: 0 auto;
+  justify-content: center;
+  grid-template-columns: auto auto;
+  justify-items: center;
   row-gap: 2em;
-  column-gap: 35%;
+  column-gap: 4rem;
 }
 
 .stat-button {
-  background-color: #32A287;
+  background-color: #32a287;
   border-radius: 20px;
-  font-family: "Perpetua", serif;
+  font-family: 'Perpetua', serif;
   font-size: 1.1em;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
   color: #fff;
@@ -122,21 +316,21 @@ const resetStatusEffectInputFields = () => {
 }
 
 .stat-add-button-container {
-  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  margin-top: 2.5rem;
 }
 
 .stat-button:hover {
-  background-color: #4BAB91;
+  background-color: #4bab91;
 }
 
 .stat-button:active {
-  background-color: #2D826D;
+  background-color: #2d826d;
 }
 
 .stat-add {
   display: flex;
-  margin-top: 2.5rem;
-  margin-left: 47%;
 }
 
 .stat-add-container {
@@ -151,14 +345,32 @@ const resetStatusEffectInputFields = () => {
 }
 
 .input-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  row-gap: 1.5em;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5em;
 }
 
-.input-grid input[type="text"] {
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: center;
+}
+
+.form-row.checkbox-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.form-row.checkbox-row label {
+  margin: 0;
+}
+
+.input-grid input[type='text'] {
   background: transparent;
-  border: 1px solid #C7C7C7;
+  border: 1px solid #c7c7c7;
   border-radius: 8px;
   padding: 0.5em 1em;
   font-size: 1em;
@@ -169,31 +381,29 @@ const resetStatusEffectInputFields = () => {
   box-shadow: none;
 }
 
-.input-grid input[type="text"]:focus {
-  border-color: #4BAB91;
+.input-grid input[type='text']:focus {
+  border-color: #4bab91;
 }
 
-.input-grid input[type="checkbox"] {
+.input-grid input[type='checkbox'] {
   appearance: none;
   width: 1.2em;
   height: 1.2em;
-  border: 1.5px solid #C7C7C7;
+  border: 1.5px solid #c7c7c7;
   border-radius: 5px;
   background: transparent;
-  margin-top: 4px;
-  margin-right: 0.7em;
   position: relative;
-  vertical-align: middle;
   cursor: pointer;
   transition: border-color 0.2s;
+  flex-shrink: 0;
 }
 
-.input-grid input[type="checkbox"]:checked {
-  background-color: #32A287;
-  border-color: #4BAB91;
+.input-grid input[type='checkbox']:checked {
+  background-color: #32a287;
+  border-color: #4bab91;
 }
 
-.input-grid input[type="checkbox"]:checked::after {
+.input-grid input[type='checkbox']:checked::after {
   content: '';
   display: block;
   position: absolute;
@@ -245,7 +455,167 @@ const resetStatusEffectInputFields = () => {
   }
 
   .input-grid {
+    gap: 1rem;
+  }
+
+  .form-row {
     grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .form-row.checkbox-row {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .stat-add-input-label {
+    font-size: 1em;
+    margin: 0;
+  }
+
+  .input-grid input[type='text'] {
+    width: 100%;
+  }
+}
+
+.token-count-wrapper {
+  position: fixed;
+  bottom: 20px;
+  right: 76px;
+  z-index: 100;
+}
+
+/* Quick add button positioning is handled by the component itself */
+/* It positions at bottom: 20px, right: 20px */
+
+/* Today's Tasks Section Styles */
+.tasks-container {
+  max-width: 60rem;
+  margin: 0 auto 2rem auto;
+  padding: 0 1rem;
+}
+
+.error-message {
+  text-align: center;
+  color: #c62828;
+  padding: 1rem;
+}
+
+.retry-button {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #32a287;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Perpetua', serif;
+}
+
+.retry-button:hover {
+  background: #2d826d;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+.task-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.task-section {
+  background: transparent;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.overdue-section {
+  border-left: 4px solid #dc143c;
+}
+
+.section-title {
+  font-family: Trajan, 'Perpetua', serif;
+  font-size: 1em;
+  color: #424242;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.overdue-title {
+  color: #dc143c;
+}
+
+.task-count,
+.overdue-count {
+  font-size: 0.85em;
+  color: #666;
+  font-weight: normal;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  margin-bottom: 1rem;
+}
+
+.section-header:hover {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 6px;
+  margin: -0.25rem -0.5rem 0.75rem -0.5rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.toggle-icon {
+  display: flex;
+  align-items: center;
+  color: #666;
+  transition: transform 0.2s;
+}
+
+.toggle-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.completed-section {
+  background: transparent;
+}
+
+@media (max-width: 900px) {
+  .tasks-container {
+    max-width: 100%;
+    padding: 0 0.5rem;
+  }
+
+  .task-section {
+    padding: 0.75rem;
+  }
+}
+
+/* Spacing for Today's Tasks heading */
+.todays-tasks-heading {
+  margin-top: 3rem;
+}
+
+@media (max-width: 768px) {
+  .todays-tasks-heading {
+    margin-top: 2.5rem;
+  }
+}
+
+@media (max-width: 430px) {
+  .todays-tasks-heading {
+    margin-top: 2rem;
   }
 }
 </style>
