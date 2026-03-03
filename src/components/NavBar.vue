@@ -185,7 +185,7 @@ const STORAGE_KEY = 'nav-open'
 // Collapsed heights/widths
 const MOBILE_COLLAPSED_H = 40 // px — only ribbon tab visible
 const MOBILE_EXPANDED_H = 100 // px — links + toggle tab
-const RAIL_COLLAPSED_W = 44 // px
+const RAIL_COLLAPSED_W = 35 // px
 const RAIL_EXPANDED_W = 96 // px
 
 const route = useRoute()
@@ -399,7 +399,7 @@ onMounted(() => {
     left: 0;
     top: 0;
     height: 100vh;
-    width: 44px;
+    width: 35px;
     overflow: visible;
     transition: width 0.3s ease;
     z-index: 200;
