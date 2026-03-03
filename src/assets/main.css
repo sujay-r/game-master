@@ -1,15 +1,25 @@
-html, body, #app {
+:root {
+  --nav-bottom-offset: 0px;
+  --nav-rail-width: 44px;
+}
+
+html,
+body,
+#app {
   /* height: 100%; */
   /* width: 100%; */
   margin: 0;
   padding: 0;
 }
 
-html, body {
+html,
+body {
   overflow-x: hidden;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -53,16 +63,23 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  background-color: #F2F2EE;
+  background-color: #f2f2ee;
   color: #424242;
   padding: 2rem;
   min-height: 100vh;
 }
 
+@media (min-width: 769px) {
+  #app {
+    padding-left: calc(var(--nav-rail-width) + 2rem);
+    transition: padding-left 0.3s ease;
+  }
+}
+
 hr {
   border: none;
   max-width: 70%;
-  background-color: #CFCFCF;
+  background-color: #cfcfcf;
   height: 1px;
   margin: 1rem auto;
 }

@@ -108,7 +108,10 @@
   </div>
 
   <!-- Quick Add Button -->
-  <QuickAddButton @click="openQuickAddTaskModal" />
+  <QuickAddButton
+    @click="openQuickAddTaskModal"
+    :style="{ bottom: 'calc(20px + var(--nav-bottom-offset, 0px))' }"
+  />
 
   <!-- Task Creation Modal -->
   <TaskCreationModal
@@ -478,13 +481,13 @@ const resetStatusEffectInputFields = () => {
 
 .token-count-wrapper {
   position: fixed;
-  bottom: 20px;
+  bottom: calc(20px + var(--nav-bottom-offset, 0px));
   right: 76px;
   z-index: 100;
+  transition: bottom 0.3s ease;
 }
 
-/* Quick add button positioning is handled by the component itself */
-/* It positions at bottom: 20px, right: 20px */
+/* Quick add button bottom offset is overridden via inline style using --nav-bottom-offset */
 
 /* Today's Tasks Section Styles */
 .tasks-container {

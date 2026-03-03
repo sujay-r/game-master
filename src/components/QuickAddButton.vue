@@ -43,7 +43,8 @@ function handleClick() {
   transition:
     background-color 0.2s,
     transform 0.1s,
-    box-shadow 0.2s;
+    box-shadow 0.2s,
+    bottom 0.3s ease;
   z-index: 100;
 }
 
