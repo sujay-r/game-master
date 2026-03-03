@@ -479,9 +479,11 @@ onMounted(async () => {
     0 1.5px 4px rgba(0, 0, 0, 0.06);
   padding: 1rem 1.25rem;
   margin: 0.75rem 0;
-  display: flex;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto;
   align-items: center;
+  gap: 0.75rem;
   min-height: 48px;
   transition: box-shadow 0.2s;
   cursor: pointer;
@@ -506,16 +508,18 @@ onMounted(async () => {
   font-weight: bold;
   font-size: 1em;
   cursor: text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .token-section {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
   display: flex;
   justify-content: flex-start;
   align-items: center;
+  grid-column: 3;
+  grid-row: 1;
 }
 
 .token-container {
@@ -543,9 +547,6 @@ onMounted(async () => {
 }
 
 .quest-badge {
-  position: absolute;
-  right: 20px;
-  bottom: 10px;
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -554,6 +555,10 @@ onMounted(async () => {
   background: rgba(0, 0, 0, 0.05);
   padding: 0.25rem 0.5rem;
   border-radius: 12px;
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: start;
+  margin-top: 0.5rem;
 }
 
 .assignment-section {
@@ -577,7 +582,6 @@ onMounted(async () => {
   border: 2px solid #bbb;
   border-radius: 4px;
   background: #fff;
-  margin-right: 1rem;
   cursor: pointer;
   transition:
     border-color 0.2s,
@@ -585,6 +589,7 @@ onMounted(async () => {
   display: inline-block;
   vertical-align: middle;
   position: relative;
+  flex-shrink: 0;
 }
 
 .task-checkbox:checked {
@@ -731,5 +736,94 @@ onMounted(async () => {
 
 .delete-button:active {
   transform: translateY(0);
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .task-container {
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto;
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+  }
+
+  .task-checkbox {
+    width: 20px;
+    height: 20px;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .task-title {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 0.67em;
+    min-width: 0;
+  }
+
+  .token-section {
+    grid-column: 3;
+    grid-row: 1;
+    justify-content: flex-end;
+    font-size: 0.67em;
+  }
+
+  .token-section :deep(svg) {
+    width: 0.9em;
+    height: 0.9em;
+  }
+
+  .quest-badge {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .task-container {
+    padding: 0.625rem 0.875rem;
+    gap: 0.4rem;
+  }
+
+  .task-title {
+    font-size: 0.63em;
+  }
+
+  .token-section {
+    font-size: 0.63em;
+  }
+
+  .token-section :deep(svg) {
+    width: 0.85em;
+    height: 0.85em;
+  }
+
+  .token-count-text {
+    font-size: 1.1em;
+  }
+}
+
+@media (max-width: 375px) {
+  .task-container {
+    padding: 0.5rem 0.75rem;
+    gap: 0.35rem;
+  }
+
+  .task-title {
+    font-size: 0.6em;
+  }
+
+  .token-section {
+    font-size: 0.6em;
+  }
+
+  .token-section :deep(svg) {
+    width: 0.8em;
+    height: 0.8em;
+  }
+
+  .task-checkbox {
+    width: 18px;
+    height: 18px;
+  }
 }
 </style>
