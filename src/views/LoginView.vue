@@ -1,3 +1,86 @@
+<template>
+  <div class="login-container">
+    <div class="title-wrapper">
+      <HKTitle img_path="/src/assets/imgs/TheGamemaster.png" :size="1" />
+    </div>
+
+    <div class="login-card" :class="{ 'error-shake': errorShake }">
+      <!-- Email Step -->
+      <div v-if="!authStore.otpSent" class="login-step">
+        <p class="step-description">Enter your email to receive a one-time password</p>
+
+        <div class="input-group">
+          <label for="email" class="input-label">Email</label>
+          <input
+            id="email"
+            v-model="email"
+            type="email"
+            class="input-field"
+            placeholder="Enter email"
+            :disabled="authStore.loading"
+            @keyup.enter="handleSendOtp"
+          />
+        </div>
+
+        <div v-if="authStore.error" class="error-message">
+          {{ authStore.error }}
+        </div>
+
+        <button
+          class="submit-button"
+          :disabled="!isEmailValid || authStore.loading"
+          @click="handleSendOtp"
+        >
+          <span v-if="authStore.loading" class="button-spinner"></span>
+          <span v-else>Send OTP</span>
+        </button>
+      </div>
+
+      <!-- OTP Step -->
+      <div v-else class="login-step">
+        <p class="step-description">
+          Enter the 6-digit code sent to <strong>{{ email }}</strong>
+        </p>
+
+        <div class="otp-container">
+          <input
+            v-for="(digit, index) in otpDigits"
+            :key="index"
+            :ref="(el) => setOtpInputRef(el as HTMLInputElement | null, index)"
+            v-model="otpDigits[index]"
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="1"
+            class="otp-input"
+            :disabled="authStore.loading"
+            @input="handleOtpInput(index, $event)"
+            @keydown="handleOtpKeydown(index, $event)"
+            @paste="handleOtpPaste"
+          />
+        </div>
+
+        <div v-if="authStore.error" class="error-message">
+          {{ authStore.error }}
+        </div>
+
+        <button
+          class="submit-button"
+          :disabled="!isOtpComplete || authStore.loading"
+          @click="handleVerifyOtp"
+        >
+          <span v-if="authStore.loading" class="button-spinner"></span>
+          <span v-else>Verify</span>
+        </button>
+
+        <button class="back-button" :disabled="authStore.loading" @click="handleBackToEmail">
+          Back to email
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -141,89 +224,6 @@ function handleBackToEmail() {
   otpDigits.value = ['', '', '', '', '', '']
 }
 </script>
-
-<template>
-  <div class="login-container">
-    <div class="title-wrapper">
-      <HKTitle img_path="/src/assets/imgs/TheGamemaster.png" :size="1" />
-    </div>
-
-    <div class="login-card" :class="{ 'error-shake': errorShake }">
-      <!-- Email Step -->
-      <div v-if="!authStore.otpSent" class="login-step">
-        <p class="step-description">Enter your email to receive a one-time password</p>
-
-        <div class="input-group">
-          <label for="email" class="input-label">Email</label>
-          <input
-            id="email"
-            v-model="email"
-            type="email"
-            class="input-field"
-            placeholder="Enter email"
-            :disabled="authStore.loading"
-            @keyup.enter="handleSendOtp"
-          />
-        </div>
-
-        <div v-if="authStore.error" class="error-message">
-          {{ authStore.error }}
-        </div>
-
-        <button
-          class="submit-button"
-          :disabled="!isEmailValid || authStore.loading"
-          @click="handleSendOtp"
-        >
-          <span v-if="authStore.loading" class="button-spinner"></span>
-          <span v-else>Send OTP</span>
-        </button>
-      </div>
-
-      <!-- OTP Step -->
-      <div v-else class="login-step">
-        <p class="step-description">
-          Enter the 6-digit code sent to <strong>{{ email }}</strong>
-        </p>
-
-        <div class="otp-container">
-          <input
-            v-for="(digit, index) in otpDigits"
-            :key="index"
-            :ref="(el) => setOtpInputRef(el as HTMLInputElement | null, index)"
-            v-model="otpDigits[index]"
-            type="text"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            maxlength="1"
-            class="otp-input"
-            :disabled="authStore.loading"
-            @input="handleOtpInput(index, $event)"
-            @keydown="handleOtpKeydown(index, $event)"
-            @paste="handleOtpPaste"
-          />
-        </div>
-
-        <div v-if="authStore.error" class="error-message">
-          {{ authStore.error }}
-        </div>
-
-        <button
-          class="submit-button"
-          :disabled="!isOtpComplete || authStore.loading"
-          @click="handleVerifyOtp"
-        >
-          <span v-if="authStore.loading" class="button-spinner"></span>
-          <span v-else>Verify</span>
-        </button>
-
-        <button class="back-button" :disabled="authStore.loading" @click="handleBackToEmail">
-          Back to email
-        </button>
-      </div>
-    </div>
-  </div>
-</template>
 
 <style scoped>
 .login-container {
