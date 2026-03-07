@@ -8,12 +8,61 @@ import {
   type TaskType,
   type TaskOutcomeType,
 } from '@/types/common'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type AuthChangeEvent, type Session } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_PROJECT_URL
 const supabaseApiKey = import.meta.env.VITE_SUPABASE_API_KEY
 
-const client = createClient(supabaseUrl, supabaseApiKey)
+const client = createClient(supabaseUrl, supabaseApiKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+  },
+})
+
+// Auth functions
+async function signInWithOtp(email: string) {
+  const { error } = await client.auth.signInWithOtp({
+    email,
+    options: {
+      shouldCreateUser: false,
+    },
+  })
+  if (error) {
+    throw error
+  }
+}
+
+async function verifyOtp(email: string, token: string) {
+  const { data, error } = await client.auth.verifyOtp({
+    email,
+    token,
+    type: 'email',
+  })
+  if (error) {
+    throw error
+  }
+  return data
+}
+
+async function signOut() {
+  const { error } = await client.auth.signOut()
+  if (error) {
+    throw error
+  }
+}
+
+async function getSession(): Promise<Session | null> {
+  const {
+    data: { session },
+  } = await client.auth.getSession()
+  return session
+}
+
+function onAuthStateChange(callback: (event: AuthChangeEvent, session: Session | null) => void) {
+  client.auth.onAuthStateChange(callback)
+}
 
 async function fetchStatsWithEffects(): Promise<StatType[]> {
   try {
@@ -656,4 +705,9 @@ export {
   insertTask,
   insertTaskOutcomes,
   deleteTask,
+  signInWithOtp,
+  verifyOtp,
+  signOut,
+  getSession,
+  onAuthStateChange,
 }

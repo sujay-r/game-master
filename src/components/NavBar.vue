@@ -84,6 +84,32 @@
           <span class="nav-link__label">Quests</span>
         </RouterLink>
       </div>
+
+      <!-- Logout button - Mobile (right extreme) -->
+      <button
+        class="nav-link nav-link--logout mobile-logout"
+        @click="handleLogout"
+        aria-label="Logout"
+      >
+        <span class="nav-link__icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </span>
+        <span class="nav-link__label">Logout</span>
+      </button>
     </div>
   </nav>
 
@@ -148,6 +174,32 @@
           <span class="nav-link__label">Quests</span>
         </RouterLink>
       </div>
+
+      <!-- Logout button - Desktop (bottom of rail) -->
+      <button
+        class="nav-link nav-link--logout desktop-logout"
+        @click="handleLogout"
+        aria-label="Logout"
+      >
+        <span class="nav-link__icon">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </span>
+        <span class="nav-link__label">Logout</span>
+      </button>
     </div>
 
     <!-- Ribbon toggle: protrudes outside the rail at vertical center -->
@@ -178,7 +230,11 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+const router = useRouter()
 
 const STORAGE_KEY = 'nav-open'
 
@@ -244,6 +300,11 @@ onMounted(() => {
   applyRootVars()
   window.addEventListener('resize', handleResize)
 })
+
+async function handleLogout() {
+  await authStore.logout()
+  router.push({ name: 'Login' })
+}
 </script>
 
 <style scoped>
@@ -290,6 +351,13 @@ onMounted(() => {
   font-size: 0.65rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.nav-link--logout {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
 }
 
 /* ─── Mobile bottom drawer ────────────────────────────────────────────────── */
@@ -383,6 +451,20 @@ onMounted(() => {
   .nav-mobile--open .nav-mobile__links {
     transform: translateY(0);
   }
+
+  /* Mobile logout button - positioned at right extreme */
+  .nav-mobile .mobile-logout {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: auto;
+    padding: 0.5rem;
+  }
+
+  .nav-mobile:not(.nav-mobile--open) .mobile-logout {
+    display: none;
+  }
 }
 
 /* ─── Desktop left rail ───────────────────────────────────────────────────── */
@@ -453,6 +535,19 @@ onMounted(() => {
   .nav-rail--open .nav-link__label {
     opacity: 1;
     transition: opacity 0.2s ease 0.1s;
+  }
+
+  /* Desktop logout button - positioned at bottom of rail */
+  .nav-rail .desktop-logout {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 88%;
+  }
+
+  .nav-rail:not(.nav-rail--open) .desktop-logout {
+    display: none;
   }
 
   /* ── Ribbon toggle tab ─────────────────────────────────────────────────── */
