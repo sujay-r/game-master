@@ -41,20 +41,41 @@ export interface Quest {
   taskIds: number[]
 }
 
-export interface TokenType {
-  token_type: string
-  quantity: number
+export interface Icon {
   icon_filename: string
   icon_color: string
   icon?: string
 }
 
-export interface TaskOutcomeType {
+export interface TokenType extends Icon {
+  token_type: string
+  quantity: number
+}
+
+export interface TaskOutcomeType extends Icon {
   token_type: string
   quantity: string
-  icon_filename: string
-  icon_color: string
-  icon?: string
+}
+
+export enum RewardStatus {
+  PENDING = 'PENDING',
+  CLAIMED = 'CLAIMED',
+}
+
+export interface RewardCost extends Icon {
+  reward_id: number
+  token_type: string
+  quantity: number
+}
+
+export interface Reward {
+  id: number
+  title: string
+  description?: string
+  status: RewardStatus
+  created_at: Date
+  updated_at: Date
+  costs: RewardCost[]
 }
 
 export interface TaskType {

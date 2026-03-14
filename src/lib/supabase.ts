@@ -2,11 +2,14 @@ import {
   QuestStatus,
   QuestType,
   TaskStatus,
+  RewardStatus,
   type Quest,
   type StatType,
   type StatusEffectType,
   type TaskType,
   type TaskOutcomeType,
+  type Reward,
+  type RewardCost,
 } from '@/types/common'
 import { createClient, type AuthChangeEvent, type Session } from '@supabase/supabase-js'
 
@@ -676,6 +679,203 @@ async function deleteTask(taskId: number): Promise<void> {
   }
 }
 
+// Reward functions
+async function fetchRewardsWithCosts(status?: RewardStatus): Promise<Reward[]> {
+  try {
+    let query = client.from('Reward').select('*')
+    if (status) {
+      query = query.eq('status', status)
+    }
+    const { data: rewardsData, error: rewardsError } = await query.order('created_at', {
+      ascending: false,
+    })
+
+    if (rewardsError) {
+      throw rewardsError
+    }
+
+    if (!rewardsData || rewardsData.length === 0) {
+      return []
+    }
+
+    // Fetch costs for all rewards
+    const rewardIds = rewardsData.map((r) => r.id)
+    const { data: costsData, error: costsError } = await client
+      .from('RewardCost')
+      .select('*')
+      .in('reward_id', rewardIds)
+
+    if (costsError) {
+      throw costsError
+    }
+
+    // Fetch token info for icons
+    const tokenTypes = [...new Set(costsData?.map((c) => c.token_type) || [])]
+    const tokens = tokenTypes.length > 0 ? await fetchTokens(tokenTypes) : []
+
+    // Merge costs with rewards
+    return rewardsData.map((reward) => {
+      const costs =
+        costsData
+          ?.filter((c) => c.reward_id === reward.id)
+          .map((cost) => {
+            const token = tokens.find((t) => t.token_type === cost.token_type)
+            return {
+              reward_id: cost.reward_id,
+              token_type: cost.token_type,
+              quantity: cost.quantity,
+              icon_filename: token?.icon_filename || '',
+              icon_color: token?.icon_color || '',
+              icon: token?.icon,
+            }
+          }) || []
+
+      return {
+        id: reward.id,
+        title: reward.title,
+        description: reward.description,
+        status: reward.status as RewardStatus,
+        created_at: new Date(reward.created_at),
+        updated_at: new Date(reward.updated_at),
+        costs,
+      }
+    })
+  } catch (err) {
+    console.error('Error fetching rewards with costs: ', err)
+    throw err
+  }
+}
+
+async function createRewardWithCosts(payload: {
+  title: string
+  description?: string
+  costs: RewardCost[]
+}): Promise<Reward> {
+  try {
+    const now = new Date().toISOString()
+    const { data: rewardData, error: rewardError } = await client
+      .from('Reward')
+      .insert({
+        title: payload.title,
+        description: payload.description || null,
+        status: RewardStatus.PENDING,
+        created_at: now,
+        updated_at: now,
+      })
+      .select()
+      .single()
+
+    if (rewardError) {
+      throw rewardError
+    }
+
+    // Insert costs
+    if (payload.costs.length > 0) {
+      const costsData = payload.costs.map((cost) => ({
+        reward_id: rewardData.id,
+        token_type: cost.token_type,
+        quantity: cost.quantity,
+      }))
+
+      const { error: costsError } = await client.from('RewardCost').insert(costsData)
+
+      if (costsError) {
+        throw costsError
+      }
+    }
+
+    // Fetch token info for response
+    const tokenTypes = payload.costs.map((c) => c.token_type)
+    const tokens = tokenTypes.length > 0 ? await fetchTokens(tokenTypes) : []
+
+    const costsWithIcons = payload.costs.map((cost) => {
+      const token = tokens.find((t) => t.token_type === cost.token_type)
+      return {
+        reward_id: rewardData.id,
+        token_type: cost.token_type,
+        quantity: cost.quantity,
+        icon_filename: token?.icon_filename || '',
+        icon_color: token?.icon_color || '',
+        icon: token?.icon,
+      }
+    })
+
+    return {
+      id: rewardData.id,
+      title: rewardData.title,
+      description: rewardData.description,
+      status: rewardData.status as RewardStatus,
+      created_at: new Date(rewardData.created_at),
+      updated_at: new Date(rewardData.updated_at),
+      costs: costsWithIcons,
+    }
+  } catch (err) {
+    console.error('Error creating reward with costs: ', err)
+    throw err
+  }
+}
+
+async function claimRewardTransaction(rewardId: number, costs: RewardCost[]): Promise<void> {
+  try {
+    // Fetch current token balances
+    const tokenTypes = costs.map((c) => c.token_type)
+    const { data: tokens, error: tokensError } = await client
+      .from('Token')
+      .select('*')
+      .in('token_type', tokenTypes)
+
+    if (tokensError) {
+      throw tokensError
+    }
+
+    // Verify sufficient balances
+    for (const cost of costs) {
+      const token = tokens.find((t) => t.token_type === cost.token_type)
+      if (!token || token.quantity < cost.quantity) {
+        throw new Error(`Insufficient ${cost.token_type} tokens`)
+      }
+    }
+
+    // Decrement token balances
+    for (const cost of costs) {
+      const token = tokens.find((t) => t.token_type === cost.token_type)
+      if (token) {
+        const { error: updateError } = await client
+          .from('Token')
+          .update({ quantity: token.quantity - cost.quantity })
+          .eq('token_type', cost.token_type)
+
+        if (updateError) {
+          throw updateError
+        }
+      }
+    }
+
+    // Delete reward costs
+    const { error: deleteCostsError } = await client
+      .from('RewardCost')
+      .delete()
+      .eq('reward_id', rewardId)
+
+    if (deleteCostsError) {
+      throw deleteCostsError
+    }
+
+    // Update reward status to CLAIMED
+    const { error: updateRewardError } = await client
+      .from('Reward')
+      .update({ status: RewardStatus.CLAIMED, updated_at: new Date().toISOString() })
+      .eq('id', rewardId)
+
+    if (updateRewardError) {
+      throw updateRewardError
+    }
+  } catch (err) {
+    console.error('Error in claim reward transaction: ', err)
+    throw err
+  }
+}
+
 export {
   client,
   fetchStatsWithEffects,
@@ -710,4 +910,7 @@ export {
   signOut,
   getSession,
   onAuthStateChange,
+  fetchRewardsWithCosts,
+  createRewardWithCosts,
+  claimRewardTransaction,
 }

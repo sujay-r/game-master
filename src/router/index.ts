@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 
 const HUDView = defineAsyncComponent(() => import('@/views/HUDView.vue'))
 const QuestView = defineAsyncComponent(() => import('@/views/QuestView.vue'))
+const ShopView = defineAsyncComponent(() => import('@/views/ShopView.vue'))
 const LoginView = defineAsyncComponent(() => import('@/views/LoginView.vue'))
 
 const router = createRouter({
@@ -19,6 +20,12 @@ const router = createRouter({
       path: '/quests',
       name: 'Quests',
       component: QuestView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/shop',
+      name: 'Shop',
+      component: ShopView,
       meta: { requiresAuth: true },
     },
     {

@@ -108,7 +108,7 @@
     </div>
 
     <div v-if="tokenStore.tokens.length > 0" class="outcomes-section">
-      <OutcomeBuilder v-model="editedOutcomes" :tokens="tokenStore.tokens" />
+      <TokenInputBuilder v-model="editedOutcomes" :tokens="tokenStore.tokens" />
     </div>
 
     <LiveEditor
@@ -157,7 +157,7 @@ const LiveEditor = defineAsyncComponent(() => import('./LiveEditor.vue'))
 import DatePill from './DatePill.vue'
 import TaskAssignmentDropdown from './TaskAssignmentDropdown.vue'
 import DeleteTaskModal from './DeleteTaskModal.vue'
-import OutcomeBuilder from './OutcomeBuilder.vue'
+import TokenInputBuilder from './TokenInputBuilder.vue'
 import type { TaskType, TaskOutcomeType } from '@/types/common'
 import { TaskStatus } from '@/types/common'
 import { useIconStore, useTokenStore } from '@/stores/resources'

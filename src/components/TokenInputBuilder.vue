@@ -1,12 +1,16 @@
 <template>
-  <div class="outcome-builder">
-    <label class="outcome-label">Task Outcomes <span class="optional">(optional)</span></label>
+  <div class="token-input-builder">
+    <label class="builder-label">
+      {{ label }}
+      <span v-if="!required" class="optional">(optional)</span>
+      <span v-else class="required-indicator">*</span>
+    </label>
 
-    <div v-if="outcomeRows.length === 0" class="no-outcomes">
-      <p>No outcomes set</p>
+    <div v-if="outcomeRows.length === 0" class="no-items">
+      <p>No {{ itemLabel }} set</p>
     </div>
 
-    <div v-for="(row, index) in outcomeRows" :key="index" class="outcome-row">
+    <div v-for="(row, index) in outcomeRows" :key="index" class="input-row">
       <DropdownBase
         :model-value="row.token_type"
         :options="tokenOptions"
@@ -19,7 +23,12 @@
         @update:secondary-value="(value) => updateOutcome(index, 'quantity', value)"
       />
 
-      <button type="button" class="remove-btn" @click="removeOutcome(index)" title="Remove outcome">
+      <button
+        type="button"
+        class="remove-btn"
+        @click="removeOutcome(index)"
+        :title="`Remove ${itemLabel}`"
+      >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           height="20px"
@@ -37,7 +46,7 @@
     <button
       v-if="outcomeRows.length < availableTokenCount"
       type="button"
-      class="add-outcome-btn"
+      class="add-item-btn"
       @click="addOutcome"
     >
       <svg
@@ -49,7 +58,7 @@
       >
         <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
       </svg>
-      Add Outcome
+      Add {{ itemLabel }}
     </button>
   </div>
 </template>
@@ -64,10 +73,20 @@ interface OutcomeRow {
   quantity: number
 }
 
-const props = defineProps<{
-  tokens: TokenType[]
-  modelValue: TaskOutcomeType[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    tokens: TokenType[]
+    modelValue: TaskOutcomeType[]
+    label?: string
+    itemLabel?: string
+    required?: boolean
+  }>(),
+  {
+    label: 'Task Outcomes',
+    itemLabel: 'Outcome',
+    required: false,
+  },
+)
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: TaskOutcomeType[]): void
@@ -172,13 +191,13 @@ function updateOutcome(index: number, field: 'token_type' | 'quantity', value: s
 </script>
 
 <style scoped>
-.outcome-builder {
+.token-input-builder {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.outcome-label {
+.builder-label {
   font-size: 0.875em;
   font-weight: 600;
   color: #666;
@@ -190,7 +209,11 @@ function updateOutcome(index: number, field: 'token_type' | 'quantity', value: s
   font-style: italic;
 }
 
-.no-outcomes {
+.required-indicator {
+  color: #c62828;
+}
+
+.no-items {
   padding: 1rem;
   text-align: center;
   color: #999;
@@ -200,11 +223,11 @@ function updateOutcome(index: number, field: 'token_type' | 'quantity', value: s
   border: 2px dashed #e0e0e0;
 }
 
-.no-outcomes p {
+.no-items p {
   margin: 0;
 }
 
-.outcome-row {
+.input-row {
   display: flex;
   gap: 0.5rem;
   align-items: flex-start;
@@ -236,7 +259,7 @@ function updateOutcome(index: number, field: 'token_type' | 'quantity', value: s
   transform: scale(0.95);
 }
 
-.add-outcome-btn {
+.add-item-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -254,12 +277,12 @@ function updateOutcome(index: number, field: 'token_type' | 'quantity', value: s
   margin-top: 0.5rem;
 }
 
-.add-outcome-btn:hover {
+.add-item-btn:hover {
   background: rgba(50, 162, 135, 0.1);
   border-style: solid;
 }
 
-.add-outcome-btn:active {
+.add-item-btn:active {
   transform: translateY(1px);
 }
 
@@ -273,11 +296,11 @@ function updateOutcome(index: number, field: 'token_type' | 'quantity', value: s
 
 /* Mobile Responsive Styles */
 @media (max-width: 768px) {
-  .outcome-row {
+  .input-row {
     gap: 0.4rem;
   }
 
-  .add-outcome-btn {
+  .add-item-btn {
     width: 100%;
     padding: 0.75rem 1rem;
     font-size: 0.85em;
@@ -290,12 +313,12 @@ function updateOutcome(index: number, field: 'token_type' | 'quantity', value: s
 }
 
 @media (max-width: 480px) {
-  .outcome-row {
+  .input-row {
     flex-wrap: nowrap;
     gap: 0.5rem;
   }
 
-  .outcome-row > *:first-child {
+  .input-row > *:first-child {
     flex: 1;
     min-width: 0;
   }

@@ -1,17 +1,17 @@
 <template>
   <Modal v-model="visible" :include-close-button="false">
-    <div class="task-creation-modal">
-      <h2 class="modal-title">Create New Task</h2>
+    <div class="reward-creation-modal">
+      <h2 class="modal-title">Create New Reward</h2>
 
       <form @submit.prevent="handleSubmit">
         <div class="form-group">
-          <label for="task-title" class="form-label">Title <span class="required">*</span></label>
+          <label for="reward-title" class="form-label">Title <span class="required">*</span></label>
           <input
-            id="task-title"
+            id="reward-title"
             v-model="formData.title"
             type="text"
             class="form-input"
-            placeholder="Enter task title"
+            placeholder="Enter reward title"
             required
           />
         </div>
@@ -21,43 +21,25 @@
           <LiveEditor
             v-model="formData.description"
             :text-box="true"
-            placeholder="Task description..."
+            placeholder="Reward description..."
           />
         </div>
 
         <div class="form-group">
-          <label class="form-label">Notes</label>
-          <LiveEditor v-model="formData.notes" :text-box="true" placeholder="Additional notes..." />
-        </div>
-
-        <div class="form-row">
-          <div class="form-group half">
-            <label for="task-due-date" class="form-label">Due Date</label>
-            <input
-              id="task-due-date"
-              v-model="formData.dueDate"
-              type="date"
-              class="form-input date-input"
-            />
-          </div>
-
-          <div class="form-group half">
-            <TaskAssignmentDropdown
-              v-model="formData.questId"
-              :quests="quests"
-              label="Assign to Quest"
-            />
-          </div>
-        </div>
-
-        <div class="form-group">
-          <TokenInputBuilder v-model="formData.outcomes" :tokens="tokenStore.tokens" />
+          <TokenInputBuilder
+            v-model="formData.costs"
+            :tokens="tokenStore.tokens"
+            label="Cost"
+            item-label="Cost"
+            :required="true"
+          />
+          <p v-if="costError" class="field-error">{{ costError }}</p>
         </div>
 
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" @click="handleCancel">Cancel</button>
-          <button type="submit" class="btn btn-primary" :disabled="!formData.title.trim()">
-            Create Task
+          <button type="submit" class="btn btn-primary" :disabled="!isFormValid">
+            Create Reward
           </button>
         </div>
       </form>
@@ -66,72 +48,73 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, defineAsyncComponent } from 'vue'
+import { ref, watch, computed, defineAsyncComponent } from 'vue'
 import Modal from './Modal.vue'
 const LiveEditor = defineAsyncComponent(() => import('./LiveEditor.vue'))
-import TaskAssignmentDropdown from './TaskAssignmentDropdown.vue'
 import TokenInputBuilder from './TokenInputBuilder.vue'
-import type { Quest, TaskStatus, TaskOutcomeType } from '@/types/common'
+import type { RewardCost, TaskOutcomeType } from '@/types/common'
 import { useTokenStore } from '@/stores/resources'
 import { stripHtml } from '@/utils/html'
 
 interface FormData {
   title: string
   description: string
-  notes: string
-  dueDate: string
-  questId: number | null
-  outcomes: TaskOutcomeType[]
+  costs: TaskOutcomeType[]
 }
 
 const props = defineProps<{
   modelValue: boolean
-  quests: Quest[]
-  initialQuestId?: number | null
 }>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (
-    e: 'created',
-    taskData: {
+    e: 'save',
+    data: {
       title: string
       description: string
-      notes: string
-      status: TaskStatus
-      dueDate: Date | null
-      questId?: number
-      outcomes?: TaskOutcomeType[]
+      costs: RewardCost[]
     },
   ): void
-  (e: 'cancelled'): void
+  (e: 'cancel'): void
 }>()
 
 const visible = ref(props.modelValue)
 const tokenStore = useTokenStore()
+const costError = ref('')
 
 const defaultFormData: FormData = {
   title: '',
   description: '',
-  notes: '',
-  dueDate: '',
-  questId: null,
-  outcomes: [],
+  costs: [],
 }
 
 const formData = ref<FormData>({ ...defaultFormData })
+
+const isFormValid = computed(() => {
+  const hasTitle = formData.value.title.trim().length > 0
+  const hasCosts = formData.value.costs.length > 0
+  const allCostsValid = formData.value.costs.every(
+    (cost) => cost.token_type && parseInt(cost.quantity, 10) > 0,
+  )
+  const noDuplicates = checkNoDuplicates()
+
+  return hasTitle && hasCosts && allCostsValid && noDuplicates
+})
+
+function checkNoDuplicates(): boolean {
+  const tokenTypes = formData.value.costs.map((c) => c.token_type)
+  return new Set(tokenTypes).size === tokenTypes.length
+}
 
 watch(
   () => props.modelValue,
   (val) => {
     visible.value = val
     if (val) {
-      // Reset form and set initial quest if provided
-      formData.value = {
-        ...defaultFormData,
-        questId: props.initialQuestId ?? null,
-        outcomes: [],
-      }
+      // Reset form
+      formData.value = { ...defaultFormData }
+      costError.value = ''
     }
   },
 )
@@ -145,29 +128,65 @@ watch(
 
 function handleCancel() {
   visible.value = false
-  emit('cancelled')
+  emit('cancel')
+}
+
+function validateCosts(): boolean {
+  costError.value = ''
+
+  if (formData.value.costs.length === 0) {
+    costError.value = 'At least one cost is required'
+    return false
+  }
+
+  // Check for duplicates
+  const tokenTypes = formData.value.costs.map((c) => c.token_type)
+  if (new Set(tokenTypes).size !== tokenTypes.length) {
+    costError.value = 'Duplicate token types are not allowed'
+    return false
+  }
+
+  // Check all costs have valid values
+  const invalidCost = formData.value.costs.find(
+    (cost) => !cost.token_type || parseInt(cost.quantity, 10) <= 0,
+  )
+  if (invalidCost) {
+    costError.value = 'All costs must have a token type and quantity greater than 0'
+    return false
+  }
+
+  return true
 }
 
 function handleSubmit() {
-  if (!formData.value.title.trim()) return
-
-  const taskData = {
-    title: formData.value.title.trim(),
-    description: stripHtml(formData.value.description),
-    notes: formData.value.notes,
-    status: 'TODO' as TaskStatus,
-    dueDate: formData.value.dueDate ? new Date(formData.value.dueDate) : null,
-    questId: formData.value.questId ?? undefined,
-    outcomes: formData.value.outcomes.length > 0 ? formData.value.outcomes : undefined,
+  if (!validateCosts()) {
+    return
   }
 
-  emit('created', taskData)
+  if (!formData.value.title.trim()) {
+    return
+  }
+
+  const rewardData = {
+    title: formData.value.title.trim(),
+    description: stripHtml(formData.value.description),
+    costs: formData.value.costs.map((cost) => ({
+      reward_id: 0, // Will be set by backend
+      token_type: cost.token_type,
+      quantity: parseInt(cost.quantity, 10) || 1,
+      icon_filename: cost.icon_filename || '',
+      icon_color: cost.icon_color || '',
+      icon: cost.icon,
+    })),
+  }
+
+  emit('save', rewardData)
   visible.value = false
 }
 </script>
 
 <style scoped>
-.task-creation-modal {
+.reward-creation-modal {
   min-width: 500px;
   max-width: 600px;
   max-height: 85vh;
@@ -179,20 +198,20 @@ function handleSubmit() {
 }
 
 /* Custom scrollbar styling */
-.task-creation-modal::-webkit-scrollbar {
+.reward-creation-modal::-webkit-scrollbar {
   width: 6px;
 }
 
-.task-creation-modal::-webkit-scrollbar-track {
+.reward-creation-modal::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.task-creation-modal::-webkit-scrollbar-thumb {
+.reward-creation-modal::-webkit-scrollbar-thumb {
   background: #c7c7c7;
   border-radius: 3px;
 }
 
-.task-creation-modal::-webkit-scrollbar-thumb:hover {
+.reward-creation-modal::-webkit-scrollbar-thumb:hover {
   background: #a7a7a7;
 }
 
@@ -207,17 +226,6 @@ function handleSubmit() {
 
 .form-group {
   margin-bottom: 1.25rem;
-}
-
-.form-row {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-}
-
-.form-group.half {
-  flex: 1;
-  margin-bottom: 0;
 }
 
 .form-label {
@@ -257,8 +265,10 @@ function handleSubmit() {
   color: #999;
 }
 
-.date-input {
-  cursor: pointer;
+.field-error {
+  color: #c62828;
+  font-size: 0.8em;
+  margin-top: 0.5rem;
 }
 
 .form-actions {
@@ -317,26 +327,14 @@ function handleSubmit() {
 
 /* Mobile Responsive Styles */
 @media (max-width: 768px) {
-  .task-creation-modal {
+  .reward-creation-modal {
     min-width: auto;
     width: 100%;
     max-width: 100%;
     padding-right: 0;
-    padding-bottom: 3rem;
+    padding-bottom: 1rem;
     margin-bottom: 1rem;
     max-height: 75vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .form-row {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .form-group.half {
-    width: 100%;
   }
 
   .form-actions {
@@ -356,11 +354,8 @@ function handleSubmit() {
 }
 
 @media (max-width: 480px) {
-  .task-creation-modal {
+  .reward-creation-modal {
     max-height: 80vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
   }
 
   .form-group {
