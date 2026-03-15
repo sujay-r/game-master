@@ -1,13 +1,6 @@
 <template>
-  <div class="reward-card" :class="{ 'reward-claimed': isClaimed }">
-    <input
-      type="checkbox"
-      class="reward-checkbox"
-      v-model="isClaimed"
-      @click="toggleDetails"
-      :disabled="isClaimed || hasError"
-    />
-    <div class="reward-content" @click="toggleDetails">
+  <div class="reward-card" @click="toggleDetails">
+    <div class="reward-content">
       <p class="reward-title">{{ reward.title }}</p>
     </div>
     <div class="token-section">
@@ -43,12 +36,8 @@
 
     <div class="modal-actions">
       <button class="btn btn-secondary" @click="showDetails = false">Close</button>
-      <button
-        class="btn btn-primary"
-        @click="handleClaim"
-        :disabled="isClaimed || hasInsufficientTokens"
-      >
-        {{ isClaimed ? 'Claimed' : 'Claim Reward' }}
+      <button class="btn btn-primary" @click="handleClaim" :disabled="hasInsufficientTokens">
+        Claim Reward
       </button>
     </div>
     <div v-if="modalErrorMessage" class="modal-error">
@@ -76,7 +65,6 @@ const emit = defineEmits<{
 const tokenStore = useTokenStore()
 const iconStore = useIconStore()
 
-const isClaimed = ref(props.reward.status === 'CLAIMED')
 const showDetails = ref(false)
 const errorMessage = ref('')
 const modalErrorMessage = ref('')
@@ -91,14 +79,8 @@ const hasInsufficientTokens = computed(() => {
   return false
 })
 
-const hasError = computed(() => {
-  return hasInsufficientTokens.value
-})
-
 function toggleDetails() {
-  if (!isClaimed.value) {
-    showDetails.value = true
-  }
+  showDetails.value = true
 }
 
 async function handleClaim() {
@@ -124,7 +106,6 @@ async function handleClaim() {
 
   try {
     emit('claim', props.reward.id)
-    isClaimed.value = true
     showDetails.value = false
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to claim reward'
@@ -156,14 +137,6 @@ watch(
   },
   { deep: true },
 )
-
-// Watch for external reward status changes
-watch(
-  () => props.reward.status,
-  (newStatus) => {
-    isClaimed.value = newStatus === 'CLAIMED'
-  },
-)
 </script>
 
 <style scoped>
@@ -177,7 +150,7 @@ watch(
   padding: 1rem 1.25rem;
   margin: 0.75rem 0;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   grid-template-rows: 1fr auto;
   align-items: center;
   gap: 0.75rem;
@@ -192,17 +165,15 @@ watch(
     0 3px 8px rgba(0, 0, 0, 0.1);
 }
 
-.reward-claimed {
-  opacity: 0.6;
-}
-
 .reward-content {
   display: flex;
   align-items: center;
   align-self: center;
+  justify-content: center;
   min-width: 0;
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 1;
+  text-align: center;
 }
 
 .reward-title {
@@ -220,7 +191,7 @@ watch(
   justify-content: flex-start;
   align-items: center;
   align-self: center;
-  grid-column: 3;
+  grid-column: 2;
   grid-row: 1;
 }
 
@@ -253,51 +224,6 @@ watch(
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   margin-top: 0.5rem;
-}
-
-.reward-checkbox {
-  align-self: center;
-  grid-column: 1;
-  grid-row: 1;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border: 2px solid #bbb;
-  border-radius: 4px;
-  background: #fff;
-  cursor: pointer;
-  transition:
-    border-color 0.2s,
-    background 0.2s;
-  display: inline-block;
-  vertical-align: middle;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.reward-checkbox:checked {
-  background: #32a287;
-  border-color: #4bab91;
-}
-
-.reward-checkbox:checked::after {
-  content: '';
-  position: absolute;
-  left: 4px;
-  top: 0px;
-  width: 6px;
-  height: 12px;
-  border: solid #fff;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-  pointer-events: none;
-}
-
-.reward-checkbox:disabled {
-  cursor: not-allowed;
-  opacity: 0.4;
-  border-color: #ccc;
-  background: #f0f0f0;
 }
 
 .reward-detail-description {
@@ -416,23 +342,14 @@ watch(
 /* Mobile Responsive Styles */
 @media (max-width: 768px) {
   .reward-card {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: 1fr auto;
     grid-template-rows: auto;
     padding: 0.75rem 1rem;
     gap: 0.5rem;
   }
 
-  .reward-checkbox {
-    width: 20px;
-    height: 20px;
-  }
-
   .reward-title {
     font-size: 0.9em;
-  }
-
-  .reward-description {
-    font-size: 0.8em;
   }
 
   .token-section {
