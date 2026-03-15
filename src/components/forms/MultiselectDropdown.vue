@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import Pill from '@/components/Pill.vue'
+import Pill from '@/components/base/Pill.vue'
 
 const props = defineProps<{
   options: any[]

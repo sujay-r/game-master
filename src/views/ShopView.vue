@@ -99,12 +99,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import HKTitle from '@/components/HKTitle.vue'
-import RewardCard from '@/components/RewardCard.vue'
-import CreateRewardModal from '@/components/CreateRewardModal.vue'
-import TokenCountDisplay from '@/components/TokenCountDisplay.vue'
-import QuickAddButton from '@/components/QuickAddButton.vue'
-import TaskCreationModal from '@/components/TaskCreationModal.vue'
+import HKTitle from '@/components/common/HKTitle.vue'
+import RewardCard from '@/components/shop/RewardCard.vue'
+import CreateRewardModal from '@/components/shop/CreateRewardModal.vue'
+import TokenCountDisplay from '@/components/common/TokenCountDisplay.vue'
+import QuickAddButton from '@/components/common/QuickAddButton.vue'
+import TaskCreationModal from '@/components/tasks/TaskCreationModal.vue'
 import { useRewardStore } from '@/stores/rewards'
 import { useQuestStore } from '@/stores/quests'
 import { useTokenStore } from '@/stores/resources'

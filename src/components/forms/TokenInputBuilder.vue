@@ -65,7 +65,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import DropdownBase from './DropdownBase.vue'
+import DropdownBase from '@/components/base/DropdownBase.vue'
 import type { TokenType, TaskOutcomeType } from '@/types/common'
 
 interface OutcomeRow {

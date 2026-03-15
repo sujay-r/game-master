@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import { VueDatePicker } from '@vuepic/vue-datepicker'
 import '@vuepic/vue-datepicker/dist/main.css'
-import PillBase from './PillBase.vue'
+import PillBase from '@/components/base/PillBase.vue'
 import { useIconStore } from '@/stores/resources'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 

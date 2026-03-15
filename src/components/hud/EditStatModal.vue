@@ -29,8 +29,8 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import Modal from './Modal.vue'
-import HeadingFleur from './HeadingFleur.vue'
+import Modal from '@/components/base/Modal.vue'
+import HeadingFleur from '@/components/base/HeadingFleur.vue'
 
 const props = defineProps<{
   modelValue: boolean

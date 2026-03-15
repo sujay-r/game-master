@@ -85,7 +85,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import HKTitle from '@/components/HKTitle.vue'
+import HKTitle from '@/components/common/HKTitle.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

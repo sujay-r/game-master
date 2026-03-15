@@ -50,7 +50,7 @@
 import { ref, computed, watch } from 'vue'
 import type { Quest, QuestType } from '@/types/common'
 import { QuestType as QuestTypeEnum } from '@/types/common'
-import Modal from './Modal.vue'
+import Modal from '@/components/base/Modal.vue'
 
 const props = defineProps<{
   modelValue: boolean

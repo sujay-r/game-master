@@ -68,8 +68,8 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import StatusEffect from './StatusEffect.vue'
-import EditStatModal from './EditStatModal.vue'
+import StatusEffect from '@/components/hud/StatusEffect.vue'
+import EditStatModal from '@/components/hud/EditStatModal.vue'
 import { useStatStore } from '@/stores/resources'
 import { updateStatValue, deleteStatusEffect } from '@/lib/supabase'
 import type { StatType, StatusEffectType } from '@/types/common'

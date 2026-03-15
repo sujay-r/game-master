@@ -172,7 +172,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { Quest, TaskType, QuestType } from '@/types/common'
-import Task from './Task.vue'
+import Task from '@/components/tasks/Task.vue'
 
 const props = defineProps<{
   quest: Quest

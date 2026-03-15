@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import Modal from './Modal.vue'
+import Modal from '@/components/base/Modal.vue'
 import type { Reward } from '@/types/common'
 import { useTokenStore } from '@/stores/resources'
 import { useIconStore } from '@/stores/resources'

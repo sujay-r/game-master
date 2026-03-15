@@ -67,10 +67,10 @@
 
 <script setup lang="ts">
 import { ref, watch, defineAsyncComponent } from 'vue'
-import Modal from './Modal.vue'
-const LiveEditor = defineAsyncComponent(() => import('./LiveEditor.vue'))
-import TaskAssignmentDropdown from './TaskAssignmentDropdown.vue'
-import TokenInputBuilder from './TokenInputBuilder.vue'
+import Modal from '@/components/base/Modal.vue'
+const LiveEditor = defineAsyncComponent(() => import('@/components/common/LiveEditor.vue'))
+import TaskAssignmentDropdown from '@/components/tasks/TaskAssignmentDropdown.vue'
+import TokenInputBuilder from '@/components/forms/TokenInputBuilder.vue'
 import type { Quest, TaskStatus, TaskOutcomeType } from '@/types/common'
 import { useTokenStore } from '@/stores/resources'
 import { stripHtml } from '@/utils/html'

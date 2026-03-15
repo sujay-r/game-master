@@ -152,12 +152,12 @@
 
 <script setup lang="ts">
 import { onMounted, ref, toRaw, nextTick, computed, watch, defineAsyncComponent } from 'vue'
-import Modal from './Modal.vue'
-const LiveEditor = defineAsyncComponent(() => import('./LiveEditor.vue'))
-import DatePill from './DatePill.vue'
-import TaskAssignmentDropdown from './TaskAssignmentDropdown.vue'
-import DeleteTaskModal from './DeleteTaskModal.vue'
-import TokenInputBuilder from './TokenInputBuilder.vue'
+import Modal from '@/components/base/Modal.vue'
+const LiveEditor = defineAsyncComponent(() => import('@/components/common/LiveEditor.vue'))
+import DatePill from '@/components/common/DatePill.vue'
+import TaskAssignmentDropdown from '@/components/tasks/TaskAssignmentDropdown.vue'
+import DeleteTaskModal from '@/components/tasks/DeleteTaskModal.vue'
+import TokenInputBuilder from '@/components/forms/TokenInputBuilder.vue'
 import type { TaskType, TaskOutcomeType } from '@/types/common'
 import { TaskStatus } from '@/types/common'
 import { useIconStore, useTokenStore } from '@/stores/resources'

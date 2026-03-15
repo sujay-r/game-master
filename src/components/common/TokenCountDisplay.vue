@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import FloatingDisplay from './FloatingDisplay.vue'
+import FloatingDisplay from '@/components/base/FloatingDisplay.vue'
 import { useIconStore, useTokenStore } from '@/stores/resources'
 import type { TokenType } from '@/types/common'
 

@@ -45,8 +45,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import Task from './Task.vue'
-import QuestTaskList from './QuestTaskList.vue'
+import Task from '@/components/tasks/Task.vue'
+import QuestTaskList from '@/components/quests/QuestTaskList.vue'
 import { useQuestStore } from '@/stores/quests'
 import type { TaskType, Quest, QuestType } from '@/types/common'
 

@@ -117,8 +117,8 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch, onMounted, toRaw, defineAsyncComponent } from 'vue'
-import Modal from './Modal.vue'
-const LiveEditor = defineAsyncComponent(() => import('./LiveEditor.vue'))
+import Modal from '@/components/base/Modal.vue'
+const LiveEditor = defineAsyncComponent(() => import('@/components/common/LiveEditor.vue'))
 import type { Quest, QuestType, TaskType } from '@/types/common'
 import { QuestStatus, TaskStatus } from '@/types/common'
 import { updateQuestDescription } from '@/lib/supabase'

@@ -32,7 +32,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import DeleteStatusEffectModal from './DeleteStatusEffectModal.vue'
+import DeleteStatusEffectModal from '@/components/hud/DeleteStatusEffectModal.vue'
 import type { StatusEffectType } from '@/types/common'
 
 const props = defineProps<{
