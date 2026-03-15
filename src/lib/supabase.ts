@@ -876,6 +876,109 @@ async function claimRewardTransaction(rewardId: number, costs: RewardCost[]): Pr
   }
 }
 
+async function updateReward(
+  rewardId: number,
+  updates: { title?: string; description?: string },
+): Promise<Reward> {
+  try {
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    }
+    if (updates.title !== undefined) {
+      updateData.title = updates.title
+    }
+    if (updates.description !== undefined) {
+      updateData.description = updates.description || null
+    }
+
+    const { data, error } = await client
+      .from('Reward')
+      .update(updateData)
+      .eq('id', rewardId)
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return {
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      status: data.status as RewardStatus,
+      created_at: new Date(data.created_at),
+      updated_at: new Date(data.updated_at),
+      costs: [], // Costs will be updated separately
+    }
+  } catch (err) {
+    console.error('Error updating reward: ', err)
+    throw err
+  }
+}
+
+async function updateRewardCosts(rewardId: number, costs: RewardCost[]): Promise<RewardCost[]> {
+  try {
+    // Delete all existing costs for this reward
+    const { error: deleteError } = await client
+      .from('RewardCost')
+      .delete()
+      .eq('reward_id', rewardId)
+
+    if (deleteError) {
+      throw deleteError
+    }
+
+    // Insert new costs
+    if (costs.length > 0) {
+      const costsData = costs.map((cost) => ({
+        reward_id: rewardId,
+        token_type: cost.token_type,
+        quantity: cost.quantity,
+      }))
+
+      const { error: insertError } = await client.from('RewardCost').insert(costsData)
+
+      if (insertError) {
+        throw insertError
+      }
+    }
+
+    // Fetch token info for response
+    const tokenTypes = costs.map((c) => c.token_type)
+    const tokens = tokenTypes.length > 0 ? await fetchTokens(tokenTypes) : []
+
+    return costs.map((cost) => {
+      const token = tokens.find((t) => t.token_type === cost.token_type)
+      return {
+        reward_id: rewardId,
+        token_type: cost.token_type,
+        quantity: cost.quantity,
+        icon_filename: token?.icon_filename || '',
+        icon_color: token?.icon_color || '',
+        icon: token?.icon,
+      }
+    })
+  } catch (err) {
+    console.error('Error updating reward costs: ', err)
+    throw err
+  }
+}
+
+async function deleteReward(rewardId: number): Promise<void> {
+  try {
+    // Costs will be cascade deleted by the database
+    const { error } = await client.from('Reward').delete().eq('id', rewardId)
+
+    if (error) {
+      throw error
+    }
+  } catch (err) {
+    console.error('Error deleting reward: ', err)
+    throw err
+  }
+}
+
 export {
   client,
   fetchStatsWithEffects,
@@ -913,4 +1016,7 @@ export {
   fetchRewardsWithCosts,
   createRewardWithCosts,
   claimRewardTransaction,
+  updateReward,
+  updateRewardCosts,
+  deleteReward,
 }

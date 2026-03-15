@@ -5,6 +5,9 @@ import {
   fetchRewardsWithCosts,
   createRewardWithCosts,
   claimRewardTransaction,
+  updateReward,
+  updateRewardCosts,
+  deleteReward,
 } from '@/lib/supabase'
 import { useTokenStore } from '@/stores/resources'
 
@@ -87,6 +90,61 @@ const useRewardStore = defineStore('rewards', {
       } catch (err) {
         this.error = err instanceof Error ? err.message : 'Failed to claim reward'
         console.error('Error claiming reward: ', err)
+        throw err
+      }
+    },
+
+    async updateReward(
+      rewardId: number,
+      updates: { title?: string; description?: string },
+      costs: RewardCost[],
+    ) {
+      try {
+        // Update reward fields
+        const updatedReward = await updateReward(rewardId, updates)
+        // Update costs
+        const updatedCosts = await updateRewardCosts(rewardId, costs)
+
+        // Update local state
+        const rewardIndex = this.rewards.findIndex((r) => r.id === rewardId)
+        if (rewardIndex !== -1) {
+          this.rewards[rewardIndex] = {
+            ...this.rewards[rewardIndex],
+            title: updatedReward.title,
+            description: updatedReward.description,
+            costs: updatedCosts,
+            updated_at: updatedReward.updated_at,
+          }
+        }
+
+        return this.rewards[rewardIndex]
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to update reward'
+        console.error('Error updating reward: ', err)
+        throw err
+      }
+    },
+
+    async deleteReward(rewardId: number) {
+      const reward = this.rewards.find((r) => r.id === rewardId)
+      if (!reward) {
+        this.error = 'Reward not found'
+        throw new Error('Reward not found')
+      }
+
+      // Only allow deleting pending rewards
+      if (reward.status !== RewardStatus.PENDING) {
+        this.error = 'Cannot delete claimed rewards'
+        throw new Error('Cannot delete claimed rewards')
+      }
+
+      try {
+        await deleteReward(rewardId)
+        // Remove from local state
+        this.rewards = this.rewards.filter((r) => r.id !== rewardId)
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to delete reward'
+        console.error('Error deleting reward: ', err)
         throw err
       }
     },

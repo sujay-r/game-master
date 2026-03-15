@@ -1,5 +1,40 @@
 <template>
   <div class="reward-card" @click="toggleDetails">
+    <!-- Desktop action buttons - left side -->
+    <div class="reward-actions desktop-only" @click.stop>
+      <button class="action-icon-btn" @click="handleEdit" title="Edit reward">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="18px"
+          viewBox="0 -960 960 960"
+          width="18px"
+          fill="currentColor"
+        >
+          <path
+            d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"
+          />
+        </svg>
+      </button>
+      <button
+        v-if="canDelete"
+        class="action-icon-btn delete"
+        @click="handleDelete"
+        title="Delete reward"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="18px"
+          viewBox="0 -960 960 960"
+          width="18px"
+          fill="currentColor"
+        >
+          <path
+            d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"
+          />
+        </svg>
+      </button>
+    </div>
+
     <div class="reward-content">
       <p class="reward-title">{{ reward.title }}</p>
     </div>
@@ -34,9 +69,44 @@
       </div>
     </div>
 
-    <div class="modal-actions">
-      <button class="btn btn-secondary" @click="showDetails = false">Close</button>
-      <button class="btn btn-primary" @click="handleClaim" :disabled="hasInsufficientTokens">
+    <div class="modal-footer">
+      <!-- Row 1: Edit and Delete buttons (equal width) -->
+      <div class="footer-actions-row">
+        <button class="btn btn-secondary" @click="handleEditFromModal">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            height="18px"
+            viewBox="0 -960 960 960"
+            width="18px"
+            fill="currentColor"
+          >
+            <path
+              d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"
+            />
+          </svg>
+          Edit
+        </button>
+        <button v-if="canDelete" class="btn btn-danger" @click="handleDeleteFromModal">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            height="18px"
+            viewBox="0 -960 960 960"
+            width="18px"
+            fill="currentColor"
+          >
+            <path
+              d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"
+            />
+          </svg>
+          Delete
+        </button>
+      </div>
+      <!-- Row 2: Claim Reward button (full width) -->
+      <button
+        class="btn btn-primary btn-full-width"
+        @click="handleClaim"
+        :disabled="hasInsufficientTokens"
+      >
         Claim Reward
       </button>
     </div>
@@ -50,6 +120,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import Modal from '@/components/base/Modal.vue'
 import type { Reward } from '@/types/common'
+import { RewardStatus } from '@/types/common'
 import { useTokenStore } from '@/stores/resources'
 import { useIconStore } from '@/stores/resources'
 
@@ -60,6 +131,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'claim', rewardId: number): void
   (e: 'error', message: string): void
+  (e: 'edit', reward: Reward): void
+  (e: 'delete', reward: Reward): void
 }>()
 
 const tokenStore = useTokenStore()
@@ -79,8 +152,34 @@ const hasInsufficientTokens = computed(() => {
   return false
 })
 
+const canDelete = computed(() => {
+  return props.reward.status === RewardStatus.PENDING
+})
+
 function toggleDetails() {
   showDetails.value = true
+}
+
+function handleEdit() {
+  emit('edit', props.reward)
+}
+
+function handleDelete() {
+  if (canDelete.value) {
+    emit('delete', props.reward)
+  }
+}
+
+function handleEditFromModal() {
+  showDetails.value = false
+  emit('edit', props.reward)
+}
+
+function handleDeleteFromModal() {
+  if (canDelete.value) {
+    showDetails.value = false
+    emit('delete', props.reward)
+  }
 }
 
 async function handleClaim() {
@@ -150,8 +249,8 @@ watch(
   padding: 1rem 1.25rem;
   margin: 0.75rem 0;
   display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: 1fr auto;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
   align-items: center;
   gap: 0.75rem;
   min-height: 48px;
@@ -165,13 +264,54 @@ watch(
     0 3px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Desktop action buttons */
+.reward-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.reward-card:hover .reward-actions {
+  opacity: 1;
+}
+
+.action-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #666;
+  padding: 0;
+}
+
+.action-icon-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: #999;
+}
+
+.action-icon-btn.delete:hover {
+  background: #ffebee;
+  border-color: #c62828;
+  color: #c62828;
+}
+
 .reward-content {
   display: flex;
   align-items: center;
   align-self: center;
   justify-content: center;
   min-width: 0;
-  grid-column: 1;
+  grid-column: 2;
   grid-row: 1;
   text-align: center;
 }
@@ -191,7 +331,7 @@ watch(
   justify-content: flex-start;
   align-items: center;
   align-self: center;
-  grid-column: 2;
+  grid-column: 3;
   grid-row: 1;
 }
 
@@ -276,16 +416,36 @@ watch(
   text-transform: capitalize;
 }
 
-.modal-actions {
+.modal-footer {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
   gap: 0.75rem;
   margin-top: 1.5rem;
   padding-top: 1rem;
   border-top: 1px solid #e0e0e0;
 }
 
+.footer-actions-row {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.footer-actions-row .btn {
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: center;
+}
+
+.btn-full-width {
+  width: 100%;
+  justify-content: center;
+}
+
 .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.625rem 1.25rem;
   border: none;
   border-radius: 8px;
@@ -295,6 +455,12 @@ watch(
   transition:
     background-color 0.2s,
     transform 0.1s;
+}
+
+.btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .btn-primary {
@@ -330,6 +496,20 @@ watch(
   transform: translateY(0);
 }
 
+.btn-danger {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.btn-danger:hover {
+  background: #ffcdd2;
+  transform: translateY(-1px);
+}
+
+.btn-danger:active {
+  transform: translateY(0);
+}
+
 .modal-error {
   margin-top: 1rem;
   padding: 0.75rem;
@@ -348,11 +528,21 @@ watch(
     gap: 0.5rem;
   }
 
+  /* Hide desktop buttons on mobile */
+  .desktop-only {
+    display: none !important;
+  }
+
+  .reward-content {
+    grid-column: 1;
+  }
+
   .reward-title {
     font-size: 0.9em;
   }
 
   .token-section {
+    grid-column: 2;
     font-size: 0.8em;
   }
 
@@ -361,13 +551,15 @@ watch(
     padding: 0.4rem 0.6rem;
   }
 
-  .modal-actions {
-    flex-direction: column-reverse;
+  .modal-footer {
+    gap: 0.5rem;
+  }
+
+  .footer-actions-row {
     gap: 0.5rem;
   }
 
   .btn {
-    width: 100%;
     padding: 0.75rem 1rem;
   }
 }
@@ -383,6 +575,11 @@ watch(
 
   .token-section {
     font-size: 0.75em;
+  }
+
+  .btn {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9em;
   }
 }
 </style>

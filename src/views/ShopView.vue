@@ -64,6 +64,8 @@
           :reward="reward"
           @claim="handleClaim"
           @error="handleError"
+          @edit="handleEdit"
+          @delete="handleDelete"
         />
       </div>
     </div>
@@ -87,6 +89,21 @@
     @cancel="handleCancel"
   />
 
+  <!-- Edit Reward Modal -->
+  <EditRewardModal
+    v-model="isEditModalOpen"
+    :reward="selectedReward"
+    @save="handleEditSave"
+    @cancel="isEditModalOpen = false"
+  />
+
+  <!-- Delete Reward Modal -->
+  <DeleteRewardModal
+    v-model="isDeleteModalOpen"
+    :reward-title="selectedReward?.title || ''"
+    @confirm="handleDeleteConfirm"
+  />
+
   <!-- Task Creation Modal -->
   <TaskCreationModal
     v-model="isTaskCreationModalOpen"
@@ -102,13 +119,15 @@ import { ref, onMounted } from 'vue'
 import HKTitle from '@/components/common/HKTitle.vue'
 import RewardCard from '@/components/shop/RewardCard.vue'
 import CreateRewardModal from '@/components/shop/CreateRewardModal.vue'
+import EditRewardModal from '@/components/shop/EditRewardModal.vue'
+import DeleteRewardModal from '@/components/shop/DeleteRewardModal.vue'
 import TokenCountDisplay from '@/components/common/TokenCountDisplay.vue'
 import QuickAddButton from '@/components/common/QuickAddButton.vue'
 import TaskCreationModal from '@/components/tasks/TaskCreationModal.vue'
 import { useRewardStore } from '@/stores/rewards'
 import { useQuestStore } from '@/stores/quests'
 import { useTokenStore } from '@/stores/resources'
-import type { RewardCost } from '@/types/common'
+import type { Reward, RewardCost } from '@/types/common'
 import type { TaskStatus, TaskOutcomeType } from '@/types/common'
 import { fetchTasksWithOutcomes } from '@/lib/supabase'
 
@@ -121,6 +140,9 @@ const tokenStore = useTokenStore()
 // Modal State
 const isCreateModalOpen = ref(false)
 const isTaskCreationModalOpen = ref(false)
+const isEditModalOpen = ref(false)
+const isDeleteModalOpen = ref(false)
+const selectedReward = ref<Reward | null>(null)
 
 // Methods
 async function loadData() {
@@ -162,6 +184,52 @@ async function handleClaim(rewardId: number) {
 
 function handleError(message: string) {
   console.error('Reward error:', message)
+}
+
+function handleEdit(reward: Reward) {
+  selectedReward.value = reward
+  isEditModalOpen.value = true
+}
+
+function handleDelete(reward: Reward) {
+  selectedReward.value = reward
+  isDeleteModalOpen.value = true
+}
+
+async function handleEditSave(data: {
+  rewardId: number
+  title: string
+  description: string
+  costs: RewardCost[]
+}) {
+  try {
+    await rewardStore.updateReward(
+      data.rewardId,
+      {
+        title: data.title,
+        description: data.description,
+      },
+      data.costs,
+    )
+    rewardStore.clearError()
+    isEditModalOpen.value = false
+    selectedReward.value = null
+  } catch (err) {
+    console.error('Failed to update reward:', err)
+  }
+}
+
+async function handleDeleteConfirm() {
+  if (!selectedReward.value) return
+
+  try {
+    await rewardStore.deleteReward(selectedReward.value.id)
+    rewardStore.clearError()
+    isDeleteModalOpen.value = false
+    selectedReward.value = null
+  } catch (err) {
+    console.error('Failed to delete reward:', err)
+  }
 }
 
 function openQuickAddTaskModal() {
