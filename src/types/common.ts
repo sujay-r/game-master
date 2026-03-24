@@ -39,6 +39,8 @@ export interface Quest {
   createdAt: Date
   updatedAt: Date
   taskIds: number[]
+  references?: Reference[]
+  referencedBy?: BackReference[]
 }
 
 export interface Icon {
@@ -60,6 +62,32 @@ export interface TaskOutcomeType extends Icon {
 export enum RewardStatus {
   PENDING = 'PENDING',
   CLAIMED = 'CLAIMED',
+}
+
+export enum ReferenceType {
+  Task = 'task',
+  Quest = 'quest',
+}
+
+export interface TaskReference {
+  type: ReferenceType.Task
+  id: number
+  title: string
+}
+
+export interface QuestReference {
+  type: ReferenceType.Quest
+  id: number
+  title: string
+  questType: QuestType
+}
+
+export type Reference = TaskReference | QuestReference
+
+export interface BackReference {
+  type: ReferenceType
+  id: number
+  title: string
 }
 
 export interface RewardCost extends Icon {
@@ -89,4 +117,6 @@ export interface TaskType {
   outcomes?: TaskOutcomeType[]
   id?: number
   questId?: number
+  references?: Reference[]
+  referencedBy?: BackReference[]
 }

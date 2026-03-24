@@ -1,6 +1,13 @@
 import { defineStore } from 'pinia'
-import type { Quest, QuestType, TaskType, TaskOutcomeType } from '@/types/common'
-import { QuestStatus, TaskStatus } from '@/types/common'
+import type {
+  Quest,
+  QuestType,
+  TaskType,
+  TaskOutcomeType,
+  Reference,
+  BackReference,
+} from '@/types/common'
+import { QuestStatus, TaskStatus, ReferenceType } from '@/types/common'
 import {
   fetchQuests,
   createQuest as createQuestInDb,
@@ -293,6 +300,102 @@ const useQuestStore = defineStore('quests', {
 
     clearError() {
       this.error = null
+    },
+
+    // TODO: Optimize by storing references in database instead of extracting on-the-fly
+    extractReferences(content: string): Reference[] {
+      if (!content) return []
+
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(content, 'text/html')
+      const references: Reference[] = []
+
+      // Extract task mentions
+      doc.querySelectorAll('.task-mention').forEach((el) => {
+        const id = el.getAttribute('data-id')
+        const title = el.textContent?.replace('@', '') || ''
+        if (id) {
+          references.push({
+            type: ReferenceType.Task,
+            id: Number(id),
+            title,
+          })
+        }
+      })
+
+      // Extract quest mentions
+      doc.querySelectorAll('.quest-mention').forEach((el) => {
+        const id = el.getAttribute('data-id')
+        const title = el.textContent?.replace('@@', '') || ''
+        const questType = (el.getAttribute('data-quest-type') as QuestType) || 'main'
+        if (id) {
+          references.push({
+            type: ReferenceType.Quest,
+            id: Number(id),
+            title,
+            questType,
+          })
+        }
+      })
+
+      return references
+    },
+
+    buildBackReferenceIndex(): Map<number, BackReference[]> {
+      const backRefMap = new Map<number, BackReference[]>()
+
+      // Process all tasks
+      this.tasks.forEach((task) => {
+        if (task.notes) {
+          const refs = this.extractReferences(task.notes)
+          refs.forEach((ref) => {
+            if (!backRefMap.has(ref.id)) {
+              backRefMap.set(ref.id, [])
+            }
+            const existing = backRefMap.get(ref.id)
+            if (
+              existing &&
+              !existing.some((r) => r.type === ReferenceType.Task && r.id === task.id)
+            ) {
+              existing.push({
+                type: ReferenceType.Task,
+                id: task.id!,
+                title: task.title,
+              })
+            }
+          })
+        }
+      })
+
+      // Process all quests
+      this.quests.forEach((quest) => {
+        if (quest.notes) {
+          const refs = this.extractReferences(quest.notes)
+          refs.forEach((ref) => {
+            if (!backRefMap.has(ref.id)) {
+              backRefMap.set(ref.id, [])
+            }
+            const existing = backRefMap.get(ref.id)
+            if (
+              existing &&
+              !existing.some((r) => r.type === ReferenceType.Quest && r.id === quest.id)
+            ) {
+              existing.push({
+                type: ReferenceType.Quest,
+                id: quest.id,
+                title: quest.title,
+              })
+            }
+          })
+        }
+      })
+
+      return backRefMap
+    },
+
+    getBackReferences(entityId: number, _entityType: 'task' | 'quest'): BackReference[] {
+      const backRefMap = this.buildBackReferenceIndex()
+      return backRefMap.get(entityId) || []
     },
   },
 

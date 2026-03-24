@@ -163,7 +163,6 @@
     :tasks="selectedQuestForDetail ? questStore.getQuestTasks(selectedQuestForDetail.id) : []"
     @save-notes="handleSaveQuestNotes"
     @save-description="handleSaveQuestDescription"
-    @open-task="handleOpenTaskFromQuest"
   />
 
   <!-- Task Creation Modal -->
@@ -203,7 +202,6 @@ import {
   QuestStatus,
   type Quest,
   type QuestType,
-  type TaskType,
   type TaskStatus,
   type TaskOutcomeType,
 } from '@/types/common'
@@ -239,7 +237,6 @@ const questToComplete = ref<Quest | null>(null)
 const showCompleteModal = ref(false)
 const selectedQuestForDetail = ref<Quest | null>(null)
 const taskToOpenId = ref<number | null>(null)
-const shouldReopenQuestAfterTask = ref(false)
 const taskCreationInitialQuestId = ref<number | null>(null)
 
 // Computed
@@ -374,24 +371,18 @@ async function handleSaveQuestDescription(data: { questId: number; description: 
   await questStore.updateQuest(data.questId, { description: data.description })
 }
 
-function handleOpenTaskFromQuest(task: TaskType) {
-  if (!task.id) return
-
-  shouldReopenQuestAfterTask.value = true
-  isQuestDetailModalOpen.value = false
-
-  // Set the task ID to open after the quest modal closes
-  taskToOpenId.value = task.id
-}
+// TODO: Re-implement reference click navigation
+// When user clicks a task/quest reference in notes:
+// 1. Close current modal (if any)
+// 2. Open the referenced task/quest modal
+// 3. Handle circular references (prevent infinite loops)
+// 4. Add "Back" button for navigation history
+//
+// Current approach had issues with event bubbling through multiple layers.
+// Recommended: Use a global modal state (Pinia) or Vue Router with query params
+// instead of complex event chain: LiveEditor -> Task/QuestDetailModal -> QuestCard -> QuestView
 
 function handleTaskModalClosed() {
-  if (shouldReopenQuestAfterTask.value && selectedQuestForDetail.value) {
-    shouldReopenQuestAfterTask.value = false
-    // Small delay for smooth transition
-    setTimeout(() => {
-      isQuestDetailModalOpen.value = true
-    }, 100)
-  }
   // Clear the task to open after modal is closed
   taskToOpenId.value = null
 }

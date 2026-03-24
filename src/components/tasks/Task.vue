@@ -116,7 +116,16 @@
       :text-box="true"
       placeholder="Add any notes for the task here..."
       :disabled="isCompleted"
+      :enable-task-mentions="true"
+      :enable-quest-mentions="true"
+      :available-tasks="tasksWithQuestNames"
+      :available-quests="questStore.quests"
+      :current-entity-id="taskData.id"
+      current-entity-type="task"
     />
+
+    <BackReferences v-if="backReferences.length > 0" :references="backReferences" />
+
     <div v-if="hasUnsavedChanges && !isCompleted" class="unsaved-warning">
       You have unsaved changes
     </div>
@@ -154,6 +163,7 @@
 import { onMounted, ref, toRaw, nextTick, computed, watch, defineAsyncComponent } from 'vue'
 import Modal from '@/components/base/Modal.vue'
 const LiveEditor = defineAsyncComponent(() => import('@/components/common/LiveEditor.vue'))
+const BackReferences = defineAsyncComponent(() => import('@/components/common/BackReferences.vue'))
 import DatePill from '@/components/common/DatePill.vue'
 import TaskAssignmentDropdown from '@/components/tasks/TaskAssignmentDropdown.vue'
 import DeleteTaskModal from '@/components/tasks/DeleteTaskModal.vue'
@@ -189,6 +199,14 @@ const emit = defineEmits<{
   (e: 'delete', taskId: number): void
 }>()
 
+// TODO: Re-implement reference click navigation
+// When user clicks a mention in notes, should open referenced entity
+// Need to add 'open-task' and 'open-quest' emits and handle:
+// - Opening referenced task modal
+// - Opening referenced quest modal
+// - Preventing navigation to self (circular reference)
+// Consider using Vue Router or global state instead of event bubbling
+
 const taskData = ref<TaskType>()
 const originalNotes = ref<string>('')
 const originalDescription = ref<string>('')
@@ -214,6 +232,21 @@ const questName = computed(() => {
   if (!taskData.value?.questId) return null
   const quest = questStore.quests.find((q) => q.id === taskData.value?.questId)
   return quest?.title || null
+})
+
+const tasksWithQuestNames = computed(() => {
+  return questStore.tasks.map((task) => {
+    const quest = task.questId ? questStore.quests.find((q) => q.id === task.questId) : null
+    return {
+      ...task,
+      questName: quest?.title,
+    }
+  })
+})
+
+const backReferences = computed(() => {
+  if (!taskData.value?.id) return []
+  return questStore.getBackReferences(taskData.value.id, 'task')
 })
 
 const assignedQuestId = computed({

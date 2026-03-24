@@ -59,7 +59,16 @@
           :text-box="true"
           placeholder="Add quest notes here..."
           :disabled="isCompleted"
+          :enable-task-mentions="true"
+          :enable-quest-mentions="true"
+          :available-tasks="tasksWithQuestNames"
+          :available-quests="questStore.quests"
+          :current-entity-id="questData?.id"
+          current-entity-type="quest"
         />
+
+        <BackReferences v-if="backReferences.length > 0" :references="backReferences" />
+
         <div v-if="hasUnsavedChanges && !isCompleted" class="unsaved-warning">
           You have unsaved changes
         </div>
@@ -74,7 +83,7 @@
 
         <!-- Active Tasks -->
         <div v-if="activeTasks.length > 0" class="task-list">
-          <div v-for="task in activeTasks" :key="task.id" class="task-item" @click="openTask(task)">
+          <div v-for="task in activeTasks" :key="task.id" class="task-item">
             <input type="checkbox" class="task-checkbox" disabled />
             <span class="task-title">{{ task.title }}</span>
           </div>
@@ -100,12 +109,7 @@
 
         <!-- Completed Tasks List -->
         <div v-if="showCompleted" class="completed-tasks-list">
-          <div
-            v-for="task in completedTasks"
-            :key="task.id"
-            class="task-item completed"
-            @click="openTask(task)"
-          >
+          <div v-for="task in completedTasks" :key="task.id" class="task-item completed">
             <input type="checkbox" class="task-checkbox" checked disabled />
             <span class="task-title">{{ task.title }}</span>
           </div>
@@ -119,9 +123,11 @@
 import { computed, nextTick, ref, watch, onMounted, toRaw, defineAsyncComponent } from 'vue'
 import Modal from '@/components/base/Modal.vue'
 const LiveEditor = defineAsyncComponent(() => import('@/components/common/LiveEditor.vue'))
+const BackReferences = defineAsyncComponent(() => import('@/components/common/BackReferences.vue'))
 import type { Quest, QuestType, TaskType } from '@/types/common'
 import { QuestStatus, TaskStatus } from '@/types/common'
 import { updateQuestDescription } from '@/lib/supabase'
+import { useQuestStore } from '@/stores/quests'
 
 const props = defineProps<{
   modelValue: boolean
@@ -132,9 +138,14 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'save-notes', data: { questId: number; notes: string }): void
-  (e: 'open-task', task: TaskType): void
   (e: 'save-description', data: { questId: number; description: string }): void
 }>()
+
+// TODO: Re-implement reference click navigation
+// When user clicks a mention in quest notes, should open referenced entity
+// Need to add 'open-task' and 'open-quest' emits and handle modal opening
+
+const questStore = useQuestStore()
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -204,6 +215,21 @@ const hasUnsavedChanges = computed(() => {
   return questData.value !== null && (questData.value.notes ?? '') !== originalNotes.value
 })
 
+const tasksWithQuestNames = computed(() => {
+  return questStore.tasks.map((task) => {
+    const quest = task.questId ? questStore.quests.find((q) => q.id === task.questId) : null
+    return {
+      ...task,
+      questName: quest?.title,
+    }
+  })
+})
+
+const backReferences = computed(() => {
+  if (!questData.value?.id) return []
+  return questStore.getBackReferences(questData.value.id, 'quest')
+})
+
 function editDescription() {
   if (isCompleted.value || !questData.value) return
   isEditingDescription.value = true
@@ -246,14 +272,6 @@ function saveNotes() {
   })
 
   originalNotes.value = notesToSave
-}
-
-function openTask(task: TaskType) {
-  emit('open-task', task)
-}
-
-function close() {
-  emit('update:modelValue', false)
 }
 
 function discardChanges() {

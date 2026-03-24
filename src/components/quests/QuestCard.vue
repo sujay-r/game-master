@@ -191,6 +191,9 @@ const emit = defineEmits<{
   (e: 'task-delete', taskId: number): void
 }>()
 
+// TODO: Add 'open-task' emit when implementing reference navigation
+// Need to forward task open events from Task components to parent
+
 const showCompleted = ref(false)
 
 const typeLabels: Record<QuestType, string> = {
