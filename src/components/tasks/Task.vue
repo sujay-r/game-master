@@ -13,8 +13,7 @@
       :class="{
         'task-completed-text': taskData.status === TaskStatus.Done,
       }"
-      @click.self.stop
-      @click.self="editTitle"
+      @click.stop="editTitle"
     >
       {{ taskData.title }}
     </p>
@@ -55,7 +54,19 @@
     </div>
   </div>
   <Modal v-if="taskData" v-model="taskOpen" :include-close-button="false">
-    <h2>{{ taskData.title }}</h2>
+    <div class="modal-title-container" @click="editModalTitle">
+      <h2 v-if="!isEditingModalTitle">{{ taskData.title }}</h2>
+      <input
+        v-else
+        type="text"
+        class="modal-title-input"
+        v-model="editedModalTitle"
+        @blur="saveModalTitle"
+        @keydown.enter.prevent="saveModalTitle"
+        @keydown.esc="cancelModalEditing"
+        ref="modalTitleInput"
+      />
+    </div>
     <div class="description-container" @click="editDescription">
       <p
         v-if="!isEditingDescription"
@@ -162,6 +173,7 @@ import type { TaskType, TaskOutcomeType } from '@/types/common'
 import { TaskStatus } from '@/types/common'
 import { useIconStore, useTokenStore } from '@/stores/resources'
 import { useQuestStore } from '@/stores/quests'
+import { useMobile } from '@/composables/useMobile'
 import {
   updateTaskDueDate,
   updateTaskTitle,
@@ -201,6 +213,10 @@ const isEditingTitle = ref<boolean>(false)
 const editedTitle = ref<string>('')
 const titleInput = ref<HTMLInputElement | null>(null)
 
+const isEditingModalTitle = ref<boolean>(false)
+const editedModalTitle = ref<string>('')
+const modalTitleInput = ref<HTMLInputElement | null>(null)
+
 const isEditingDescription = ref<boolean>(false)
 const editedDescription = ref<string>('')
 const descriptionInput = ref<HTMLTextAreaElement | null>(null)
@@ -209,6 +225,7 @@ const isDeleteModalOpen = ref<boolean>(false)
 const icons = useIconStore()
 const questStore = useQuestStore()
 const tokenStore = useTokenStore()
+const { isMobile } = useMobile()
 
 const questName = computed(() => {
   if (!taskData.value?.questId) return null
@@ -264,7 +281,8 @@ const hasUnsavedChanges = computed(() => {
   const descriptionChanged = taskData.value.description !== originalDescription.value
   const outcomesChanged =
     JSON.stringify(editedOutcomes.value) !== JSON.stringify(originalOutcomes.value)
-  return notesChanged || descriptionChanged || outcomesChanged
+  const titleChanged = isEditingModalTitle.value
+  return notesChanged || descriptionChanged || outcomesChanged || titleChanged
 })
 
 function onDueDateChanged(newDate: Date | null) {
@@ -278,7 +296,7 @@ function onDueDateChanged(newDate: Date | null) {
 }
 
 function editTitle() {
-  if (isCompleted.value) return
+  if (isCompleted.value || isMobile.value) return
   isEditingTitle.value = true
   editedTitle.value = taskData.value?.title || ''
   nextTick(() => {
@@ -304,6 +322,35 @@ async function saveTitle() {
 
 function cancelEditing() {
   isEditingTitle.value = false
+}
+
+function editModalTitle() {
+  if (isCompleted.value) return
+  isEditingModalTitle.value = true
+  editedModalTitle.value = taskData.value?.title || ''
+  nextTick(() => {
+    modalTitleInput.value?.focus()
+  })
+}
+
+async function saveModalTitle() {
+  if (!taskData.value) return
+  const newTitle = editedModalTitle.value.trim()
+
+  if (newTitle && newTitle !== taskData.value.title) {
+    taskData.value.title = newTitle
+    if (taskData.value.id) {
+      updateTaskTitle(taskData.value.id, newTitle)
+    } else {
+      console.error(`Task ID not found for ${taskData.value.title}. Can't update title.`)
+    }
+  }
+
+  isEditingModalTitle.value = false
+}
+
+function cancelModalEditing() {
+  isEditingModalTitle.value = false
 }
 
 function editDescription() {
@@ -701,6 +748,43 @@ onMounted(async () => {
   background: #fff;
   border-radius: 4px;
   box-shadow: 0 0 0 1.5px #4bab91;
+}
+
+.modal-title-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.modal-title-container h2 {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.modal-title-input {
+  flex: 1;
+  font-size: 1.5em;
+  font-weight: bold;
+  font-family: inherit;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  line-height: 1.5;
+  outline: none;
+}
+
+.modal-title-input:focus {
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1.5px #4bab91;
+}
+
+@media (max-width: 768px) {
+  .modal-title-container {
+    justify-content: center;
+  }
 }
 
 .modal-footer {
