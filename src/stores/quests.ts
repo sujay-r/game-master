@@ -316,7 +316,9 @@ const useQuestStore = defineStore('quests', {
     },
 
     unassignedTasks: (state) => {
-      return state.tasks.filter((t) => t.questId === undefined || t.questId === null)
+      return state.tasks.filter(
+        (t) => (t.questId === undefined || t.questId === null) && t.status !== TaskStatus.Done,
+      )
     },
 
     questProgress: (state) => {
