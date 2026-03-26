@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import type { Session, User, AuthChangeEvent } from '@supabase/supabase-js'
 import { signInWithOtp, verifyOtp, signOut, getSession, onAuthStateChange } from '@/lib/supabase'
 
-const ALLOWED_EMAIL = 'sujay.rokade.2k@gmail.com'
+const ALLOWED_EMAIL = import.meta.env.VITE_ALLOWED_EMAIL
 
 interface AuthState {
   session: Session | null
@@ -59,6 +59,14 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
       this.error = null
       this.email = email
+
+      // Check if ALLOWED_EMAIL is configured
+      if (!ALLOWED_EMAIL) {
+        this.error =
+          'Server configuration error: ALLOWED_EMAIL not set. Please contact the administrator.'
+        this.loading = false
+        return false
+      }
 
       // Validate email is allowed
       if (!this.isAllowedEmail) {
