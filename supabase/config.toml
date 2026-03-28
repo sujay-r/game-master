@@ -112,10 +112,10 @@ enabled = true
 file_size_limit = "50mib"
 
 # uncomment to configure local storage buckets
-# [storage.buckets.images]
-# public = false
+[storage.buckets.icons]
+public = true
 # file_size_limit = "50mib"
-# allowed_mime_types = ["image/png", "image/jpeg"]
+# allowed_mime_types = ["image/*"]
 # objects_path = "./images"
 
 # allow connections via s3 compatible clients
