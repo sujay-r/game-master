@@ -8,6 +8,7 @@ This file contains essential information for agentic coding agents working in th
 - **State Management**: Pinia
 - **Backend**: Supabase
 - **PWA**: Enabled via vite-plugin-pwa
+- **Testing**: Playwright (e2e)
 - **Concept**: A life-as-a-game platform that helps the user manage various aspects of their life.
 
 ## Build Commands
@@ -30,9 +31,24 @@ npm run lint            # ESLint with auto-fix
 npm run format          # Prettier format src/ directory
 ```
 
-## Testing
+## Testing Commands
 
-No test framework is currently configured. To add tests, configure Vitest or Jest.
+```bash
+# Run all e2e tests
+npm run test:e2e
+
+# Run a specific test file
+npx playwright test tests/e2e/specs/task.spec.ts
+
+# Run tests in headed mode (visible browser)
+npx playwright test --headed
+
+# Run tests with UI mode
+npx playwright test --ui
+
+# Run tests for a specific project
+npx playwright test --project="Desktop Chrome"
+```
 
 ## Code Style Guidelines
 
@@ -94,6 +110,7 @@ No test framework is currently configured. To add tests, configure Vitest or Jes
 - Use `scoped` styles in components
 - Class names: kebab-case (e.g., `.stat-container`)
 - Use CSS variables where appropriate
+- Support mobile responsive breakpoints (768px, 480px)
 
 ## Project Structure
 
