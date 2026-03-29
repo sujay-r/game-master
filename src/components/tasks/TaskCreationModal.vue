@@ -171,10 +171,10 @@ function handleSubmit() {
   min-width: 500px;
   max-width: 600px;
   max-height: 85vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
   padding-right: 18px;
+}
+
+form {
   padding-bottom: 2rem;
 }
 
@@ -325,9 +325,6 @@ function handleSubmit() {
     padding-bottom: 3rem;
     margin-bottom: 1rem;
     max-height: 75vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
   }
 
   .form-row {
@@ -358,9 +355,6 @@ function handleSubmit() {
 @media (max-width: 480px) {
   .task-creation-modal {
     max-height: 80vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
   }
 
   .form-group {

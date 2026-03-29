@@ -190,10 +190,10 @@ function handleSubmit() {
   min-width: 500px;
   max-width: 600px;
   max-height: 85vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
   padding-right: 18px;
+}
+
+form {
   padding-bottom: 2rem;
 }
 

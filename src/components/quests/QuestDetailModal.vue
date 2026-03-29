@@ -294,7 +294,7 @@ onMounted(() => {
   width: 780px;
   max-width: 90vw;
   max-height: 85vh;
-  overflow-y: auto;
+  padding-bottom: 2rem;
 }
 
 .modal-header {
