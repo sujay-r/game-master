@@ -8,6 +8,5 @@ export const supabase = createClient(
 
 export async function deleteTestTasks() {
   const { error } = await supabase.from('Task').delete().like('title', 'test-task-%');
-
   if (error) console.error(`Failed to cleanup test tasks: ${error}`);
 }
