@@ -753,6 +753,7 @@ onMounted(async () => {
 .modal-title-container {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   cursor: pointer;
   padding: 4px 0;
