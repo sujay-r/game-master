@@ -5,7 +5,7 @@
       class="task-checkbox"
       v-model="isCompleted"
       @click.self.stop
-      :disabled="isCompleted"
+      :disabled="isCompleted || isSyncPending"
     />
     <p
       v-if="!isEditingTitle"
@@ -51,6 +51,39 @@
         />
       </svg>
       <span>{{ questName }}</span>
+    </div>
+
+    <div v-if="taskData._syncStatus === 'pending'" class="sync-indicator pending">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="14px"
+        viewBox="0 -960 960 960"
+        width="14px"
+        fill="currentColor"
+      >
+        <path
+          d="M480-80q-82 0-155-31.5t-127.5-86q-54.5-54.5-86-127T80-480q0-83 31.5-155.5t86-127Q252-817 325-848.5T480-880q17 0 28.5 11.5T520-840q0 17-11.5 28.5T480-800q-133 0-226.5 93.5T160-480q0 133 93.5 226.5T480-160q133 0 226.5-93.5T800-480q0-17 11.5-28.5T840-520q17 0 28.5 11.5T880-480q0 82-31.5 155t-86 127.5q-54.5 54.5-127 86T480-80Z"
+        />
+      </svg>
+    </div>
+
+    <div
+      v-if="taskData._syncStatus === 'failed'"
+      class="sync-indicator failed"
+      @click.stop="taskOpen = true"
+      title="Sync failed. Click to retry or discard."
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="14px"
+        viewBox="0 -960 960 960"
+        width="14px"
+        fill="currentColor"
+      >
+        <path
+          d="M480-280q17 0 28.5-11.5T520-320q0-17-11.5-28.5T480-360q-17 0-28.5 11.5T440-320q0 17 11.5 28.5T480-280Zm-40-160h80v-240h-80v240Zm40 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156t85.5-127q54-54 127-85.5T480-880q83 0 156 31.5t127 85.5q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"
+        />
+      </svg>
     </div>
   </div>
   <Modal v-if="taskData" v-model="taskOpen" :include-close-button="false">
@@ -126,13 +159,27 @@
       v-model="taskData.notes"
       :text-box="true"
       placeholder="Add any notes for the task here..."
-      :disabled="isCompleted"
+      :disabled="isCompleted || isSyncPending"
     />
     <div v-if="hasUnsavedChanges && !isCompleted" class="unsaved-warning">
       You have unsaved changes
     </div>
+
+    <div v-if="taskData._syncStatus === 'failed'" class="sync-failure-section">
+      <p class="sync-failure-text">Sync failed. The task could not be saved to the server.</p>
+      <div class="sync-failure-actions">
+        <button class="btn btn-secondary" @click="handleRetry">Retry</button>
+        <button class="btn btn-danger" @click="handleDiscard">Discard</button>
+      </div>
+    </div>
+
     <div class="modal-footer">
-      <button class="delete-button" @click="isDeleteModalOpen = true" title="Delete task">
+      <button
+        class="delete-button"
+        @click="isDeleteModalOpen = true"
+        title="Delete task"
+        :disabled="isSyncPending"
+      >
         <!-- TODO: Move to icons store -->
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -173,6 +220,8 @@ import type { TaskType, TaskOutcomeType } from '@/types/common'
 import { TaskStatus } from '@/types/common'
 import { useIconStore, useTokenStore } from '@/stores/resources'
 import { useQuestStore } from '@/stores/quests'
+import { useTaskStore } from '@/stores/taskStore'
+import { useTaskSync } from '@/composables/useTaskSync'
 import { useMobile } from '@/composables/useMobile'
 import {
   updateTaskDueDate,
@@ -198,7 +247,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'modal-closed'): void
-  (e: 'delete', taskId: number): void
+  (e: 'delete', taskId: number | string): void
 }>()
 
 const taskData = ref<TaskType>()
@@ -224,8 +273,12 @@ const isDeleteModalOpen = ref<boolean>(false)
 
 const icons = useIconStore()
 const questStore = useQuestStore()
+const taskStore = useTaskStore()
 const tokenStore = useTokenStore()
+const taskSync = useTaskSync()
 const { isMobile } = useMobile()
+
+const isSyncPending = computed(() => taskData.value?._syncStatus === 'pending')
 
 const questName = computed(() => {
   if (!taskData.value?.questId) return null
@@ -255,7 +308,7 @@ watch(isCompleted, async (newVal) => {
       taskData.value.status = newVal ? TaskStatus.Done : TaskStatus.Todo
 
       if (taskData.value.id) {
-        await questStore.completeTask(taskData.value.id)
+        await taskStore.completeTask(taskData.value.id)
       } else {
         console.error('Cannot update task because id not found.')
       }
@@ -288,7 +341,7 @@ const hasUnsavedChanges = computed(() => {
 function onDueDateChanged(newDate: Date | null) {
   if (taskData.value) {
     taskData.value.dueDate = newDate
-    if (taskData.value.id) {
+    if (typeof taskData.value.id === 'number') {
       const dateString = newDate ? newDate.toLocaleDateString('en-CA') : null
       updateTaskDueDate(taskData.value.id, dateString)
     }
@@ -296,7 +349,7 @@ function onDueDateChanged(newDate: Date | null) {
 }
 
 function editTitle() {
-  if (isCompleted.value || isMobile.value) return
+  if (isCompleted.value || isMobile.value || isSyncPending.value) return
   isEditingTitle.value = true
   editedTitle.value = taskData.value?.title || ''
   nextTick(() => {
@@ -310,7 +363,7 @@ async function saveTitle() {
 
   if (newTitle && newTitle !== taskData.value.title) {
     taskData.value.title = newTitle
-    if (taskData.value.id) {
+    if (typeof taskData.value.id === 'number') {
       updateTaskTitle(taskData.value.id, newTitle)
     } else {
       console.error(`Task ID not found for ${taskData.value.title}. Can't update title.`)
@@ -325,7 +378,7 @@ function cancelEditing() {
 }
 
 function editModalTitle() {
-  if (isCompleted.value) return
+  if (isCompleted.value || isSyncPending.value) return
   isEditingModalTitle.value = true
   editedModalTitle.value = taskData.value?.title || ''
   nextTick(() => {
@@ -339,7 +392,7 @@ async function saveModalTitle() {
 
   if (newTitle && newTitle !== taskData.value.title) {
     taskData.value.title = newTitle
-    if (taskData.value.id) {
+    if (typeof taskData.value.id === 'number') {
       updateTaskTitle(taskData.value.id, newTitle)
     } else {
       console.error(`Task ID not found for ${taskData.value.title}. Can't update title.`)
@@ -354,7 +407,7 @@ function cancelModalEditing() {
 }
 
 function editDescription() {
-  if (isCompleted.value) return
+  if (isCompleted.value || isSyncPending.value) return
   isEditingDescription.value = true
   editedDescription.value = taskData.value?.description || ''
   nextTick(() => {
@@ -369,7 +422,7 @@ async function saveDescription() {
 
   if (newDescription !== taskData.value.description) {
     taskData.value.description = newDescription
-    if (taskData.value.id) {
+    if (typeof taskData.value.id === 'number') {
       try {
         await updateTaskDescription(taskData.value.id, newDescription)
         originalDescription.value = newDescription
@@ -389,7 +442,7 @@ function cancelDescriptionEditing() {
 }
 
 async function saveNotes() {
-  if (!taskData.value?.id) {
+  if (!taskData.value?.id || typeof taskData.value.id !== 'number') {
     console.error('Cannot save notes - task ID not found')
     return
   }
@@ -403,7 +456,7 @@ async function saveNotes() {
 }
 
 async function saveOutcomes() {
-  if (!taskData.value?.id) {
+  if (!taskData.value?.id || typeof taskData.value.id !== 'number') {
     console.error('Cannot save outcomes - task ID not found')
     return
   }
@@ -469,6 +522,20 @@ async function loadOutcomeIcons(outcomes: TaskOutcomeType[]) {
 function handleDelete() {
   if (taskData.value?.id) {
     emit('delete', taskData.value.id)
+    taskOpen.value = false
+  }
+}
+
+async function handleRetry() {
+  if (typeof taskData.value?.id === 'string') {
+    await taskSync.retryOptimisticTask(taskData.value.id)
+    taskOpen.value = false
+  }
+}
+
+async function handleDiscard() {
+  if (typeof taskData.value?.id === 'string') {
+    await taskSync.discardOptimisticTask(taskData.value.id)
     taskOpen.value = false
   }
 }
@@ -910,5 +977,65 @@ onMounted(async () => {
     width: 18px;
     height: 18px;
   }
+}
+
+.sync-indicator {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+}
+
+.sync-indicator.pending {
+  animation: spin 1s linear infinite;
+  color: #999;
+}
+
+.sync-indicator.failed {
+  background: #ffebee;
+  color: #c62828;
+  cursor: pointer;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.sync-failure-section {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #ffebee;
+  border-radius: 8px;
+  border: 1px solid #ffcdd2;
+}
+
+.sync-failure-text {
+  color: #c62828;
+  font-size: 0.9em;
+  margin: 0 0 0.75rem 0;
+}
+
+.sync-failure-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-danger {
+  background: #c62828;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #b71c1c;
 }
 </style>

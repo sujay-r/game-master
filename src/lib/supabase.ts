@@ -370,7 +370,7 @@ async function updateTaskStatus(taskId: number, newStatus: TaskStatus) {
 
 async function markTaskDone(task: TaskType) {
   try {
-    if (task.id) {
+    if (typeof task.id === 'number') {
       const { error } = await client
         .from('Task')
         .update({
@@ -395,7 +395,7 @@ async function markTaskDone(task: TaskType) {
 
         await deleteOutcomesForTask(task.id)
       }
-    } else {
+    } else if (!task.id) {
       throw new Error('No task ID found for task: ' + task.title)
     }
   } catch (err) {

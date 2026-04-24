@@ -135,7 +135,9 @@ import TaskCreationModal from '@/components/tasks/TaskCreationModal.vue'
 import TaskGroup from '@/components/tasks/TaskGroup.vue'
 import { useStatStore, useTokenStore } from '@/stores/resources'
 import { useQuestStore } from '@/stores/quests'
-import { addStatusEffect, fetchTasksWithOutcomes } from '@/lib/supabase'
+import { useTaskStore } from '@/stores/taskStore'
+import { useTaskSync } from '@/composables/useTaskSync'
+import { addStatusEffect } from '@/lib/supabase'
 import { ref, onMounted, computed, watch } from 'vue'
 import { isSameDay, isBefore } from '@/utils/date'
 import { TaskStatus } from '@/types/common'
@@ -147,6 +149,8 @@ import type { StatType, StatusEffectType, TaskOutcomeType } from '@/types/common
 
 const stats = useStatStore()
 const questStore = useQuestStore()
+const taskStore = useTaskStore()
+const taskSync = useTaskSync()
 const tokenStore = useTokenStore()
 const modalOpen = ref<boolean>(false)
 const isTaskCreationModalOpen = ref(false)
@@ -176,21 +180,21 @@ const today = computed(() => new Date())
 
 // Filter tasks by date and status
 const overdueTasks = computed(() =>
-  questStore.tasks.filter(
+  taskStore.tasks.filter(
     (task) =>
       task.dueDate && isBefore(task.dueDate, today.value) && task.status !== TaskStatus.Done,
   ),
 )
 
 const todaysTasks = computed(() =>
-  questStore.tasks.filter(
+  taskStore.tasks.filter(
     (task) =>
       task.dueDate && isSameDay(task.dueDate, today.value) && task.status !== TaskStatus.Done,
   ),
 )
 
 const completedTasks = computed(() =>
-  questStore.tasks.filter(
+  taskStore.tasks.filter(
     (task) =>
       task.status === TaskStatus.Done &&
       task.completedAt &&
@@ -205,9 +209,12 @@ const hasAnyTasks = computed(
     completedTasks.value.length > 0,
 )
 
-async function handleTaskDelete(taskId: number) {
+async function handleTaskDelete(taskId: number | string) {
   try {
-    await questStore.deleteTask(taskId)
+    const questId = await taskStore.deleteTask(taskId)
+    if (questId) {
+      questStore.detachTaskFromQuest(taskId)
+    }
   } catch (err) {
     console.error('Failed to delete task:', err)
   }
@@ -220,6 +227,10 @@ onMounted(() => {
   if (!questStore.quests.length) {
     loadQuests()
   }
+  if (!taskStore.tasks.length) {
+    taskStore.loadTasks()
+  }
+  taskSync.hydratePendingTasks()
   // Load tokens if not already loaded
   if (tokenStore.tokens.length === 0) {
     tokenStore.fetchTokensFromDb()
@@ -228,8 +239,7 @@ onMounted(() => {
 
 async function loadQuests() {
   try {
-    const tasks = await fetchTasksWithOutcomes()
-    await questStore.loadQuests(tasks)
+    await questStore.loadQuests()
   } catch (err) {
     console.error('Error loading quests:', err)
   }
@@ -249,7 +259,7 @@ async function handleTaskCreated(taskData: {
   outcomes?: TaskOutcomeType[]
 }) {
   try {
-    await questStore.createTask(taskData)
+    await taskSync.createOptimisticTask(taskData)
   } catch (err) {
     console.error('Failed to create task:', err)
   }

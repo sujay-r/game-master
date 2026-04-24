@@ -126,15 +126,18 @@ import QuickAddButton from '@/components/common/QuickAddButton.vue'
 import TaskCreationModal from '@/components/tasks/TaskCreationModal.vue'
 import { useRewardStore } from '@/stores/rewards'
 import { useQuestStore } from '@/stores/quests'
+import { useTaskStore } from '@/stores/taskStore'
+import { useTaskSync } from '@/composables/useTaskSync'
 import { useTokenStore } from '@/stores/resources'
 import type { Reward, RewardCost } from '@/types/common'
 import type { TaskStatus, TaskOutcomeType } from '@/types/common'
-import { fetchTasksWithOutcomes } from '@/lib/supabase'
 
 const shopTitleURL = new URL('@/assets/imgs/TheShop.png', import.meta.url).href
 
 const rewardStore = useRewardStore()
 const questStore = useQuestStore()
+const taskStore = useTaskStore()
+const taskSync = useTaskSync()
 const tokenStore = useTokenStore()
 
 // Modal State
@@ -148,8 +151,8 @@ const selectedReward = ref<Reward | null>(null)
 async function loadData() {
   await rewardStore.fetchActiveRewards()
   // Load quests for task creation modal
-  const tasks = await fetchTasksWithOutcomes()
-  await questStore.loadQuests(tasks)
+  await taskStore.loadTasks()
+  await questStore.loadQuests()
 }
 
 function openCreateModal() {
@@ -246,7 +249,7 @@ async function handleTaskCreated(taskData: {
   outcomes?: TaskOutcomeType[]
 }) {
   try {
-    await questStore.createTask(taskData)
+    await taskSync.createOptimisticTask(taskData)
   } catch (err) {
     console.error('Failed to create task:', err)
   }
@@ -259,6 +262,7 @@ function handleTaskCreationCancelled() {
 // Lifecycle
 onMounted(() => {
   loadData()
+  taskSync.hydratePendingTasks()
   // Load tokens if not already loaded
   if (tokenStore.tokens.length === 0) {
     tokenStore.fetchTokensFromDb()

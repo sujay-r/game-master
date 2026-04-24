@@ -38,7 +38,7 @@ export interface Quest {
   status: QuestStatus
   createdAt: Date
   updatedAt: Date
-  taskIds: number[]
+  taskIds: (number | string)[]
 }
 
 export interface Icon {
@@ -60,6 +60,12 @@ export interface TaskOutcomeType extends Icon {
 export enum RewardStatus {
   PENDING = 'PENDING',
   CLAIMED = 'CLAIMED',
+}
+
+export enum SyncStatus {
+  Pending = 'pending',
+  Synced = 'synced',
+  Failed = 'failed',
 }
 
 export interface RewardCost extends Icon {
@@ -87,6 +93,7 @@ export interface TaskType {
   dueDate?: Date | null
   completedAt?: Date | null
   outcomes?: TaskOutcomeType[]
-  id?: number
+  id?: number | string
   questId?: number
+  _syncStatus?: SyncStatus
 }

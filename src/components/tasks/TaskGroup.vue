@@ -57,7 +57,7 @@ const props = defineProps<{
 const questStore = useQuestStore()
 
 const emit = defineEmits<{
-  (e: 'delete', taskId: number): void
+  (e: 'delete', taskId: number | string): void
 }>()
 
 const mainQuestTasks = computed(() =>
@@ -105,7 +105,7 @@ function getQuest(questId: number): Quest | undefined {
   return questStore.quests.find((q) => q.id === questId)
 }
 
-function handleDelete(taskId: number) {
+function handleDelete(taskId: number | string) {
   emit('delete', taskId)
 }
 </script>

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import type { Quest, QuestType, TaskType, TaskOutcomeType } from '@/types/common'
-import { QuestStatus, TaskStatus } from '@/types/common'
+import type { Quest, QuestType } from '@/types/common'
+import { QuestStatus } from '@/types/common'
 import {
   fetchQuests,
   createQuest as createQuestInDb,
@@ -9,15 +9,11 @@ import {
   completeQuest as completeQuestInDb,
   assignTaskToQuest as assignTaskToQuestInDb,
   removeTaskFromQuest as removeTaskFromQuestInDb,
-  insertTask,
-  deleteTask as deleteTaskInDb,
-  markTaskDone,
 } from '@/lib/supabase'
-import { useTokenStore } from '@/stores/resources'
+import { useTaskStore } from '@/stores/taskStore'
 
 interface QuestStoreState {
   quests: Quest[]
-  tasks: TaskType[]
   loading: boolean
   error: string | null
   expandedQuestIds: number[]
@@ -28,19 +24,16 @@ const STORAGE_KEY = 'quest-expanded-state'
 const useQuestStore = defineStore('quests', {
   state: (): QuestStoreState => ({
     quests: [],
-    tasks: [],
     loading: false,
     error: null,
     expandedQuestIds: JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'),
   }),
 
   actions: {
-    async loadQuests(allTasks: TaskType[]) {
+    async loadQuests() {
       this.loading = true
       this.error = null
-
       try {
-        this.tasks = allTasks
         this.quests = await fetchQuests()
       } catch (err) {
         this.error = err instanceof Error ? err.message : 'Failed to load quests'
@@ -79,17 +72,6 @@ const useQuestStore = defineStore('quests', {
     async deleteQuest(questId: number, cascadeTasks: boolean) {
       try {
         await deleteQuestInDb(questId, cascadeTasks)
-
-        if (!cascadeTasks) {
-          this.tasks.forEach((task) => {
-            if (task.questId === questId) {
-              task.questId = undefined
-            }
-          })
-        } else {
-          this.tasks = this.tasks.filter((task) => task.questId !== questId)
-        }
-
         this.quests = this.quests.filter((q) => q.id !== questId)
         this.expandedQuestIds = this.expandedQuestIds.filter((id) => id !== questId)
         this.saveExpandedState()
@@ -129,13 +111,10 @@ const useQuestStore = defineStore('quests', {
       }
     },
 
-    async assignTaskToQuest(taskId: number, questId: number) {
+    async assignTaskToQuest(taskId: number | string, questId: number) {
       try {
-        await assignTaskToQuestInDb(taskId, questId)
-
-        const taskIndex = this.tasks.findIndex((t) => t.id === taskId)
-        if (taskIndex !== -1) {
-          this.tasks[taskIndex].questId = questId
+        if (typeof taskId === 'number') {
+          await assignTaskToQuestInDb(taskId, questId)
         }
 
         const questIndex = this.quests.findIndex((q) => q.id === questId)
@@ -149,23 +128,15 @@ const useQuestStore = defineStore('quests', {
       }
     },
 
-    async removeTaskFromQuest(taskId: number) {
+    async removeTaskFromQuest(taskId: number | string) {
       try {
-        await removeTaskFromQuestInDb(taskId)
+        if (typeof taskId === 'number') {
+          await removeTaskFromQuestInDb(taskId)
+        }
 
-        const taskIndex = this.tasks.findIndex((t) => t.id === taskId)
-        if (taskIndex !== -1) {
-          const questId = this.tasks[taskIndex].questId
-          this.tasks[taskIndex].questId = undefined
-
-          if (questId) {
-            const questIndex = this.quests.findIndex((q) => q.id === questId)
-            if (questIndex !== -1) {
-              this.quests[questIndex].taskIds = this.quests[questIndex].taskIds.filter(
-                (id) => id !== taskId,
-              )
-            }
-          }
+        const quest = this.quests.find((q) => q.taskIds.includes(taskId))
+        if (quest) {
+          quest.taskIds = quest.taskIds.filter((id) => id !== taskId)
         }
       } catch (err) {
         this.error = err instanceof Error ? err.message : 'Failed to remove task from quest'
@@ -174,96 +145,17 @@ const useQuestStore = defineStore('quests', {
       }
     },
 
-    // TODO: Move this action to an independent task store.
-    async createTask(taskData: {
-      title: string
-      description: string
-      notes: string
-      status: TaskStatus
-      dueDate: Date | null
-      questId?: number
-      outcomes?: TaskOutcomeType[]
-    }) {
-      try {
-        const newTask = await insertTask(taskData)
-        // Use unshift to add to beginning and trigger reactivity
-        this.tasks.unshift(newTask)
-
-        // If task is assigned to a quest, update the quest's taskIds
-        if (taskData.questId) {
-          const questIndex = this.quests.findIndex((q) => q.id === taskData.questId)
-          if (questIndex !== -1 && newTask.id) {
-            this.quests[questIndex].taskIds.unshift(newTask.id)
-          }
-        }
-
-        return newTask
-      } catch (err) {
-        this.error = err instanceof Error ? err.message : 'Failed to create task'
-        console.error('Error creating task: ', err)
-        throw err
+    addTaskIdToQuest(taskId: number | string, questId: number) {
+      const questIndex = this.quests.findIndex((q) => q.id === questId)
+      if (questIndex !== -1 && !this.quests[questIndex].taskIds.includes(taskId)) {
+        this.quests[questIndex].taskIds.unshift(taskId)
       }
     },
 
-    // TODO: Check if this needs to be in the separate tasks store or not.
-    async deleteTask(taskId: number) {
-      try {
-        await deleteTaskInDb(taskId)
-
-        // Remove task from local array
-        const taskIndex = this.tasks.findIndex((t) => t.id === taskId)
-        if (taskIndex !== -1) {
-          const questId = this.tasks[taskIndex].questId
-          this.tasks.splice(taskIndex, 1)
-
-          // Remove taskId from quest's taskIds if assigned
-          if (questId) {
-            const questIndex = this.quests.findIndex((q) => q.id === questId)
-            if (questIndex !== -1) {
-              this.quests[questIndex].taskIds = this.quests[questIndex].taskIds.filter(
-                (id) => id !== taskId,
-              )
-            }
-          }
-        }
-      } catch (err) {
-        this.error = err instanceof Error ? err.message : 'Failed to delete task'
-        console.error('Error deleting task: ', err)
-        throw err
-      }
-    },
-
-    async completeTask(taskId: number) {
-      try {
-        const task = this.tasks.find((t) => t.id === taskId)
-        if (!task) {
-          throw new Error('Task not found in store')
-        }
-
-        // Update database first
-        await markTaskDone(task)
-
-        // Update local task status and completedAt to trigger UI reactivity
-        task.status = TaskStatus.Done
-        task.completedAt = new Date()
-
-        // Update token quantities in the token store to reflect rewards
-        const tokenStore = useTokenStore()
-        if (task.outcomes) {
-          for (const outcome of task.outcomes) {
-            const token = tokenStore.getTokenByType(outcome.token_type)
-            if (token) {
-              const newQuantity = token.quantity + Number(outcome.quantity)
-              tokenStore.updateTokenQuantity(outcome.token_type, newQuantity)
-            }
-          }
-        }
-
-        return task
-      } catch (err) {
-        this.error = err instanceof Error ? err.message : 'Failed to complete task'
-        console.error('Error completing task: ', err)
-        throw err
+    detachTaskFromQuest(taskId: number | string) {
+      const quest = this.quests.find((q) => q.taskIds.includes(taskId))
+      if (quest) {
+        quest.taskIds = quest.taskIds.filter((id) => id !== taskId)
       }
     },
 
@@ -309,24 +201,13 @@ const useQuestStore = defineStore('quests', {
       return state.quests.filter((q) => q.status === 'completed')
     },
 
-    getQuestTasks: (state) => {
-      return (questId: number) => {
-        return state.tasks.filter((t) => t.questId === questId)
-      }
-    },
-
-    unassignedTasks: (state) => {
-      return state.tasks.filter(
-        (t) => (t.questId === undefined || t.questId === null) && t.status !== TaskStatus.Done,
-      )
-    },
-
     questProgress: (state) => {
       return (questId: number) => {
         const quest = state.quests.find((q) => q.id === questId)
         if (!quest) return { completed: 0, total: 0, percentage: 0 }
 
-        const tasks = state.tasks.filter((t) => t.questId === questId)
+        const taskStore = useTaskStore()
+        const tasks = taskStore.tasks.filter((t) => t.questId === questId)
         const total = tasks.length
         const completed = tasks.filter((t) => t.status === 'DONE').length
         const percentage = total > 0 ? Math.round((completed / total) * 100) : 0

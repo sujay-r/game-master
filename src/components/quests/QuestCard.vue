@@ -188,7 +188,7 @@ const emit = defineEmits<{
   (e: 'request-complete', quest: Quest): void
   (e: 'add-task', quest: Quest): void
   (e: 'open-quest', quest: Quest): void
-  (e: 'task-delete', taskId: number): void
+  (e: 'task-delete', taskId: number | string): void
 }>()
 
 const showCompleted = ref(false)

@@ -80,7 +80,7 @@
           v-for="quest in filteredQuests"
           :key="quest.id"
           :quest="quest"
-          :tasks="questStore.getQuestTasks(quest.id)"
+          :tasks="taskStore.getQuestTasks(quest.id)"
           :is-expanded="questStore.isQuestExpanded(quest.id)"
           @toggle-expand="questStore.toggleQuestExpansion(quest.id)"
           @edit="openEditModal"
@@ -117,13 +117,13 @@
         Unassigned Tasks
       </h3>
 
-      <div v-if="questStore.unassignedTasks.length === 0" class="empty-tasks">
+      <div v-if="taskStore.unassignedTasks.length === 0" class="empty-tasks">
         <p>No unassigned tasks</p>
       </div>
 
       <div v-else class="unassigned-tasks-list">
         <Task
-          v-for="task in questStore.unassignedTasks"
+          v-for="task in taskStore.unassignedTasks"
           :key="task.id"
           :task="task"
           :open-modal="taskToOpenId === task.id"
@@ -160,7 +160,7 @@
   <QuestDetailModal
     v-model="isQuestDetailModalOpen"
     :quest="selectedQuestForDetail"
-    :tasks="selectedQuestForDetail ? questStore.getQuestTasks(selectedQuestForDetail.id) : []"
+    :tasks="selectedQuestForDetail ? taskStore.getQuestTasks(selectedQuestForDetail.id) : []"
     @save-notes="handleSaveQuestNotes"
     @save-description="handleSaveQuestDescription"
     @open-task="handleOpenTaskFromQuest"
@@ -197,8 +197,9 @@ import TokenCountDisplay from '@/components/common/TokenCountDisplay.vue'
 import QuickAddButton from '@/components/common/QuickAddButton.vue'
 import TaskCreationModal from '@/components/tasks/TaskCreationModal.vue'
 import { useQuestStore } from '@/stores/quests'
+import { useTaskStore } from '@/stores/taskStore'
+import { useTaskSync } from '@/composables/useTaskSync'
 import { useTokenStore } from '@/stores/resources'
-import { fetchTasksWithOutcomes } from '@/lib/supabase'
 import {
   QuestStatus,
   type Quest,
@@ -211,6 +212,8 @@ import {
 const questsTitleURL = new URL('@/assets/imgs/theQuests.png', import.meta.url).href
 
 const questStore = useQuestStore()
+const taskStore = useTaskStore()
+const taskSync = useTaskSync()
 const tokenStore = useTokenStore()
 
 // Filter and Sort State
@@ -238,7 +241,7 @@ const deletingQuest = ref<Quest | null>(null)
 const questToComplete = ref<Quest | null>(null)
 const showCompleteModal = ref(false)
 const selectedQuestForDetail = ref<Quest | null>(null)
-const taskToOpenId = ref<number | null>(null)
+const taskToOpenId = ref<number | string | null>(null)
 const shouldReopenQuestAfterTask = ref(false)
 const taskCreationInitialQuestId = ref<number | null>(null)
 
@@ -283,8 +286,8 @@ const filteredQuests = computed(() => {
 
 // Methods
 async function loadData() {
-  const tasks = await fetchTasksWithOutcomes()
-  await questStore.loadQuests(tasks)
+  await taskStore.loadTasks()
+  await questStore.loadQuests()
 }
 
 function openCreateModal() {
@@ -322,7 +325,7 @@ async function handleTaskCreated(taskData: {
   outcomes?: TaskOutcomeType[]
 }) {
   try {
-    await questStore.createTask(taskData)
+    await taskSync.createOptimisticTask(taskData)
     taskCreationInitialQuestId.value = null
   } catch (err) {
     console.error('Failed to create task:', err)
@@ -396,9 +399,12 @@ function handleTaskModalClosed() {
   taskToOpenId.value = null
 }
 
-async function handleTaskDelete(taskId: number) {
+async function handleTaskDelete(taskId: number | string) {
   try {
-    await questStore.deleteTask(taskId)
+    const questId = await taskStore.deleteTask(taskId)
+    if (questId) {
+      questStore.detachTaskFromQuest(taskId)
+    }
   } catch (err) {
     console.error('Failed to delete task:', err)
   }
@@ -407,6 +413,7 @@ async function handleTaskDelete(taskId: number) {
 // Lifecycle
 onMounted(() => {
   loadData()
+  taskSync.hydratePendingTasks()
   // Load tokens if not already loaded
   if (tokenStore.tokens.length === 0) {
     tokenStore.fetchTokensFromDb()

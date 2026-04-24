@@ -21,7 +21,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'delete', taskId: number): void
+  (e: 'delete', taskId: number | string): void
 }>()
 
 const typeLabels: Record<QuestType, string> = {
@@ -32,7 +32,7 @@ const typeLabels: Record<QuestType, string> = {
 
 const typeLabel = computed(() => typeLabels[props.quest.type])
 
-function handleDelete(taskId: number) {
+function handleDelete(taskId: number | string) {
   emit('delete', taskId)
 }
 </script>
