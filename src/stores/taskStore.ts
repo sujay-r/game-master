@@ -7,7 +7,7 @@ import {
   deleteTask as deleteTaskInDb,
   markTaskDone,
 } from '@/lib/supabase'
-import { useTokenStore } from '@/stores/resources'
+import { useIconStore, useTokenStore } from '@/stores/resources'
 
 interface TaskStoreState {
   tasks: TaskType[]
@@ -28,6 +28,22 @@ const useTaskStore = defineStore('tasks', {
       this.error = null
       try {
         this.tasks = await fetchTasksWithOutcomes()
+
+        // Bulk-preload all unique outcome icons to prevent per-row storage fetches
+        const iconStore = useIconStore()
+        const iconFilenames = new Set<string>()
+        for (const task of this.tasks) {
+          for (const outcome of task.outcomes || []) {
+            if (outcome.icon_filename) {
+              iconFilenames.add(outcome.icon_filename)
+            }
+          }
+        }
+        await Promise.all(
+          Array.from(iconFilenames).map((filename) =>
+            iconStore.getIcon(filename, '', 15).catch(() => undefined),
+          ),
+        )
       } catch (err) {
         this.error = err instanceof Error ? err.message : 'Failed to load tasks'
         console.error('Error loading tasks: ', err)

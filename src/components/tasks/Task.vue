@@ -568,7 +568,7 @@ watch(
   { deep: true },
 )
 
-onMounted(async () => {
+onMounted(() => {
   taskData.value = structuredClone(toRaw(props.task))
   originalNotes.value = taskData.value.notes || ''
   taskData.value.notes = originalNotes.value
@@ -576,7 +576,7 @@ onMounted(async () => {
   taskData.value.description = originalDescription.value
   isCompleted.value = taskData.value.status === TaskStatus.Done
   if (taskData.value.outcomes) {
-    await loadOutcomeIcons(taskData.value.outcomes)
+    loadOutcomeIcons(taskData.value.outcomes)
     originalOutcomes.value = [...taskData.value.outcomes]
     editedOutcomes.value = [...taskData.value.outcomes]
   }
