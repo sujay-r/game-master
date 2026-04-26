@@ -1,10 +1,10 @@
 import { defineAsyncComponent } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import HUDView from '@/views/HUDView.vue'
+import QuestView from '@/views/QuestView.vue'
+import ShopView from '@/views/ShopView.vue'
 
-const HUDView = defineAsyncComponent(() => import('@/views/HUDView.vue'))
-const QuestView = defineAsyncComponent(() => import('@/views/QuestView.vue'))
-const ShopView = defineAsyncComponent(() => import('@/views/ShopView.vue'))
 const LoginView = defineAsyncComponent(() => import('@/views/LoginView.vue'))
 
 const router = createRouter({
