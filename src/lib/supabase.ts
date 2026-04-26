@@ -230,37 +230,45 @@ async function fetchTasksWithOutcomes() {
     throw error
   }
 
-  const results = await Promise.all(
-    data.map(async (item) => {
-      const { TaskOutcome, ...rest } = item
-      const tokenTypes = TaskOutcome.map((outcome: { token_type: string }) => outcome.token_type)
-      const tokens = await fetchTokens(tokenTypes)
+  if (!data || data.length === 0) {
+    return []
+  }
 
-      return {
-        title: item.title,
-        description: item.description,
-        status: item.status,
-        notes: item.notes,
-        id: item.id,
-        questId: item.quest_id,
-        createdAt: new Date(item.created_at),
-        dueDate: item.due_date ? new Date(item.due_date) : null,
-        completedAt: item.completed_at ? new Date(item.completed_at) : null,
-        outcomes: TaskOutcome.map((outcome: { token_type: string; quantity: number }) => {
-          const token = tokens.find((t) => t.token_type === outcome.token_type)
+  // Collect all unique token types across all tasks to avoid N+1 queries
+  const tokenTypeSet = new Set<string>()
+  for (const item of data) {
+    for (const outcome of item.TaskOutcome as { token_type: string }[]) {
+      tokenTypeSet.add(outcome.token_type)
+    }
+  }
+  const allTokenTypes = Array.from(tokenTypeSet)
 
-          return {
-            token_type: outcome.token_type,
-            quantity: outcome.quantity,
-            icon_filename: token.icon_filename,
-            icon_color: token.icon_color,
-          }
-        }),
-      }
-    }),
-  )
+  // Single Token query for all outcomes
+  const tokens = allTokenTypes.length > 0 ? await fetchTokens(allTokenTypes) : []
 
-  return results
+  return data.map((item) => {
+    const TaskOutcome = item.TaskOutcome as { token_type: string; quantity: number }[]
+    return {
+      title: item.title,
+      description: item.description,
+      status: item.status,
+      notes: item.notes,
+      id: item.id,
+      questId: item.quest_id,
+      createdAt: new Date(item.created_at),
+      dueDate: item.due_date ? new Date(item.due_date) : null,
+      completedAt: item.completed_at ? new Date(item.completed_at) : null,
+      outcomes: TaskOutcome.map((outcome) => {
+        const token = tokens.find((t) => t.token_type === outcome.token_type)
+        return {
+          token_type: outcome.token_type,
+          quantity: outcome.quantity as unknown as string,
+          icon_filename: token?.icon_filename as unknown as string,
+          icon_color: token?.icon_color as unknown as string,
+        }
+      }),
+    }
+  })
 }
 
 async function fetchTaskWithOutcomes(taskId: number) {
@@ -407,7 +415,7 @@ async function fetchQuests(): Promise<Quest[]> {
   try {
     const { data, error } = await client
       .from('Quest')
-      .select('*')
+      .select('*, Task(id)')
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -418,25 +426,20 @@ async function fetchQuests(): Promise<Quest[]> {
       return []
     }
 
-    const quests = await Promise.all(
-      data.map(async (item) => {
-        const { data: tasksData } = await client.from('Task').select('id').eq('quest_id', item.id)
-
-        return {
-          id: item.id,
-          title: item.title,
-          description: item.description,
-          notes: item.notes,
-          type: item.type as QuestType,
-          status: item.status as QuestStatus,
-          createdAt: new Date(item.created_at),
-          updatedAt: new Date(item.updated_at),
-          taskIds: tasksData?.map((t) => t.id) || [],
-        }
-      }),
-    )
-
-    return quests
+    return data.map((item) => {
+      const tasksData = item.Task as { id: number }[] | null
+      return {
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        notes: item.notes,
+        type: item.type as QuestType,
+        status: item.status as QuestStatus,
+        createdAt: new Date(item.created_at),
+        updatedAt: new Date(item.updated_at),
+        taskIds: tasksData?.map((t) => t.id) || [],
+      }
+    })
   } catch (err) {
     console.error('Error fetching quests: ', err)
     throw err
