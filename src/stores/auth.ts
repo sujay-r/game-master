@@ -11,6 +11,7 @@ interface AuthState {
   error: string | null
   email: string
   otpSent: boolean
+  authReady: Promise<void>
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -21,6 +22,7 @@ export const useAuthStore = defineStore('auth', {
     error: null,
     email: '',
     otpSent: false,
+    authReady: Promise.resolve(),
   }),
 
   getters: {
@@ -30,6 +32,11 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     async initializeAuth() {
+      let resolveReady: () => void
+      this.authReady = new Promise((resolve) => {
+        resolveReady = resolve
+      })
+
       this.loading = true
       try {
         const session = await getSession()
@@ -52,6 +59,7 @@ export const useAuthStore = defineStore('auth', {
         console.error('Error initializing auth:', err)
       } finally {
         this.loading = false
+        resolveReady!()
       }
     },
 

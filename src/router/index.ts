@@ -40,10 +40,9 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
-  // Wait for auth initialization if not already done
+  // Wait for auth initialization to complete instead of blind timeout
   if (authStore.loading) {
-    // Wait a bit for auth to initialize
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await authStore.authReady
   }
 
   const requiresAuth = to.meta.requiresAuth
