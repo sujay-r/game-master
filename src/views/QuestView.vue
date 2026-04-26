@@ -44,7 +44,7 @@
     </div>
 
     <!-- Loading State -->
-    <div v-if="questStore.loading" class="loading-state">
+    <div v-if="taskStore.loading || questStore.loading" class="loading-state">
       <p>Loading quests...</p>
     </div>
 
@@ -96,6 +96,7 @@
     <!-- Unassigned Tasks Section -->
     <div
       v-if="
+        !taskStore.loading &&
         !questStore.loading &&
         !questStore.error &&
         (currentFilter === 'all' || currentFilter === 'unassigned')
@@ -286,8 +287,7 @@ const filteredQuests = computed(() => {
 
 // Methods
 async function loadData() {
-  await taskStore.loadTasks()
-  await questStore.loadQuests()
+  await Promise.all([taskStore.loadTasks(), questStore.loadQuests()])
 }
 
 function openCreateModal() {

@@ -50,7 +50,7 @@
   <!-- Tasks Container -->
   <div class="tasks-container">
     <!-- Loading State -->
-    <p v-if="questStore.loading" class="loading-message">Loading tasks...</p>
+    <p v-if="taskStore.loading || questStore.loading" class="loading-message">Loading tasks...</p>
 
     <!-- Error State -->
     <div v-else-if="questStore.error" class="error-message">
@@ -224,12 +224,14 @@ onMounted(() => {
   if (!stats.stats.length) {
     stats.fetchStatsFromDb()
   }
+  const promises: Promise<void>[] = []
   if (!questStore.quests.length) {
-    loadQuests()
+    promises.push(loadQuests())
   }
   if (!taskStore.tasks.length) {
-    taskStore.loadTasks()
+    promises.push(taskStore.loadTasks())
   }
+  Promise.all(promises)
   taskSync.hydratePendingTasks()
   // Load tokens if not already loaded
   if (tokenStore.tokens.length === 0) {

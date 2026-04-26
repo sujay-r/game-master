@@ -9,15 +9,14 @@
 const props = defineProps<{
   text: string
   color?: string
-}>();
+}>()
 
 const emits = defineEmits<{
   (e: 'delete', value: boolean): void
-
-}>();
+}>()
 
 const deletePill = () => {
-  emits('delete', true);
+  emits('delete', true)
 }
 </script>
 
@@ -46,10 +45,10 @@ const deletePill = () => {
 }
 
 .pill-close:hover {
-  color: #DC143C;
+  color: #dc143c;
 }
 
 .pill-close:active {
-  color: #B11B32;
+  color: #b11b32;
 }
 </style>

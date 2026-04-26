@@ -21,7 +21,10 @@
     </div>
 
     <!-- Loading State -->
-    <div v-if="rewardStore.loading" class="loading-state">
+    <div
+      v-if="rewardStore.loading || taskStore.loading || questStore.loading"
+      class="loading-state"
+    >
       <p>Loading rewards...</p>
     </div>
 
@@ -151,8 +154,7 @@ const selectedReward = ref<Reward | null>(null)
 async function loadData() {
   await rewardStore.fetchActiveRewards()
   // Load quests for task creation modal
-  await taskStore.loadTasks()
-  await questStore.loadQuests()
+  await Promise.all([taskStore.loadTasks(), questStore.loadQuests()])
 }
 
 function openCreateModal() {

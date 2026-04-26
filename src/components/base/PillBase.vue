@@ -5,21 +5,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed } from 'vue'
 
 const props = defineProps<{
-  color?: string,
-  fontColor?: string,
-}>();
+  color?: string
+  fontColor?: string
+}>()
 
 const customColors = computed(() => {
   const style: { [key: string]: string } = {}
-  if (props.color) style.background = props.color;
-  if (props.fontColor) style.color = props.fontColor;
+  if (props.color) style.background = props.color
+  if (props.fontColor) style.color = props.fontColor
 
   return style
-});
-
+})
 </script>
 
 <style scoped>
