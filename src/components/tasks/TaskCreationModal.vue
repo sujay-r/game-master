@@ -54,6 +54,15 @@
           <TokenInputBuilder v-model="formData.outcomes" :tokens="tokenStore.tokens" />
         </div>
 
+        <div class="form-group">
+          <label class="form-label">Tags</label>
+          <TagInput
+            v-model="formData.tags"
+            :available-tags="tagsStore.allTags"
+            @create="handleCreateTag"
+          />
+        </div>
+
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" @click="handleCancel">Cancel</button>
           <button type="submit" class="btn btn-primary" :disabled="!formData.title.trim()">
@@ -71,9 +80,11 @@ import Modal from '@/components/base/Modal.vue'
 const LiveEditor = defineAsyncComponent(() => import('@/components/common/LiveEditor.vue'))
 import TaskAssignmentDropdown from '@/components/tasks/TaskAssignmentDropdown.vue'
 import TokenInputBuilder from '@/components/forms/TokenInputBuilder.vue'
-import type { Quest, TaskStatus, TaskOutcomeType } from '@/types/common'
+import type { Quest, TaskStatus, TaskOutcomeType, Tag } from '@/types/common'
 import { useTokenStore } from '@/stores/resources'
+import { useTagsStore } from '@/stores/tags'
 import { stripHtml } from '@/utils/html'
+import TagInput from '@/components/tags/TagInput.vue'
 
 interface FormData {
   title: string
@@ -82,6 +93,7 @@ interface FormData {
   dueDate: string
   questId: number | null
   outcomes: TaskOutcomeType[]
+  tags: Tag[]
 }
 
 const props = defineProps<{
@@ -102,6 +114,7 @@ const emit = defineEmits<{
       dueDate: Date | null
       questId?: number
       outcomes?: TaskOutcomeType[]
+      tagIds?: number[]
     },
   ): void
   (e: 'cancelled'): void
@@ -109,6 +122,7 @@ const emit = defineEmits<{
 
 const visible = ref(props.modelValue)
 const tokenStore = useTokenStore()
+const tagsStore = useTagsStore()
 
 const defaultFormData: FormData = {
   title: '',
@@ -117,6 +131,7 @@ const defaultFormData: FormData = {
   dueDate: '',
   questId: null,
   outcomes: [],
+  tags: [],
 }
 
 const formData = ref<FormData>({ ...defaultFormData })
@@ -131,6 +146,7 @@ watch(
         ...defaultFormData,
         questId: props.initialQuestId ?? null,
         outcomes: [],
+        tags: [],
       }
     }
   },
@@ -159,10 +175,20 @@ function handleSubmit() {
     dueDate: formData.value.dueDate ? new Date(formData.value.dueDate) : null,
     questId: formData.value.questId ?? undefined,
     outcomes: formData.value.outcomes.length > 0 ? formData.value.outcomes : undefined,
+    tagIds: formData.value.tags.length > 0 ? formData.value.tags.map((t) => t.id) : undefined,
   }
 
   emit('created', taskData)
   visible.value = false
+}
+
+async function handleCreateTag(name: string) {
+  try {
+    const tag = await tagsStore.ensureTag(name)
+    formData.value.tags.push(tag)
+  } catch (err) {
+    console.error('Error creating tag:', err)
+  }
 }
 </script>
 

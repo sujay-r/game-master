@@ -10,6 +10,7 @@ import {
   type TaskOutcomeType,
   type Reward,
   type RewardCost,
+  type Tag,
 } from '@/types/common'
 import { createClient, type AuthChangeEvent, type Session } from '@supabase/supabase-js'
 
@@ -246,6 +247,10 @@ async function fetchTasksWithOutcomes() {
   // Single Token query for all outcomes
   const tokens = allTokenTypes.length > 0 ? await fetchTokens(allTokenTypes) : []
 
+  // Batch fetch tags for all tasks
+  const taskIds = data.map((item) => item.id as number)
+  const tagsMap = await fetchTagsForTasks(taskIds)
+
   return data.map((item) => {
     const TaskOutcome = item.TaskOutcome as { token_type: string; quantity: number }[]
     return {
@@ -267,6 +272,7 @@ async function fetchTasksWithOutcomes() {
           icon_color: token?.icon_color as unknown as string,
         }
       }),
+      tags: tagsMap.get(item.id as number) || [],
     }
   })
 }
@@ -426,6 +432,10 @@ async function fetchQuests(): Promise<Quest[]> {
       return []
     }
 
+    // Batch fetch tags for all quests
+    const questIds = data.map((item) => item.id as number)
+    const tagsMap = await fetchTagsForQuests(questIds)
+
     return data.map((item) => {
       const tasksData = item.Task as { id: number }[] | null
       return {
@@ -438,6 +448,7 @@ async function fetchQuests(): Promise<Quest[]> {
         createdAt: new Date(item.created_at),
         updatedAt: new Date(item.updated_at),
         taskIds: tasksData?.map((t) => t.id) || [],
+        tags: tagsMap.get(item.id as number) || [],
       }
     })
   } catch (err) {
@@ -451,6 +462,7 @@ async function createQuest(questData: {
   description?: string
   notes?: string
   type: QuestType
+  tagIds?: number[]
 }): Promise<Quest> {
   try {
     const now = new Date().toISOString()
@@ -472,6 +484,11 @@ async function createQuest(questData: {
       throw error
     }
 
+    // Insert tags if provided
+    if (questData.tagIds && questData.tagIds.length > 0) {
+      await setTagsForQuest(data.id, questData.tagIds)
+    }
+
     return {
       id: data.id,
       title: data.title,
@@ -482,6 +499,7 @@ async function createQuest(questData: {
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at),
       taskIds: [],
+      tags: [],
     }
   } catch (err) {
     console.error('Error creating quest: ', err)
@@ -619,6 +637,7 @@ async function insertTask(taskData: {
   dueDate: Date | null
   questId?: number
   outcomes?: TaskOutcomeType[]
+  tagIds?: number[]
 }): Promise<TaskType> {
   try {
     const now = new Date().toISOString()
@@ -647,6 +666,11 @@ async function insertTask(taskData: {
       await insertTaskOutcomes(data.id, taskData.outcomes)
     }
 
+    // Insert tags if provided
+    if (taskData.tagIds && taskData.tagIds.length > 0) {
+      await setTagsForTask(data.id, taskData.tagIds)
+    }
+
     return {
       title: data.title,
       description: data.description,
@@ -658,6 +682,7 @@ async function insertTask(taskData: {
       dueDate: data.due_date ? new Date(data.due_date) : null,
       completedAt: data.completed_at ? new Date(data.completed_at) : null,
       outcomes: taskData.outcomes || [],
+      tags: [],
     }
   } catch (err) {
     console.error('Error inserting task: ', err)
@@ -982,6 +1007,238 @@ async function deleteReward(rewardId: number): Promise<void> {
   }
 }
 
+// Tag functions
+async function fetchAllTags(): Promise<Tag[]> {
+  try {
+    const { data, error } = await client.from('Tag').select('*').order('name')
+    if (error) {
+      throw error
+    }
+    return (data || []).map((t) => ({
+      id: t.id,
+      name: t.name,
+      color: t.color,
+    }))
+  } catch (err) {
+    console.error('Error fetching tags: ', err)
+    throw err
+  }
+}
+
+async function createTag(name: string, color?: string): Promise<Tag> {
+  const normalized = name.trim().toLowerCase()
+  if (!normalized) {
+    throw new Error('Tag name cannot be empty')
+  }
+  try {
+    const { data, error } = await client
+      .from('Tag')
+      .insert({ name: normalized, color: color || '#32a287' })
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      color: data.color,
+    }
+  } catch (err) {
+    console.error('Error creating tag: ', err)
+    throw err
+  }
+}
+
+async function findOrCreateTag(name: string, color?: string): Promise<Tag> {
+  const normalized = name.trim().toLowerCase()
+  if (!normalized) {
+    throw new Error('Tag name cannot be empty')
+  }
+  try {
+    const { data, error } = await client.from('Tag').select('*').eq('name', normalized).single()
+    if (error && error.code !== 'PGRST116') {
+      throw error
+    }
+    if (data) {
+      return { id: data.id, name: data.name, color: data.color }
+    }
+    return createTag(normalized, color)
+  } catch (err) {
+    console.error('Error finding or creating tag: ', err)
+    throw err
+  }
+}
+
+async function updateTag(tagId: number, updates: { name?: string; color?: string }): Promise<Tag> {
+  try {
+    const payload: Record<string, unknown> = {}
+    if (updates.name !== undefined) {
+      const normalized = updates.name.trim().toLowerCase()
+      if (!normalized) {
+        throw new Error('Tag name cannot be empty')
+      }
+      payload.name = normalized
+    }
+    if (updates.color !== undefined) {
+      payload.color = updates.color
+    }
+
+    const { data, error } = await client
+      .from('Tag')
+      .update(payload)
+      .eq('id', tagId)
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      color: data.color,
+    }
+  } catch (err) {
+    console.error('Error updating tag: ', err)
+    throw err
+  }
+}
+
+async function deleteTag(tagId: number): Promise<void> {
+  try {
+    const { error } = await client.from('Tag').delete().eq('id', tagId)
+    if (error) {
+      throw error
+    }
+  } catch (err) {
+    console.error('Error deleting tag: ', err)
+    throw err
+  }
+}
+
+async function fetchTagsForTasks(taskIds: number[]): Promise<Map<number, Tag[]>> {
+  if (taskIds.length === 0) {
+    return new Map()
+  }
+  try {
+    const { data, error } = await client
+      .from('TaskTag')
+      .select('task_id, Tag(*)')
+      .in('task_id', taskIds)
+
+    if (error) {
+      throw error
+    }
+
+    const map = new Map<number, Tag[]>()
+    for (const row of data || []) {
+      const taskId = row.task_id as number
+      const tag = (row.Tag as unknown as { id: number; name: string; color: string })
+      if (!map.has(taskId)) {
+        map.set(taskId, [])
+      }
+      map.get(taskId)!.push({ id: tag.id, name: tag.name, color: tag.color })
+    }
+    return map
+  } catch (err) {
+    console.error('Error fetching tags for tasks: ', err)
+    throw err
+  }
+}
+
+async function fetchTagsForQuests(questIds: number[]): Promise<Map<number, Tag[]>> {
+  if (questIds.length === 0) {
+    return new Map()
+  }
+  try {
+    const { data, error } = await client
+      .from('QuestTag')
+      .select('quest_id, Tag(*)')
+      .in('quest_id', questIds)
+
+    if (error) {
+      throw error
+    }
+
+    const map = new Map<number, Tag[]>()
+    for (const row of data || []) {
+      const questId = row.quest_id as number
+      const tag = (row.Tag as unknown as { id: number; name: string; color: string })
+      if (!map.has(questId)) {
+        map.set(questId, [])
+      }
+      map.get(questId)!.push({ id: tag.id, name: tag.name, color: tag.color })
+    }
+    return map
+  } catch (err) {
+    console.error('Error fetching tags for quests: ', err)
+    throw err
+  }
+}
+
+async function setTagsForTask(taskId: number, tagIds: number[]): Promise<void> {
+  try {
+    await client.from('TaskTag').delete().eq('task_id', taskId)
+    if (tagIds.length > 0) {
+      const rows = tagIds.map((tagId) => ({ task_id: taskId, tag_id: tagId }))
+      const { error } = await client.from('TaskTag').insert(rows)
+      if (error) {
+        throw error
+      }
+    }
+  } catch (err) {
+    console.error('Error setting tags for task: ', err)
+    throw err
+  }
+}
+
+async function setTagsForQuest(questId: number, tagIds: number[]): Promise<void> {
+  try {
+    await client.from('QuestTag').delete().eq('quest_id', questId)
+    if (tagIds.length > 0) {
+      const rows = tagIds.map((tagId) => ({ quest_id: questId, tag_id: tagId }))
+      const { error } = await client.from('QuestTag').insert(rows)
+      if (error) {
+        throw error
+      }
+    }
+  } catch (err) {
+    console.error('Error setting tags for quest: ', err)
+    throw err
+  }
+}
+
+async function fetchTagUsageCounts(): Promise<Map<number, number>> {
+  try {
+    const [{ data: taskData, error: taskError }, { data: questData, error: questError }] =
+      await Promise.all([
+        client.from('TaskTag').select('tag_id'),
+        client.from('QuestTag').select('tag_id'),
+      ])
+
+    if (taskError) throw taskError
+    if (questError) throw questError
+
+    const counts = new Map<number, number>()
+    for (const row of taskData || []) {
+      const id = row.tag_id as number
+      counts.set(id, (counts.get(id) || 0) + 1)
+    }
+    for (const row of questData || []) {
+      const id = row.tag_id as number
+      counts.set(id, (counts.get(id) || 0) + 1)
+    }
+    return counts
+  } catch (err) {
+    console.error('Error fetching tag usage counts: ', err)
+    throw err
+  }
+}
+
 export {
   client,
   fetchStatsWithEffects,
@@ -1022,4 +1279,14 @@ export {
   updateReward,
   updateRewardCosts,
   deleteReward,
+  fetchAllTags,
+  createTag,
+  findOrCreateTag,
+  updateTag,
+  deleteTag,
+  fetchTagsForTasks,
+  fetchTagsForQuests,
+  setTagsForTask,
+  setTagsForQuest,
+  fetchTagUsageCounts,
 }

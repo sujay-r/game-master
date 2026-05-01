@@ -27,6 +27,22 @@
           </select>
         </div>
 
+        <!-- Manage Tags Button -->
+        <button class="manage-tags-button" @click="isTagManagerOpen = true" title="Manage tags">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            height="18px"
+            viewBox="0 -960 960 960"
+            width="18px"
+            fill="currentColor"
+          >
+            <path
+              d="M120-160v-160h160v160H120Zm240 0v-160h480v160H360ZM120-400v-160h160v160H120Zm240 0v-160h480v160H360ZM120-640v-160h160v160H120Zm240 0v-160h480v160H360Z"
+            />
+          </svg>
+          Tags
+        </button>
+
         <!-- New Quest Button -->
         <button class="new-quest-button" @click="openCreateModal">
           <svg
@@ -183,6 +199,9 @@
     @confirm="handleCompleteQuest"
     @cancel="showCompleteModal = false"
   />
+
+  <!-- Tag Manager Modal -->
+  <TagManagerModal v-model="isTagManagerOpen" />
 </template>
 
 <script setup lang="ts">
@@ -197,10 +216,12 @@ import CompleteQuestModal from '@/components/quests/CompleteQuestModal.vue'
 import TokenCountDisplay from '@/components/common/TokenCountDisplay.vue'
 import QuickAddButton from '@/components/common/QuickAddButton.vue'
 import TaskCreationModal from '@/components/tasks/TaskCreationModal.vue'
+import TagManagerModal from '@/components/tags/TagManagerModal.vue'
 import { useQuestStore } from '@/stores/quests'
 import { useTaskStore } from '@/stores/taskStore'
 import { useTaskSync } from '@/composables/useTaskSync'
 import { useTokenStore } from '@/stores/resources'
+import { useTagsStore } from '@/stores/tags'
 import {
   QuestStatus,
   type Quest,
@@ -216,6 +237,7 @@ const questStore = useQuestStore()
 const taskStore = useTaskStore()
 const taskSync = useTaskSync()
 const tokenStore = useTokenStore()
+const tagsStore = useTagsStore()
 
 // Filter and Sort State
 const currentFilter = ref<'all' | 'main' | 'side' | 'lifeAdmin' | 'unassigned'>('all')
@@ -237,6 +259,7 @@ const isQuestModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 const isQuestDetailModalOpen = ref(false)
 const isTaskCreationModalOpen = ref(false)
+const isTagManagerOpen = ref(false)
 const editingQuest = ref<Quest | undefined>(undefined)
 const deletingQuest = ref<Quest | null>(null)
 const questToComplete = ref<Quest | null>(null)
@@ -323,6 +346,7 @@ async function handleTaskCreated(taskData: {
   dueDate: Date | null
   questId?: number
   outcomes?: TaskOutcomeType[]
+  tagIds?: number[]
 }) {
   try {
     await taskSync.createOptimisticTask(taskData)
@@ -336,11 +360,17 @@ function handleTaskCreationCancelled() {
   taskCreationInitialQuestId.value = null
 }
 
-async function handleSaveQuest(data: { title: string; description: string; type: QuestType }) {
+async function handleSaveQuest(data: { title: string; description: string; type: QuestType; tagIds?: number[] }) {
   if (editingQuest.value) {
     await questStore.updateQuest(editingQuest.value.id, data)
+    if (data.tagIds !== undefined) {
+      await questStore.setQuestTags(editingQuest.value.id, data.tagIds)
+    }
   } else {
-    await questStore.createQuest(data)
+    const newQuest = await questStore.createQuest(data)
+    if (data.tagIds && data.tagIds.length > 0 && newQuest.id) {
+      await questStore.setQuestTags(newQuest.id, data.tagIds)
+    }
   }
 }
 
@@ -417,6 +447,10 @@ onMounted(() => {
   // Load tokens if not already loaded
   if (tokenStore.tokens.length === 0) {
     tokenStore.fetchTokensFromDb()
+  }
+  // Load tags if not already loaded
+  if (tagsStore.tags.length === 0) {
+    tagsStore.loadTags()
   }
 })
 </script>
@@ -515,6 +549,32 @@ onMounted(() => {
 }
 
 .new-quest-button:active {
+  transform: translateY(0);
+}
+
+.manage-tags-button {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  color: #666;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-family: Trajan, 'Perpetua', serif;
+  font-size: 0.8em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.manage-tags-button:hover {
+  border-color: #32a287;
+  color: #32a287;
+  transform: translateY(-1px);
+}
+
+.manage-tags-button:active {
   transform: translateY(0);
 }
 

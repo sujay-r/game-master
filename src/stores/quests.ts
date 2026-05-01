@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { Quest, QuestType } from '@/types/common'
+import type { Quest, QuestType, Tag } from '@/types/common'
 import { QuestStatus } from '@/types/common'
 import {
   fetchQuests,
@@ -9,8 +9,10 @@ import {
   completeQuest as completeQuestInDb,
   assignTaskToQuest as assignTaskToQuestInDb,
   removeTaskFromQuest as removeTaskFromQuestInDb,
+  setTagsForQuest,
 } from '@/lib/supabase'
 import { useTaskStore } from '@/stores/taskStore'
+import { useTagsStore } from '@/stores/tags'
 
 interface QuestStoreState {
   quests: Quest[]
@@ -43,7 +45,7 @@ const useQuestStore = defineStore('quests', {
       }
     },
 
-    async createQuest(questData: { title: string; description?: string; type: QuestType }) {
+    async createQuest(questData: { title: string; description?: string; type: QuestType; tagIds?: number[] }) {
       try {
         const newQuest = await createQuestInDb(questData)
         this.quests.unshift(newQuest)
@@ -51,6 +53,21 @@ const useQuestStore = defineStore('quests', {
       } catch (err) {
         this.error = err instanceof Error ? err.message : 'Failed to create quest'
         console.error('Error creating quest: ', err)
+        throw err
+      }
+    },
+
+    async setQuestTags(questId: number, tagIds: number[]) {
+      try {
+        await setTagsForQuest(questId, tagIds)
+        const quest = this.quests.find((q) => q.id === questId)
+        if (quest) {
+          const tagsStore = useTagsStore()
+          quest.tags = tagIds.map((id) => tagsStore.getTagById(id)).filter(Boolean) as Tag[]
+        }
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to set quest tags'
+        console.error('Error setting quest tags: ', err)
         throw err
       }
     },

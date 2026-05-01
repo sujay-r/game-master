@@ -1,13 +1,15 @@
 import { defineStore } from 'pinia'
-import type { TaskType, TaskOutcomeType } from '@/types/common'
+import type { TaskType, TaskOutcomeType, Tag } from '@/types/common'
 import { TaskStatus, SyncStatus } from '@/types/common'
 import {
   fetchTasksWithOutcomes,
   insertTask,
   deleteTask as deleteTaskInDb,
   markTaskDone,
+  setTagsForTask,
 } from '@/lib/supabase'
 import { useIconStore, useTokenStore } from '@/stores/resources'
+import { useTagsStore } from '@/stores/tags'
 
 interface TaskStoreState {
   tasks: TaskType[]
@@ -60,6 +62,7 @@ const useTaskStore = defineStore('tasks', {
       dueDate: Date | null
       questId?: number
       outcomes?: TaskOutcomeType[]
+      tagIds?: number[]
     }): Promise<TaskType> {
       try {
         const newTask = await insertTask(taskData)
@@ -68,6 +71,21 @@ const useTaskStore = defineStore('tasks', {
       } catch (err) {
         this.error = err instanceof Error ? err.message : 'Failed to create task'
         console.error('Error creating task: ', err)
+        throw err
+      }
+    },
+
+    async setTaskTags(taskId: number, tagIds: number[]) {
+      try {
+        await setTagsForTask(taskId, tagIds)
+        const task = this.tasks.find((t) => t.id === taskId)
+        if (task) {
+          const tagsStore = useTagsStore()
+          task.tags = tagIds.map((id) => tagsStore.getTagById(id)).filter(Boolean) as Tag[]
+        }
+      } catch (err) {
+        this.error = err instanceof Error ? err.message : 'Failed to set task tags'
+        console.error('Error setting task tags: ', err)
         throw err
       }
     },

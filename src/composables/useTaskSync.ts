@@ -19,6 +19,7 @@ interface SyncEntry {
     notes?: string
     dueDate?: string
     outcomes?: TaskOutcomeType[]
+    tagIds?: number[]
   }
   queuedAt: string
   attemptCount: number
@@ -107,6 +108,7 @@ function buildOptimisticTask(entry: SyncEntry): TaskType {
     createdAt: new Date(entry.queuedAt),
     completedAt: null,
     outcomes: entry.payload.outcomes,
+    tags: [],
     _syncStatus: SyncStatusEnum.Pending,
   }
 }
@@ -134,6 +136,7 @@ async function doImmediateSync(taskData: SyncEntry['payload']): Promise<TaskType
     dueDate: taskData.dueDate ? new Date(taskData.dueDate) : null,
     questId: taskData.questId,
     outcomes: taskData.outcomes,
+    tagIds: taskData.tagIds,
   })
 }
 
@@ -176,6 +179,7 @@ interface CreateTaskInput {
   dueDate: Date | null
   questId?: number
   outcomes?: TaskOutcomeType[]
+  tagIds?: number[]
 }
 
 export function useTaskSync() {
@@ -196,6 +200,7 @@ export function useTaskSync() {
       createdAt: new Date(),
       completedAt: null,
       outcomes: taskData.outcomes,
+      tags: [],
       _syncStatus: SyncStatusEnum.Pending,
     }
 
@@ -224,6 +229,7 @@ export function useTaskSync() {
       questId: taskData.questId,
       dueDate: taskData.dueDate?.toISOString(),
       outcomes: taskData.outcomes,
+      tagIds: taskData.tagIds,
     }
 
     try {
@@ -288,6 +294,7 @@ export function useTaskSync() {
       questId: task.questId,
       dueDate: task.dueDate?.toISOString(),
       outcomes: task.outcomes,
+      tagIds: task.tags?.map((t) => t.id),
     }
 
     try {

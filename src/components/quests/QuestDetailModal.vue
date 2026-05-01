@@ -11,6 +11,7 @@
         <span class="pill" :class="questData.type">{{ typeLabel }} Quest</span>
         <span class="pill progress">{{ progress.completed }}/{{ progress.total }} Tasks</span>
         <span class="pill status" :class="questData.status">{{ statusLabel }}</span>
+        <TagPill v-for="tag in questData.tags" :key="tag.id" :tag="tag" />
       </div>
 
       <!-- Description Section -->
@@ -119,6 +120,7 @@
 import { computed, nextTick, ref, watch, onMounted, toRaw, defineAsyncComponent } from 'vue'
 import Modal from '@/components/base/Modal.vue'
 const LiveEditor = defineAsyncComponent(() => import('@/components/common/LiveEditor.vue'))
+import TagPill from '@/components/tags/TagPill.vue'
 import type { Quest, QuestType, TaskType } from '@/types/common'
 import { QuestStatus, TaskStatus } from '@/types/common'
 import { updateQuestDescription } from '@/lib/supabase'

@@ -39,6 +39,7 @@ export interface Quest {
   createdAt: Date
   updatedAt: Date
   taskIds: (number | string)[]
+  tags?: Tag[]
 }
 
 export interface Icon {
@@ -84,6 +85,12 @@ export interface Reward {
   costs: RewardCost[]
 }
 
+export interface Tag {
+  id: number
+  name: string
+  color: string
+}
+
 export interface TaskType {
   title: string
   description: string
@@ -96,4 +103,5 @@ export interface TaskType {
   id?: number | string
   questId?: number
   _syncStatus?: SyncStatus
+  tags?: Tag[]
 }

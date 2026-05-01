@@ -38,6 +38,15 @@
         </select>
       </div>
 
+      <div class="form-group">
+        <label>Tags</label>
+        <TagInput
+          v-model="formData.tags"
+          :available-tags="tagsStore.allTags"
+          @create="handleCreateTag"
+        />
+      </div>
+
       <div class="form-actions">
         <button type="button" class="button cancel" @click="cancel">Cancel</button>
         <button type="submit" class="button save" :disabled="!isValid">Save</button>
@@ -48,9 +57,11 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import type { Quest, QuestType } from '@/types/common'
+import type { Quest, QuestType, Tag } from '@/types/common'
 import { QuestType as QuestTypeEnum } from '@/types/common'
 import Modal from '@/components/base/Modal.vue'
+import TagInput from '@/components/tags/TagInput.vue'
+import { useTagsStore } from '@/stores/tags'
 
 const props = defineProps<{
   modelValue: boolean
@@ -59,8 +70,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'save', data: { title: string; description: string; type: QuestType }): void
+  (e: 'save', data: { title: string; description: string; type: QuestType; tagIds?: number[] }): void
 }>()
+
+const tagsStore = useTagsStore()
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -73,6 +86,7 @@ const formData = ref({
   title: '',
   description: '',
   type: QuestTypeEnum.Main,
+  tags: [] as Tag[],
 })
 
 const validationError = ref('')
@@ -90,12 +104,14 @@ watch(
           title: props.quest.title,
           description: props.quest.description || '',
           type: props.quest.type,
+          tags: props.quest.tags ? [...props.quest.tags] : [],
         }
       } else {
         formData.value = {
           title: '',
           description: '',
           type: QuestTypeEnum.Main,
+          tags: [],
         }
       }
       validationError.value = ''
@@ -127,9 +143,19 @@ function save() {
     title: formData.value.title.trim(),
     description: formData.value.description.trim(),
     type: formData.value.type,
+    tagIds: formData.value.tags.length > 0 ? formData.value.tags.map((t) => t.id) : undefined,
   })
 
   close()
+}
+
+async function handleCreateTag(name: string) {
+  try {
+    const tag = await tagsStore.ensureTag(name)
+    formData.value.tags.push(tag)
+  } catch (err) {
+    console.error('Error creating tag:', err)
+  }
 }
 
 function cancel() {

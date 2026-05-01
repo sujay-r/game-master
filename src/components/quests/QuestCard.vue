@@ -77,6 +77,10 @@
         {{ quest.description }}
       </div>
 
+      <div v-if="quest.tags && quest.tags.length > 0" class="quest-tag-pills">
+        <TagPill v-for="tag in quest.tags" :key="tag.id" :tag="tag" />
+      </div>
+
       <!-- Active Tasks -->
       <div v-if="activeTasks.length > 0" class="tasks-container">
         <Task
@@ -173,6 +177,7 @@
 import { computed, ref } from 'vue'
 import type { Quest, TaskType, QuestType } from '@/types/common'
 import Task from '@/components/tasks/Task.vue'
+import TagPill from '@/components/tags/TagPill.vue'
 
 const props = defineProps<{
   quest: Quest
@@ -495,6 +500,13 @@ const completedTasks = computed(() => {
   background: rgba(0, 0, 0, 0.03);
   border-radius: 8px;
   line-height: 1.5;
+}
+
+.quest-tag-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
 }
 
 .tasks-container {

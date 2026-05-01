@@ -53,6 +53,10 @@
       <span>{{ questName }}</span>
     </div>
 
+    <div v-if="taskData.tags && taskData.tags.length > 0" class="tag-pills-row">
+      <TagPill v-for="tag in taskData.tags" :key="tag.id" :tag="tag" />
+    </div>
+
     <div v-if="taskData._syncStatus === 'pending'" class="sync-indicator pending">
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -143,6 +147,15 @@
       />
     </div>
 
+    <div v-if="tagsStore.allTags.length > 0 || taskData.tags?.length" class="tags-section">
+      <label class="section-label">Tags</label>
+      <TagInput
+        v-model="editedTags"
+        :available-tags="tagsStore.allTags"
+        @create="handleCreateTag"
+      />
+    </div>
+
     <div v-if="questStore.quests.length > 0" class="assignment-section">
       <TaskAssignmentDropdown
         v-model="assignedQuestId"
@@ -216,11 +229,14 @@ import DatePill from '@/components/common/DatePill.vue'
 import TaskAssignmentDropdown from '@/components/tasks/TaskAssignmentDropdown.vue'
 import DeleteTaskModal from '@/components/tasks/DeleteTaskModal.vue'
 import TokenInputBuilder from '@/components/forms/TokenInputBuilder.vue'
-import type { TaskType, TaskOutcomeType } from '@/types/common'
+import TagInput from '@/components/tags/TagInput.vue'
+import TagPill from '@/components/tags/TagPill.vue'
+import type { TaskType, TaskOutcomeType, Tag } from '@/types/common'
 import { TaskStatus } from '@/types/common'
 import { useIconStore, useTokenStore } from '@/stores/resources'
 import { useQuestStore } from '@/stores/quests'
 import { useTaskStore } from '@/stores/taskStore'
+import { useTagsStore } from '@/stores/tags'
 import { useTaskSync } from '@/composables/useTaskSync'
 import { useMobile } from '@/composables/useMobile'
 import {
@@ -229,6 +245,7 @@ import {
   updateTaskNotes,
   updateTaskDescription,
   updateTaskOutcomes,
+  setTagsForTask,
 } from '@/lib/supabase'
 
 // TODO: Fix issue where size of task component changes when inline editing is active.
@@ -255,6 +272,8 @@ const originalNotes = ref<string>('')
 const originalDescription = ref<string>('')
 const originalOutcomes = ref<TaskOutcomeType[]>([])
 const editedOutcomes = ref<TaskOutcomeType[]>([])
+const originalTags = ref<Tag[]>([])
+const editedTags = ref<Tag[]>([])
 const taskOpen = ref<boolean>(false)
 const isCompleted = ref<boolean>(false)
 
@@ -275,6 +294,7 @@ const icons = useIconStore()
 const questStore = useQuestStore()
 const taskStore = useTaskStore()
 const tokenStore = useTokenStore()
+const tagsStore = useTagsStore()
 const taskSync = useTaskSync()
 const { isMobile } = useMobile()
 
@@ -334,8 +354,9 @@ const hasUnsavedChanges = computed(() => {
   const descriptionChanged = taskData.value.description !== originalDescription.value
   const outcomesChanged =
     JSON.stringify(editedOutcomes.value) !== JSON.stringify(originalOutcomes.value)
+  const tagsChanged = JSON.stringify(editedTags.value) !== JSON.stringify(originalTags.value)
   const titleChanged = isEditingModalTitle.value
-  return notesChanged || descriptionChanged || outcomesChanged || titleChanged
+  return notesChanged || descriptionChanged || outcomesChanged || tagsChanged || titleChanged
 })
 
 function onDueDateChanged(newDate: Date | null) {
@@ -476,6 +497,26 @@ async function saveOutcomes() {
   }
 }
 
+async function saveTags() {
+  if (!taskData.value?.id || typeof taskData.value.id !== 'number') {
+    console.error('Cannot save tags - task ID not found')
+    return
+  }
+
+  if (JSON.stringify(editedTags.value) === JSON.stringify(originalTags.value)) {
+    return
+  }
+
+  try {
+    const tagIds = editedTags.value.map((t) => t.id)
+    await setTagsForTask(taskData.value.id, tagIds)
+    originalTags.value = [...editedTags.value]
+    taskData.value.tags = [...editedTags.value]
+  } catch (err) {
+    console.error('Error saving tags:', err)
+  }
+}
+
 async function saveAllChanges() {
   if (!taskData.value?.id) {
     console.error('Cannot save changes - task ID not found')
@@ -497,6 +538,11 @@ async function saveAllChanges() {
     if (JSON.stringify(editedOutcomes.value) !== JSON.stringify(originalOutcomes.value)) {
       await saveOutcomes()
     }
+
+    // Save tags if changed
+    if (JSON.stringify(editedTags.value) !== JSON.stringify(originalTags.value)) {
+      await saveTags()
+    }
   } catch (err) {
     console.error('Error saving changes:', err)
   }
@@ -507,6 +553,7 @@ function discardChanges() {
     taskData.value.notes = originalNotes.value
     taskData.value.description = originalDescription.value
     editedOutcomes.value = [...originalOutcomes.value]
+    editedTags.value = [...originalTags.value]
   }
 }
 
@@ -537,6 +584,15 @@ async function handleDiscard() {
   if (typeof taskData.value?.id === 'string') {
     await taskSync.discardOptimisticTask(taskData.value.id)
     taskOpen.value = false
+  }
+}
+
+async function handleCreateTag(name: string) {
+  try {
+    const tag = await tagsStore.ensureTag(name)
+    editedTags.value.push(tag)
+  } catch (err) {
+    console.error('Error creating tag:', err)
   }
 }
 
@@ -580,6 +636,9 @@ onMounted(() => {
     originalOutcomes.value = [...taskData.value.outcomes]
     editedOutcomes.value = [...taskData.value.outcomes]
   }
+  const taskTags = taskData.value.tags || []
+  originalTags.value = [...taskTags]
+  editedTags.value = [...taskTags]
 })
 </script>
 
@@ -673,6 +732,31 @@ onMounted(() => {
   grid-row: 2;
   justify-self: start;
   margin-top: 0.5rem;
+}
+
+.tag-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  grid-column: 2 / -1;
+  grid-row: 3;
+  justify-self: start;
+  margin-top: 0.25rem;
+}
+
+.tags-section {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+}
+
+.tags-section .section-label {
+  display: block;
+  font-weight: 600;
+  color: #424242;
+  font-size: 0.9em;
+  margin-bottom: 0.5rem;
 }
 
 .assignment-section {
@@ -927,6 +1011,12 @@ onMounted(() => {
 
   .quest-badge {
     display: none;
+  }
+
+  .tag-pills-row {
+    grid-column: 2 / -1;
+    grid-row: 2;
+    margin-top: 0.25rem;
   }
 }
 
