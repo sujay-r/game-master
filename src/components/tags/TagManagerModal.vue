@@ -46,13 +46,8 @@
             </span>
             <button
               class="delete-btn"
-              :disabled="tagsStore.isTagInUse(tag.id)"
-              :title="
-                tagsStore.isTagInUse(tag.id)
-                  ? 'Tag is in use and cannot be deleted'
-                  : 'Delete tag'
-              "
-              @click="tagsStore.removeTag(tag.id)"
+              title="Delete tag"
+              @click="handleDelete(tag.id)"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -70,6 +65,7 @@
         </div>
       </div>
 
+      <!-- TODO: Replace preset color palette with a proper color picker (e.g. <input type="color"> or a library) -->
       <!-- Inline color picker popover -->
       <div v-if="pickingTag" class="color-picker-popover">
         <div class="color-grid">
@@ -93,6 +89,8 @@ import { ref, computed, watch, nextTick } from 'vue'
 import type { Tag } from '@/types/common'
 import Modal from '@/components/base/Modal.vue'
 import { useTagsStore } from '@/stores/tags'
+import { useTaskStore } from '@/stores/taskStore'
+import { useQuestStore } from '@/stores/quests'
 
 const props = defineProps<{
   modelValue: boolean
@@ -103,6 +101,8 @@ const emit = defineEmits<{
 }>()
 
 const tagsStore = useTagsStore()
+const taskStore = useTaskStore()
+const questStore = useQuestStore()
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -160,6 +160,25 @@ async function applyColor(color: string) {
     console.error('Failed to recolor tag:', err)
   }
   pickingTag.value = null
+}
+
+async function handleDelete(tagId: number) {
+  try {
+    await tagsStore.removeTag(tagId)
+    // Clean up stale local references so TagPills disappear immediately
+    for (const task of taskStore.tasks) {
+      if (task.tags) {
+        task.tags = task.tags.filter((t) => t.id !== tagId)
+      }
+    }
+    for (const quest of questStore.quests) {
+      if (quest.tags) {
+        quest.tags = quest.tags.filter((t) => t.id !== tagId)
+      }
+    }
+  } catch (err) {
+    console.error('Failed to delete tag:', err)
+  }
 }
 </script>
 

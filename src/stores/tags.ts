@@ -9,6 +9,7 @@ import {
   fetchTagUsageCounts,
 } from '@/lib/supabase'
 
+// TODO: Replace preset color palette with a proper color picker (e.g. <input type="color"> or a library)
 const TAG_COLORS = [
   '#32a287',
   '#2d826d',
@@ -19,6 +20,15 @@ const TAG_COLORS = [
   '#8e6b8c',
   '#d4894a',
   '#424242',
+  '#1976d2',
+  '#388e3c',
+  '#f57c00',
+  '#7b1fa2',
+  '#00796b',
+  '#5d4037',
+  '#e91e63',
+  '#455a64',
+  '#9e9d24',
 ]
 
 interface TagsStoreState {
@@ -73,6 +83,7 @@ const useTagsStore = defineStore('tags', {
       if (existing) {
         return existing
       }
+      // TODO: Allow user to pick a tag color during creation instead of auto-assigning
       const color = this.getNextDefaultColor()
       const tag = await findOrCreateTag(normalized, color)
       this.tags.push(tag)

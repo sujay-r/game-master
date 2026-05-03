@@ -1,5 +1,5 @@
 <template>
-  <div class="tag-input" @click="focusInput">
+  <div class="tag-input" v-click-outside="closeDropdown" @click="focusInput">
     <div class="tag-input__pills">
       <TagPill
         v-for="tag in selectedTags"
@@ -113,6 +113,7 @@ function handleEnter() {
 function createAndSelect() {
   const name = query.value.trim().toLowerCase()
   if (!name) return
+  // TODO: Allow user to pick a tag color during creation instead of auto-assigning
   emit('create', name)
   query.value = ''
   isOpen.value = false
@@ -132,6 +133,29 @@ function closeDropdown() {
 watch(query, () => {
   isOpen.value = true
 })
+
+// Click outside handler storage
+const clickOutsideHandlers = new WeakMap<HTMLElement, (event: Event) => void>()
+
+// Click outside directive
+const vClickOutside = {
+  mounted(el: HTMLElement, binding: { value: () => void }) {
+    const handler = (event: Event) => {
+      if (!(el === event.target || el.contains(event.target as Node))) {
+        binding.value()
+      }
+    }
+    clickOutsideHandlers.set(el, handler)
+    document.addEventListener('click', handler)
+  },
+  unmounted(el: HTMLElement) {
+    const handler = clickOutsideHandlers.get(el)
+    if (handler) {
+      document.removeEventListener('click', handler)
+      clickOutsideHandlers.delete(el)
+    }
+  },
+}
 </script>
 
 <style scoped>
@@ -164,7 +188,8 @@ watch(query, () => {
   min-width: 80px;
   border: none;
   background: transparent;
-  font-size: 0.9em;
+  font-size: 1em;
+  font-family: inherit;
   color: #424242;
   padding: 0.25rem 0;
   outline: none;

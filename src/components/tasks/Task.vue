@@ -1,5 +1,5 @@
 <template>
-  <div v-if="taskData" class="task-container" :class="taskStatusClass" @click="taskOpen = true">
+  <div v-if="taskData" class="task-container" :class="[taskStatusClass, { 'has-tags': taskData.tags?.length }]" @click="taskOpen = true">
     <input
       type="checkbox"
       class="task-checkbox"
@@ -656,7 +656,8 @@ onMounted(() => {
   grid-template-columns: auto 1fr auto;
   grid-template-rows: auto;
   align-items: center;
-  gap: 0.75rem;
+  row-gap: 0.05em;
+  column-gap: 0.75rem;
   min-height: 48px;
   transition: box-shadow 0.2s;
   cursor: pointer;
@@ -666,6 +667,10 @@ onMounted(() => {
   box-shadow:
     0 4px 16px rgba(0, 0, 0, 0.12),
     0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.task-container.has-tags {
+  padding-bottom: 0.75rem;
 }
 
 .task-completed {
@@ -731,7 +736,6 @@ onMounted(() => {
   grid-column: 2;
   grid-row: 2;
   justify-self: start;
-  margin-top: 0.5rem;
 }
 
 .tag-pills-row {
@@ -739,9 +743,12 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 0.35rem;
   grid-column: 2 / -1;
-  grid-row: 3;
+  grid-row: 2;
   justify-self: start;
-  margin-top: 0.25rem;
+}
+
+.task-container:has(.quest-badge) .tag-pills-row {
+  grid-row: 3;
 }
 
 .tags-section {
@@ -980,7 +987,8 @@ onMounted(() => {
     grid-template-columns: auto 1fr auto;
     grid-template-rows: auto;
     padding: 0.75rem 1rem;
-    gap: 0.5rem;
+    row-gap: 0.05em;
+    column-gap: 0.5rem;
   }
 
   .task-checkbox {
@@ -1016,7 +1024,6 @@ onMounted(() => {
   .tag-pills-row {
     grid-column: 2 / -1;
     grid-row: 2;
-    margin-top: 0.25rem;
   }
 }
 

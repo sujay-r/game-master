@@ -709,6 +709,11 @@ onMounted(() => {
     justify-content: center;
     order: 3;
   }
+
+  .manage-tags-button {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {

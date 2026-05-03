@@ -45,9 +45,9 @@ function handleRemove() {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.2rem 0.6rem;
+  padding: 0.05rem 0.45rem;
   border-radius: 12px;
-  font-size: 0.75em;
+  font-size: 0.82em;
   font-weight: 600;
   line-height: 1.2;
   user-select: none;
