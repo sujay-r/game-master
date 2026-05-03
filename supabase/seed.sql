@@ -230,6 +230,24 @@ INSERT INTO "public"."TaskOutcome" ("task_id", "token_type", "quantity") VALUES
 
 
 --
+-- Data for Name: Tag; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO "public"."Tag" ("id", "name", "color", "created_at") VALUES
+	(1, 'tag', '#32a287', '2026-03-28 11:43:42.526+00'),
+	(2, 'tag2', '#2d826d', '2026-03-28 11:43:42.526+00');
+
+
+--
+-- Data for Name: TaskTag; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO "public"."TaskTag" ("tag_id", "task_id") VALUES
+	(1, 3),
+	(2, 1);
+
+
+--
 -- Data for Name: buckets; Type: TABLE DATA; Schema: storage; Owner: supabase_storage_admin
 --
 
@@ -350,6 +368,13 @@ SELECT pg_catalog.setval('"public"."Task_id_seq"', 8, true);
 --
 
 SELECT pg_catalog.setval('"supabase_functions"."hooks_id_seq"', 1, false);
+
+
+--
+-- Name: Tag_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('"public"."Tag_id_seq"', 2, true);
 
 
 --
