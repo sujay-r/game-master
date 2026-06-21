@@ -597,7 +597,11 @@ async function handleCreateTag(name: string) {
 }
 
 watch(taskOpen, (isOpen) => {
-  if (!isOpen) {
+  if (isOpen) {
+    if (tagsStore.tags.length === 0 && !tagsStore.loading) {
+      tagsStore.loadTags()
+    }
+  } else {
     if (hasUnsavedChanges.value) {
       discardChanges()
     }
