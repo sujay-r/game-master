@@ -34,11 +34,7 @@
               :style="{ width: `${item.progressPercent}%` }"
             />
           </div>
-          <span
-            v-if="item.isBreached"
-            class="budget-status__warning"
-            title="Budget breached"
-          >
+          <span v-if="item.isBreached" class="budget-status__warning" title="Budget breached">
             ⚠️
           </span>
         </div>
@@ -139,8 +135,7 @@ const visibleBudgets = computed<BudgetRow[]>(() => {
       const spend = financeStore.transactions
         .filter(
           (transaction) =>
-            transaction.transactionTypeId === item.type.id &&
-            isWithinDateRange(transaction),
+            transaction.transactionTypeId === item.type.id && isWithinDateRange(transaction),
         )
         .reduce((sum, transaction) => sum + transaction.amount, 0)
 

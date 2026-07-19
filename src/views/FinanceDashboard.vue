@@ -58,10 +58,7 @@
       </DashboardSlot>
 
       <DashboardSlot test-id="spend-breakdown-slot" class="slot-breakdown" enable-error-toggle>
-        <div class="placeholder" data-testid="spend-breakdown-placeholder">
-          <h3>Spend Breakdown</h3>
-          <p>{{ expenseTypeCount }} expense categories considered</p>
-        </div>
+        <SpendBreakdown />
       </DashboardSlot>
 
       <DashboardSlot test-id="transaction-list-slot" class="slot-transactions" enable-error-toggle>
@@ -96,8 +93,8 @@ import FinanceFilterBar from '@/components/finance/FinanceFilterBar.vue'
 import DashboardSlot from '@/components/finance/DashboardSlot.vue'
 import SummaryBar from '@/components/finance/SummaryBar.vue'
 import BudgetStatus from '@/components/finance/BudgetStatus.vue'
+import SpendBreakdown from '@/components/finance/SpendBreakdown.vue'
 import { useFinanceStore } from '@/stores/finance'
-import { TransactionKind } from '@/types/common'
 import type { Transaction } from '@/types/common'
 
 const financeStore = useFinanceStore()
@@ -140,13 +137,6 @@ const filteredTransactions = computed(() =>
 )
 
 const filteredTransactionCount = computed(() => filteredTransactions.value.length)
-
-const expenseTypeCount = computed(() => {
-  const selectedIds = financeStore.filters.transactionTypeIds
-  const baseTypes =
-    selectedIds.length > 0 ? financeStore.selectedTransactionTypes : financeStore.expenseTypes
-  return baseTypes.filter((type) => type.kind === TransactionKind.Expense).length
-})
 
 onMounted(() => {
   if (import.meta.env.DEV && financeStore.transactionTypes.length === 0) {

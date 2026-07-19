@@ -148,4 +148,53 @@ test.describe('finance dashboard shell', () => {
     await expect(page.getByTestId('faulty-slot')).toContainText('Try again')
     await expect(page.getByTestId('healthy-slot')).toContainText('Healthy slot rendered')
   })
+
+  test('spend breakdown renders donut chart and legend for default seed data', async ({ page }) => {
+    const slot = page.getByTestId('spend-breakdown-slot')
+
+    await expect(slot.getByTestId('spend-breakdown-chart')).toBeVisible()
+    await expect(slot.getByTestId('spend-breakdown-legend')).toBeVisible()
+
+    const legendItems = slot.getByTestId('spend-breakdown-legend-item')
+    await expect(legendItems).toHaveCount(3)
+
+    await expect(slot).toContainText('Need')
+    await expect(slot).toContainText('Want')
+    await expect(slot).toContainText('Investment')
+  })
+
+  test('spend breakdown shows empty state when income kind is selected', async ({ page }) => {
+    await page.getByRole('button', { name: 'Income' }).click()
+
+    const slot = page.getByTestId('spend-breakdown-slot')
+    await expect(slot.getByTestId('spend-breakdown-empty')).toBeVisible()
+    await expect(slot).toContainText('No expense data')
+  })
+
+  test('spend breakdown shows empty state when date range has no transactions', async ({ page }) => {
+    const dateInput = page.locator('.date-range-picker input').first()
+    await dateInput.click()
+
+    const previousMonthButton = page.locator('[data-dp-element="action-prev"]').first()
+    await expect(previousMonthButton).toBeVisible()
+
+    // Move several months into the past so no seeded transactions fall inside the range.
+    await previousMonthButton.click()
+    await previousMonthButton.click()
+    await previousMonthButton.click()
+
+    const calendarCells = page.locator('.dp__calendar_item .dp__cell_inner')
+    await expect(calendarCells.first()).toBeVisible()
+
+    const firstCell = calendarCells.first()
+    const secondCell = calendarCells.nth(1)
+    await firstCell.click()
+    await secondCell.click()
+
+    await page.keyboard.press('Escape')
+
+    const slot = page.getByTestId('spend-breakdown-slot')
+    await expect(slot.getByTestId('spend-breakdown-empty')).toBeVisible()
+    await expect(slot).toContainText('No expense data')
+  })
 })
