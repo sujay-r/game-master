@@ -13,8 +13,8 @@ test.describe('finance dashboard shell', () => {
     await expect(page.getByText('Transaction Types')).toBeVisible()
     await expect(page.locator('.kind-toggle-label')).toHaveText('Kind')
 
-    // Six named slots with placeholder content
-    await expect(page.getByTestId('summary-bar-slot')).toContainText('Summary Bar')
+    // Six named slots render their components.
+    await expect(page.getByTestId('summary-bar-slot')).toContainText('Total Income')
     await expect(page.getByTestId('budget-status-slot')).toContainText('Budget Status')
     await expect(page.getByTestId('spend-breakdown-slot')).toContainText('Spend Breakdown')
     await expect(page.getByTestId('transaction-list-slot')).toContainText('Transaction List')
@@ -24,19 +24,27 @@ test.describe('finance dashboard shell', () => {
     await expect(page.getByTestId('nlq-panel-slot')).toContainText('NLQ Panel')
   })
 
-  test('kind toggle updates the shared filter state and placeholders', async ({ page }) => {
+  test('kind toggle updates the shared filter state and summary values', async ({ page }) => {
     const summarySlot = page.getByTestId('summary-bar-slot')
 
-    await expect(summarySlot).toContainText('Current kind filter: all')
+    await expect(summarySlot).toContainText('Total Income')
+    await expect(summarySlot).toContainText('₹5,000')
+    await expect(summarySlot).toContainText('₹2,445')
 
     await page.getByRole('button', { name: 'Income' }).click()
-    await expect(summarySlot).toContainText('Current kind filter: income')
+    await expect(summarySlot).toContainText('Total Income')
+    await expect(summarySlot).toContainText('₹5,000')
+    await expect(summarySlot).not.toContainText('₹2,445')
 
     await page.getByRole('button', { name: 'Expense' }).click()
-    await expect(summarySlot).toContainText('Current kind filter: expense')
+    await expect(summarySlot).toContainText('Total Expense')
+    await expect(summarySlot).toContainText('₹2,445')
+    await expect(summarySlot).not.toContainText('₹5,000')
 
     await page.getByRole('button', { name: 'All' }).click()
-    await expect(summarySlot).toContainText('Current kind filter: all')
+    await expect(summarySlot).toContainText('Total Income')
+    await expect(summarySlot).toContainText('₹5,000')
+    await expect(summarySlot).toContainText('₹2,445')
   })
 
   test('transaction type multi-select updates the shared filter state', async ({ page }) => {
@@ -76,7 +84,7 @@ test.describe('finance dashboard shell', () => {
 
     await page.getByRole('button', { name: 'Reset' }).click()
     await expect(page.getByRole('button', { name: 'Reset' })).not.toBeVisible()
-    await expect(page.getByTestId('summary-bar-slot')).toContainText('Current kind filter: all')
+    await expect(page.getByRole('button', { name: 'All' })).toHaveClass(/active/)
   })
 
   test('navigation links to Transaction Entry and Query History work', async ({ page }) => {
@@ -127,7 +135,7 @@ test.describe('finance dashboard shell', () => {
     await expect(targetSlot).toContainText('Something went wrong')
     await expect(targetSlot).toContainText('Try again')
 
-    await expect(page.getByTestId('summary-bar-slot')).toContainText('Summary Bar')
+    await expect(page.getByTestId('summary-bar-slot')).toContainText('Total Income')
     await expect(page.getByTestId('budget-status-slot')).toContainText('Budget Status')
     await expect(page.getByTestId('transaction-list-slot')).toContainText('Transaction List')
     await expect(page.getByTestId('income-expense-chart-slot')).toContainText(
@@ -196,5 +204,68 @@ test.describe('finance dashboard shell', () => {
     const slot = page.getByTestId('spend-breakdown-slot')
     await expect(slot.getByTestId('spend-breakdown-empty')).toBeVisible()
     await expect(slot).toContainText('No expense data')
+  })
+
+  test('transaction list renders all seeded rows sorted by date descending', async ({ page }) => {
+    const slot = page.getByTestId('transaction-list-slot')
+    const rows = slot.getByTestId('transaction-list-row')
+
+    await expect(rows).toHaveCount(8)
+
+    const firstRowDate = await rows.first().locator('td').first().textContent()
+    const lastRowDate = await rows.last().locator('td').first().textContent()
+    expect(firstRowDate).toBeTruthy()
+    expect(lastRowDate).toBeTruthy()
+
+    const firstDate = new Date(firstRowDate!)
+    const lastDate = new Date(lastRowDate!)
+    expect(firstDate.getTime()).toBeGreaterThanOrEqual(lastDate.getTime())
+  })
+
+  test('transaction list pagination shows page count and boundary states', async ({ page }) => {
+    const slot = page.getByTestId('transaction-list-slot')
+
+    await expect(slot.getByTestId('transaction-list-page-info')).toHaveText('Page 1 of 1')
+    await expect(slot.getByTestId('transaction-list-previous')).toBeDisabled()
+    await expect(slot.getByTestId('transaction-list-next')).toBeDisabled()
+  })
+
+  test('transaction list filters to income only and resets pagination', async ({ page }) => {
+    const slot = page.getByTestId('transaction-list-slot')
+
+    await page.getByRole('button', { name: 'Income' }).click()
+
+    const rows = slot.getByTestId('transaction-list-row')
+    await expect(rows).toHaveCount(1)
+    await expect(slot).toContainText('Monthly salary deposit')
+
+    await expect(slot.getByTestId('transaction-list-page-info')).toHaveText('Page 1 of 1')
+  })
+
+  test('transaction list shows empty state when date range has no transactions', async ({ page }) => {
+    const dateInput = page.locator('.date-range-picker input').first()
+    await dateInput.click()
+
+    const previousMonthButton = page.locator('[data-dp-element="action-prev"]').first()
+    await expect(previousMonthButton).toBeVisible()
+
+    // Move several months into the past so no seeded transactions fall inside the range.
+    await previousMonthButton.click()
+    await previousMonthButton.click()
+    await previousMonthButton.click()
+
+    const calendarCells = page.locator('.dp__calendar_item .dp__cell_inner')
+    await expect(calendarCells.first()).toBeVisible()
+
+    const firstCell = calendarCells.first()
+    const secondCell = calendarCells.nth(1)
+    await firstCell.click()
+    await secondCell.click()
+
+    await page.keyboard.press('Escape')
+
+    const slot = page.getByTestId('transaction-list-slot')
+    await expect(slot.getByTestId('transaction-list-empty')).toBeVisible()
+    await expect(slot).toContainText('No transactions match the current filters')
   })
 })

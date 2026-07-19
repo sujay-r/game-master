@@ -62,10 +62,7 @@
       </DashboardSlot>
 
       <DashboardSlot test-id="transaction-list-slot" class="slot-transactions" enable-error-toggle>
-        <div class="placeholder" data-testid="transaction-list-placeholder">
-          <h3>Transaction List</h3>
-          <p>{{ filteredTransactionCount }} visible transactions</p>
-        </div>
+        <TransactionList />
       </DashboardSlot>
 
       <DashboardSlot test-id="income-expense-chart-slot" class="slot-chart" enable-error-toggle>
@@ -94,8 +91,8 @@ import DashboardSlot from '@/components/finance/DashboardSlot.vue'
 import SummaryBar from '@/components/finance/SummaryBar.vue'
 import BudgetStatus from '@/components/finance/BudgetStatus.vue'
 import SpendBreakdown from '@/components/finance/SpendBreakdown.vue'
+import TransactionList from '@/components/finance/TransactionList.vue'
 import { useFinanceStore } from '@/stores/finance'
-import type { Transaction } from '@/types/common'
 
 const financeStore = useFinanceStore()
 
@@ -105,38 +102,6 @@ const selectedTypeNames = computed(() => {
   const names = financeStore.selectedTransactionTypes.map((type) => type.name)
   return names.length > 0 ? names.join(', ') : 'All types'
 })
-
-function isWithinDateRange(transaction: Transaction): boolean {
-  const start = new Date(financeStore.filters.dateRange.start).getTime()
-  const end = new Date(financeStore.filters.dateRange.end).getTime()
-  const date = transaction.date.getTime()
-  return date >= start && date <= end
-}
-
-function kindMatches(transaction: Transaction): boolean {
-  if (financeStore.filters.kind === 'all') {
-    return true
-  }
-  const type = financeStore.transactionTypes.find((t) => t.id === transaction.transactionTypeId)
-  return type?.kind === financeStore.filters.kind
-}
-
-function typeFilterMatches(transaction: Transaction): boolean {
-  const selectedIds = financeStore.filters.transactionTypeIds
-  if (selectedIds.length === 0) {
-    return true
-  }
-  return selectedIds.includes(transaction.transactionTypeId)
-}
-
-const filteredTransactions = computed(() =>
-  financeStore.transactions.filter(
-    (transaction) =>
-      isWithinDateRange(transaction) && kindMatches(transaction) && typeFilterMatches(transaction),
-  ),
-)
-
-const filteredTransactionCount = computed(() => filteredTransactions.value.length)
 
 onMounted(() => {
   if (import.meta.env.DEV && financeStore.transactionTypes.length === 0) {
@@ -243,9 +208,12 @@ onMounted(() => {
     grid-column: span 6;
   }
 
-  .slot-transactions,
   .slot-chart {
     grid-column: span 6;
+  }
+
+  .slot-transactions {
+    grid-column: span 12;
   }
 
   .slot-nlq {
@@ -259,9 +227,12 @@ onMounted(() => {
   }
 
   .slot-budget,
-  .slot-breakdown,
+  .slot-breakdown {
+    grid-column: span 6;
+  }
+
   .slot-transactions {
-    grid-column: span 4;
+    grid-column: span 12;
   }
 
   .slot-chart,
