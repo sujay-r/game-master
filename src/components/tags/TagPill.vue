@@ -64,7 +64,9 @@ function handleRemove() {
   font-weight: bold;
   font-size: 1.1em;
   opacity: 0.7;
-  transition: opacity 0.2s, background-color 0.2s;
+  transition:
+    opacity 0.2s,
+    background-color 0.2s;
   margin-left: 0.1rem;
 }
 

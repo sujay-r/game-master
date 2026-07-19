@@ -3,6 +3,9 @@ import {
   QuestType,
   TaskStatus,
   RewardStatus,
+  TransactionKind,
+  TransactionSource,
+  BudgetPeriod,
   type Quest,
   type StatType,
   type StatusEffectType,
@@ -11,7 +14,23 @@ import {
   type Reward,
   type RewardCost,
   type Tag,
+  type TransactionType,
+  type Transaction,
+  type Budget,
+  type UserQuery,
 } from '@/types/common'
+import {
+  isTransactionKind,
+  isTransactionSource,
+  isBudgetPeriod,
+  isDateRangeContext,
+  type CreateTransactionTypeInput,
+  type CreateTransactionInput,
+  type CreateBudgetInput,
+  type CreateUserQueryInput,
+  type DateRangeContext,
+} from '@/types/finance'
+import { assertExpenseType } from '@/utils/finance'
 import { createClient, type AuthChangeEvent, type Session } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_PROJECT_URL
@@ -1137,7 +1156,7 @@ async function fetchTagsForTasks(taskIds: number[]): Promise<Map<number, Tag[]>>
     const map = new Map<number, Tag[]>()
     for (const row of data || []) {
       const taskId = row.task_id as number
-      const tag = (row.Tag as unknown as { id: number; name: string; color: string })
+      const tag = row.Tag as unknown as { id: number; name: string; color: string }
       if (!map.has(taskId)) {
         map.set(taskId, [])
       }
@@ -1167,7 +1186,7 @@ async function fetchTagsForQuests(questIds: number[]): Promise<Map<number, Tag[]
     const map = new Map<number, Tag[]>()
     for (const row of data || []) {
       const questId = row.quest_id as number
-      const tag = (row.Tag as unknown as { id: number; name: string; color: string })
+      const tag = row.Tag as unknown as { id: number; name: string; color: string }
       if (!map.has(questId)) {
         map.set(questId, [])
       }
@@ -1239,6 +1258,582 @@ async function fetchTagUsageCounts(): Promise<Map<number, number>> {
   }
 }
 
+// Finance functions
+async function fetchTransactionTypes(): Promise<TransactionType[]> {
+  try {
+    const { data, error } = await client.from('TransactionType').select('*').order('name')
+    if (error) {
+      throw error
+    }
+    return (data || []).map((t) => ({
+      id: t.id,
+      name: t.name,
+      kind: isTransactionKind(t.kind) ? t.kind : TransactionKind.Expense,
+      description: t.description,
+      createdAt: new Date(t.created_at),
+    }))
+  } catch (err) {
+    console.error('Error fetching transaction types: ', err)
+    throw err
+  }
+}
+
+async function createTransactionType(
+  transactionTypeData: CreateTransactionTypeInput,
+): Promise<TransactionType> {
+  try {
+    if (!isTransactionKind(transactionTypeData.kind)) {
+      throw new Error(`Invalid transaction kind: ${transactionTypeData.kind}`)
+    }
+
+    const { data, error } = await client
+      .from('TransactionType')
+      .insert({
+        name: transactionTypeData.name,
+        kind: transactionTypeData.kind,
+        description: transactionTypeData.description || null,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      kind: isTransactionKind(data.kind) ? data.kind : transactionTypeData.kind,
+      description: data.description,
+      createdAt: new Date(data.created_at),
+    }
+  } catch (err) {
+    console.error('Error creating transaction type: ', err)
+    throw err
+  }
+}
+
+async function updateTransactionType(
+  transactionTypeId: number,
+  updates: Partial<Omit<TransactionType, 'id' | 'createdAt'>>,
+): Promise<TransactionType> {
+  try {
+    const payload: Record<string, unknown> = {}
+    if (updates.name !== undefined) {
+      payload.name = updates.name
+    }
+    if (updates.kind !== undefined) {
+      if (!isTransactionKind(updates.kind)) {
+        throw new Error(`Invalid transaction kind: ${updates.kind}`)
+      }
+      payload.kind = updates.kind
+    }
+    if (updates.description !== undefined) {
+      payload.description = updates.description || null
+    }
+
+    const { data, error } = await client
+      .from('TransactionType')
+      .update(payload)
+      .eq('id', transactionTypeId)
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      kind: isTransactionKind(data.kind) ? data.kind : TransactionKind.Expense,
+      description: data.description,
+      createdAt: new Date(data.created_at),
+    }
+  } catch (err) {
+    console.error('Error updating transaction type: ', err)
+    throw err
+  }
+}
+
+async function deleteTransactionType(transactionTypeId: number): Promise<void> {
+  try {
+    const { error } = await client.from('TransactionType').delete().eq('id', transactionTypeId)
+    if (error) {
+      throw error
+    }
+  } catch (err) {
+    console.error('Error deleting transaction type: ', err)
+    throw err
+  }
+}
+
+async function fetchTransactions(): Promise<Transaction[]> {
+  try {
+    const { data, error } = await client
+      .from('Transaction')
+      .select('*, TransactionType(*)')
+      .order('date', { ascending: false })
+
+    if (error) {
+      throw error
+    }
+
+    return (data || []).map((item) => {
+      const transactionTypeData = item.TransactionType as unknown as {
+        id: number
+        name: string
+        kind: string
+        description: string | null
+        created_at: string
+      } | null
+      return {
+        id: item.id,
+        amount: item.amount,
+        transactionTypeId: item.transaction_type_id,
+        transactionType: transactionTypeData
+          ? {
+              id: transactionTypeData.id,
+              name: transactionTypeData.name,
+              kind: isTransactionKind(transactionTypeData.kind)
+                ? transactionTypeData.kind
+                : TransactionKind.Expense,
+              description: transactionTypeData.description || undefined,
+              createdAt: new Date(transactionTypeData.created_at),
+            }
+          : undefined,
+        description: item.description,
+        date: new Date(item.date),
+        createdAt: new Date(item.created_at),
+        source: isTransactionSource(item.source) ? item.source : TransactionSource.Manual,
+      }
+    })
+  } catch (err) {
+    console.error('Error fetching transactions: ', err)
+    throw err
+  }
+}
+
+async function createTransaction(transactionData: CreateTransactionInput): Promise<Transaction> {
+  try {
+    if (!isTransactionSource(transactionData.source)) {
+      throw new Error(`Invalid transaction source: ${transactionData.source}`)
+    }
+
+    const { data, error } = await client
+      .from('Transaction')
+      .insert({
+        amount: transactionData.amount,
+        transaction_type_id: transactionData.transactionTypeId,
+        description: transactionData.description,
+        date: transactionData.date.toISOString(),
+        source: transactionData.source,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return {
+      id: data.id,
+      amount: data.amount,
+      transactionTypeId: data.transaction_type_id,
+      description: data.description,
+      date: new Date(data.date),
+      createdAt: new Date(data.created_at),
+      source: isTransactionSource(data.source) ? data.source : transactionData.source,
+    }
+  } catch (err) {
+    console.error('Error creating transaction: ', err)
+    throw err
+  }
+}
+
+async function updateTransaction(
+  transactionId: number,
+  updates: Partial<CreateTransactionInput>,
+): Promise<Transaction> {
+  try {
+    const payload: Record<string, unknown> = {}
+    if (updates.amount !== undefined) {
+      payload.amount = updates.amount
+    }
+    if (updates.transactionTypeId !== undefined) {
+      payload.transaction_type_id = updates.transactionTypeId
+    }
+    if (updates.description !== undefined) {
+      payload.description = updates.description
+    }
+    if (updates.date !== undefined) {
+      payload.date = updates.date.toISOString()
+    }
+    if (updates.source !== undefined) {
+      if (!isTransactionSource(updates.source)) {
+        throw new Error(`Invalid transaction source: ${updates.source}`)
+      }
+      payload.source = updates.source
+    }
+
+    const { data, error } = await client
+      .from('Transaction')
+      .update(payload)
+      .eq('id', transactionId)
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return {
+      id: data.id,
+      amount: data.amount,
+      transactionTypeId: data.transaction_type_id,
+      description: data.description,
+      date: new Date(data.date),
+      createdAt: new Date(data.created_at),
+      source: isTransactionSource(data.source) ? data.source : TransactionSource.Manual,
+    }
+  } catch (err) {
+    console.error('Error updating transaction: ', err)
+    throw err
+  }
+}
+
+async function deleteTransaction(transactionId: number): Promise<void> {
+  try {
+    const { error } = await client.from('Transaction').delete().eq('id', transactionId)
+    if (error) {
+      throw error
+    }
+  } catch (err) {
+    console.error('Error deleting transaction: ', err)
+    throw err
+  }
+}
+
+async function fetchBudgets(): Promise<Budget[]> {
+  try {
+    const { data, error } = await client
+      .from('Budget')
+      .select('*, TransactionType(*)')
+      .order('start_date', { ascending: false })
+
+    if (error) {
+      throw error
+    }
+
+    return (data || []).map((item) => {
+      const transactionTypeData = item.TransactionType as unknown as {
+        id: number
+        name: string
+        kind: string
+        description: string | null
+        created_at: string
+      } | null
+      return {
+        id: item.id,
+        transactionTypeId: item.transaction_type_id,
+        transactionType: transactionTypeData
+          ? {
+              id: transactionTypeData.id,
+              name: transactionTypeData.name,
+              kind: isTransactionKind(transactionTypeData.kind)
+                ? transactionTypeData.kind
+                : TransactionKind.Expense,
+              description: transactionTypeData.description || undefined,
+              createdAt: new Date(transactionTypeData.created_at),
+            }
+          : undefined,
+        amount: item.amount,
+        period: isBudgetPeriod(item.period) ? item.period : BudgetPeriod.Monthly,
+        startDate: new Date(item.start_date),
+        endDate: item.end_date ? new Date(item.end_date) : null,
+        createdAt: new Date(item.created_at),
+      }
+    })
+  } catch (err) {
+    console.error('Error fetching budgets: ', err)
+    throw err
+  }
+}
+
+async function createBudget(budgetData: CreateBudgetInput): Promise<Budget> {
+  try {
+    if (!isBudgetPeriod(budgetData.period)) {
+      throw new Error(`Invalid budget period: ${budgetData.period}`)
+    }
+
+    // Enforce expense-only budget constraint at the app layer.
+    const { data: typeData, error: typeError } = await client
+      .from('TransactionType')
+      .select('*')
+      .eq('id', budgetData.transactionTypeId)
+      .single()
+    if (typeError) {
+      throw typeError
+    }
+    const transactionType: TransactionType = {
+      id: typeData.id,
+      name: typeData.name,
+      kind: isTransactionKind(typeData.kind) ? typeData.kind : TransactionKind.Expense,
+      description: typeData.description,
+      createdAt: new Date(typeData.created_at),
+    }
+    assertExpenseType(transactionType)
+
+    const { data, error } = await client
+      .from('Budget')
+      .insert({
+        transaction_type_id: budgetData.transactionTypeId,
+        amount: budgetData.amount,
+        period: budgetData.period,
+        start_date: budgetData.startDate.toISOString(),
+        end_date: budgetData.endDate?.toISOString() || null,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return {
+      id: data.id,
+      transactionTypeId: data.transaction_type_id,
+      amount: data.amount,
+      period: isBudgetPeriod(data.period) ? data.period : budgetData.period,
+      startDate: new Date(data.start_date),
+      endDate: data.end_date ? new Date(data.end_date) : null,
+      createdAt: new Date(data.created_at),
+    }
+  } catch (err) {
+    console.error('Error creating budget: ', err)
+    throw err
+  }
+}
+
+async function updateBudget(
+  budgetId: number,
+  updates: Partial<CreateBudgetInput>,
+): Promise<Budget> {
+  try {
+    const payload: Record<string, unknown> = {}
+
+    if (updates.period !== undefined && !isBudgetPeriod(updates.period)) {
+      throw new Error(`Invalid budget period: ${updates.period}`)
+    }
+
+    // Enforce expense-only budget constraint when the transaction type changes.
+    if (updates.transactionTypeId !== undefined) {
+      const { data: typeData, error: typeError } = await client
+        .from('TransactionType')
+        .select('*')
+        .eq('id', updates.transactionTypeId)
+        .single()
+      if (typeError) {
+        throw typeError
+      }
+      const transactionType: TransactionType = {
+        id: typeData.id,
+        name: typeData.name,
+        kind: isTransactionKind(typeData.kind) ? typeData.kind : TransactionKind.Expense,
+        description: typeData.description,
+        createdAt: new Date(typeData.created_at),
+      }
+      assertExpenseType(transactionType)
+      payload.transaction_type_id = updates.transactionTypeId
+    }
+
+    if (updates.amount !== undefined) {
+      payload.amount = updates.amount
+    }
+    if (updates.period !== undefined) {
+      payload.period = updates.period
+    }
+    if (updates.startDate !== undefined) {
+      payload.start_date = updates.startDate.toISOString()
+    }
+    if (updates.endDate !== undefined) {
+      payload.end_date = updates.endDate?.toISOString() || null
+    }
+
+    const { data, error } = await client
+      .from('Budget')
+      .update(payload)
+      .eq('id', budgetId)
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return {
+      id: data.id,
+      transactionTypeId: data.transaction_type_id,
+      amount: data.amount,
+      period: isBudgetPeriod(data.period) ? data.period : BudgetPeriod.Monthly,
+      startDate: new Date(data.start_date),
+      endDate: data.end_date ? new Date(data.end_date) : null,
+      createdAt: new Date(data.created_at),
+    }
+  } catch (err) {
+    console.error('Error updating budget: ', err)
+    throw err
+  }
+}
+
+async function deleteBudget(budgetId: number): Promise<void> {
+  try {
+    const { error } = await client.from('Budget').delete().eq('id', budgetId)
+    if (error) {
+      throw error
+    }
+  } catch (err) {
+    console.error('Error deleting budget: ', err)
+    throw err
+  }
+}
+
+async function fetchUserQueries(): Promise<UserQuery[]> {
+  try {
+    const { data, error } = await client
+      .from('UserQuery')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      throw error
+    }
+
+    return (data || []).map((item) => {
+      const dateRangeContext: DateRangeContext | null = isDateRangeContext(item.date_range_context)
+        ? item.date_range_context
+        : null
+      return {
+        id: item.id,
+        queryText: item.query_text,
+        responseText: item.response_text,
+        resolvedTransactionIds: item.resolved_transaction_ids || [],
+        dateRangeContext,
+        createdAt: new Date(item.created_at),
+      }
+    })
+  } catch (err) {
+    console.error('Error fetching user queries: ', err)
+    throw err
+  }
+}
+
+async function createUserQuery(userQueryData: CreateUserQueryInput): Promise<UserQuery> {
+  try {
+    if (
+      userQueryData.dateRangeContext !== undefined &&
+      userQueryData.dateRangeContext !== null &&
+      !isDateRangeContext(userQueryData.dateRangeContext)
+    ) {
+      throw new Error('Invalid date range context shape')
+    }
+
+    const { data, error } = await client
+      .from('UserQuery')
+      .insert({
+        query_text: userQueryData.queryText,
+        response_text: userQueryData.responseText,
+        resolved_transaction_ids: userQueryData.resolvedTransactionIds,
+        date_range_context: userQueryData.dateRangeContext,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    const dateRangeContext: DateRangeContext | null = isDateRangeContext(data.date_range_context)
+      ? data.date_range_context
+      : null
+
+    return {
+      id: data.id,
+      queryText: data.query_text,
+      responseText: data.response_text,
+      resolvedTransactionIds: data.resolved_transaction_ids || [],
+      dateRangeContext,
+      createdAt: new Date(data.created_at),
+    }
+  } catch (err) {
+    console.error('Error creating user query: ', err)
+    throw err
+  }
+}
+
+async function updateUserQuery(
+  userQueryId: number,
+  updates: Partial<CreateUserQueryInput>,
+): Promise<UserQuery> {
+  try {
+    const payload: Record<string, unknown> = {}
+    if (updates.queryText !== undefined) {
+      payload.query_text = updates.queryText
+    }
+    if (updates.responseText !== undefined) {
+      payload.response_text = updates.responseText
+    }
+    if (updates.resolvedTransactionIds !== undefined) {
+      payload.resolved_transaction_ids = updates.resolvedTransactionIds
+    }
+    if (updates.dateRangeContext !== undefined) {
+      if (updates.dateRangeContext !== null && !isDateRangeContext(updates.dateRangeContext)) {
+        throw new Error('Invalid date range context shape')
+      }
+      payload.date_range_context = updates.dateRangeContext
+    }
+
+    const { data, error } = await client
+      .from('UserQuery')
+      .update(payload)
+      .eq('id', userQueryId)
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    const dateRangeContext: DateRangeContext | null = isDateRangeContext(data.date_range_context)
+      ? data.date_range_context
+      : null
+
+    return {
+      id: data.id,
+      queryText: data.query_text,
+      responseText: data.response_text,
+      resolvedTransactionIds: data.resolved_transaction_ids || [],
+      dateRangeContext,
+      createdAt: new Date(data.created_at),
+    }
+  } catch (err) {
+    console.error('Error updating user query: ', err)
+    throw err
+  }
+}
+
+async function deleteUserQuery(userQueryId: number): Promise<void> {
+  try {
+    const { error } = await client.from('UserQuery').delete().eq('id', userQueryId)
+    if (error) {
+      throw error
+    }
+  } catch (err) {
+    console.error('Error deleting user query: ', err)
+    throw err
+  }
+}
+
 export {
   client,
   fetchStatsWithEffects,
@@ -1289,4 +1884,20 @@ export {
   setTagsForTask,
   setTagsForQuest,
   fetchTagUsageCounts,
+  fetchTransactionTypes,
+  createTransactionType,
+  updateTransactionType,
+  deleteTransactionType,
+  fetchTransactions,
+  createTransaction,
+  updateTransaction,
+  deleteTransaction,
+  fetchBudgets,
+  createBudget,
+  updateBudget,
+  deleteBudget,
+  fetchUserQueries,
+  createUserQuery,
+  updateUserQuery,
+  deleteUserQuery,
 }

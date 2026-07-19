@@ -70,7 +70,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'save', data: { title: string; description: string; type: QuestType; tagIds?: number[] }): void
+  (
+    e: 'save',
+    data: { title: string; description: string; type: QuestType; tagIds?: number[] },
+  ): void
 }>()
 
 const tagsStore = useTagsStore()

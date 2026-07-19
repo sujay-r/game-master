@@ -1,5 +1,10 @@
 <template>
-  <div v-if="taskData" class="task-container" :class="[taskStatusClass, { 'has-tags': taskData.tags?.length }]" @click="taskOpen = true">
+  <div
+    v-if="taskData"
+    class="task-container"
+    :class="[taskStatusClass, { 'has-tags': taskData.tags?.length }]"
+    @click="taskOpen = true"
+  >
     <input
       type="checkbox"
       class="task-checkbox"

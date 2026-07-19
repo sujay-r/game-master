@@ -45,7 +45,12 @@ const useQuestStore = defineStore('quests', {
       }
     },
 
-    async createQuest(questData: { title: string; description?: string; type: QuestType; tagIds?: number[] }) {
+    async createQuest(questData: {
+      title: string
+      description?: string
+      type: QuestType
+      tagIds?: number[]
+    }) {
       try {
         const newQuest = await createQuestInDb(questData)
         this.quests.unshift(newQuest)

@@ -105,3 +105,57 @@ export interface TaskType {
   _syncStatus?: SyncStatus
   tags?: Tag[]
 }
+
+export enum TransactionKind {
+  Income = 'income',
+  Expense = 'expense',
+}
+
+export enum TransactionSource {
+  Manual = 'manual',
+  Api = 'api',
+}
+
+export enum BudgetPeriod {
+  Monthly = 'monthly',
+  Weekly = 'weekly',
+}
+
+export interface TransactionType {
+  id: number
+  name: string
+  kind: TransactionKind
+  description?: string
+  createdAt: Date
+}
+
+export interface Transaction {
+  id: number
+  amount: number
+  transactionTypeId: number
+  transactionType?: TransactionType
+  description: string
+  date: Date
+  createdAt: Date
+  source: TransactionSource
+}
+
+export interface Budget {
+  id: number
+  transactionTypeId: number
+  transactionType?: TransactionType
+  amount: number
+  period: BudgetPeriod
+  startDate: Date
+  endDate?: Date | null
+  createdAt: Date
+}
+
+export interface UserQuery {
+  id: number
+  queryText: string
+  responseText: string
+  resolvedTransactionIds: number[]
+  dateRangeContext?: { start: string; end: string } | null
+  createdAt: Date
+}

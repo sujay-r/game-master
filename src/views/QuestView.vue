@@ -360,7 +360,12 @@ function handleTaskCreationCancelled() {
   taskCreationInitialQuestId.value = null
 }
 
-async function handleSaveQuest(data: { title: string; description: string; type: QuestType; tagIds?: number[] }) {
+async function handleSaveQuest(data: {
+  title: string
+  description: string
+  type: QuestType
+  tagIds?: number[]
+}) {
   if (editingQuest.value) {
     await questStore.updateQuest(editingQuest.value.id, data)
     if (data.tagIds !== undefined) {

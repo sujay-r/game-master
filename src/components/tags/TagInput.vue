@@ -69,9 +69,7 @@ const filteredTags = computed(() => {
   if (!q) {
     return props.availableTags.filter((t) => !selectedIds.value.has(t.id))
   }
-  return props.availableTags.filter(
-    (t) => t.name.includes(q) && !selectedIds.value.has(t.id),
-  )
+  return props.availableTags.filter((t) => t.name.includes(q) && !selectedIds.value.has(t.id))
 })
 
 const exactMatch = computed(() => {
@@ -167,7 +165,9 @@ const vClickOutside = {
   border-radius: 8px;
   background: #fff;
   cursor: text;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .tag-input:focus-within {

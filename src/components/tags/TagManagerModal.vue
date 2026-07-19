@@ -44,11 +44,7 @@
                 (tagsStore.usageCounts.get(tag.id) || 0) === 1 ? '' : 's'
               }}
             </span>
-            <button
-              class="delete-btn"
-              title="Delete tag"
-              @click="handleDelete(tag.id)"
-            >
+            <button class="delete-btn" title="Delete tag" @click="handleDelete(tag.id)">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 height="16px"
