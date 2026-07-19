@@ -18,9 +18,7 @@ test.describe('finance dashboard shell', () => {
     await expect(page.getByTestId('budget-status-slot')).toContainText('Budget Status')
     await expect(page.getByTestId('spend-breakdown-slot')).toContainText('Spend Breakdown')
     await expect(page.getByTestId('transaction-list-slot')).toContainText('Transaction List')
-    await expect(page.getByTestId('income-expense-chart-slot')).toContainText(
-      'Income vs. Expense Chart',
-    )
+    await expect(page.getByTestId('income-expense-chart-slot')).toContainText('Income vs. Expense')
     await expect(page.getByTestId('nlq-panel-slot')).toContainText('NLQ Panel')
   })
 
@@ -138,9 +136,7 @@ test.describe('finance dashboard shell', () => {
     await expect(page.getByTestId('summary-bar-slot')).toContainText('Total Income')
     await expect(page.getByTestId('budget-status-slot')).toContainText('Budget Status')
     await expect(page.getByTestId('transaction-list-slot')).toContainText('Transaction List')
-    await expect(page.getByTestId('income-expense-chart-slot')).toContainText(
-      'Income vs. Expense Chart',
-    )
+    await expect(page.getByTestId('income-expense-chart-slot')).toContainText('Income vs. Expense')
     await expect(page.getByTestId('nlq-panel-slot')).toContainText('NLQ Panel')
 
     await targetSlot.getByRole('button', { name: 'Try again' }).click()
@@ -161,10 +157,6 @@ test.describe('finance dashboard shell', () => {
     const slot = page.getByTestId('spend-breakdown-slot')
 
     await expect(slot.getByTestId('spend-breakdown-chart')).toBeVisible()
-    await expect(slot.getByTestId('spend-breakdown-legend')).toBeVisible()
-
-    const legendItems = slot.getByTestId('spend-breakdown-legend-item')
-    await expect(legendItems).toHaveCount(3)
 
     await expect(slot).toContainText('Need')
     await expect(slot).toContainText('Want')
@@ -179,7 +171,9 @@ test.describe('finance dashboard shell', () => {
     await expect(slot).toContainText('No expense data')
   })
 
-  test('spend breakdown shows empty state when date range has no transactions', async ({ page }) => {
+  test('spend breakdown shows empty state when date range has no transactions', async ({
+    page,
+  }) => {
     const dateInput = page.locator('.date-range-picker input').first()
     await dateInput.click()
 
@@ -242,7 +236,9 @@ test.describe('finance dashboard shell', () => {
     await expect(slot.getByTestId('transaction-list-page-info')).toHaveText('Page 1 of 1')
   })
 
-  test('transaction list shows empty state when date range has no transactions', async ({ page }) => {
+  test('transaction list shows empty state when date range has no transactions', async ({
+    page,
+  }) => {
     const dateInput = page.locator('.date-range-picker input').first()
     await dateInput.click()
 
@@ -267,5 +263,60 @@ test.describe('finance dashboard shell', () => {
     const slot = page.getByTestId('transaction-list-slot')
     await expect(slot.getByTestId('transaction-list-empty')).toBeVisible()
     await expect(slot).toContainText('No transactions match the current filters')
+  })
+
+  test('income vs expense chart renders a canvas for default seed data', async ({ page }) => {
+    const slot = page.getByTestId('income-expense-chart-slot')
+
+    await expect(slot).toContainText('Income vs. Expense')
+    await expect(slot.getByTestId('income-expense-chart-canvas')).toBeVisible()
+    await expect(slot).toContainText('Income')
+    await expect(slot).toContainText('Expense')
+  })
+
+  test('income vs expense chart shows only income series when kind is income', async ({ page }) => {
+    await page.getByRole('button', { name: 'Income' }).click()
+
+    const slot = page.getByTestId('income-expense-chart-slot')
+    await expect(slot).toContainText('Income')
+    await expect(slot).not.toContainText('Expense')
+  })
+
+  test('income vs expense chart shows only expense series when kind is expense', async ({
+    page,
+  }) => {
+    await page.getByRole('button', { name: 'Expense' }).click()
+
+    const slot = page.getByTestId('income-expense-chart-slot')
+    await expect(slot).toContainText('Expense')
+    await expect(slot).not.toContainText('Income')
+  })
+
+  test('income vs expense chart shows empty state when date range has no transactions', async ({
+    page,
+  }) => {
+    const dateInput = page.locator('.date-range-picker input').first()
+    await dateInput.click()
+
+    const previousMonthButton = page.locator('[data-dp-element="action-prev"]').first()
+    await expect(previousMonthButton).toBeVisible()
+
+    await previousMonthButton.click()
+    await previousMonthButton.click()
+    await previousMonthButton.click()
+
+    const calendarCells = page.locator('.dp__calendar_item .dp__cell_inner')
+    await expect(calendarCells.first()).toBeVisible()
+
+    const firstCell = calendarCells.first()
+    const secondCell = calendarCells.nth(1)
+    await firstCell.click()
+    await secondCell.click()
+
+    await page.keyboard.press('Escape')
+
+    const slot = page.getByTestId('income-expense-chart-slot')
+    await expect(slot.getByTestId('income-expense-chart-empty')).toBeVisible()
+    await expect(slot).toContainText('No data')
   })
 })

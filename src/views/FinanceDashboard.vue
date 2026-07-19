@@ -66,10 +66,7 @@
       </DashboardSlot>
 
       <DashboardSlot test-id="income-expense-chart-slot" class="slot-chart" enable-error-toggle>
-        <div class="placeholder" data-testid="income-expense-chart-placeholder">
-          <h3>Income vs. Expense Chart</h3>
-          <p>Chart will be rendered here</p>
-        </div>
+        <IncomeExpenseChart />
       </DashboardSlot>
 
       <DashboardSlot test-id="nlq-panel-slot" class="slot-nlq" enable-error-toggle>
@@ -92,6 +89,7 @@ import SummaryBar from '@/components/finance/SummaryBar.vue'
 import BudgetStatus from '@/components/finance/BudgetStatus.vue'
 import SpendBreakdown from '@/components/finance/SpendBreakdown.vue'
 import TransactionList from '@/components/finance/TransactionList.vue'
+import IncomeExpenseChart from '@/components/finance/IncomeExpenseChart.vue'
 import { useFinanceStore } from '@/stores/finance'
 
 const financeStore = useFinanceStore()

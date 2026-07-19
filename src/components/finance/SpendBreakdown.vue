@@ -12,42 +12,22 @@
 
     <template v-else>
       <div class="spend-breakdown__chart-wrapper">
-        <svg
-          class="spend-breakdown__chart"
-          viewBox="0 0 100 100"
-          data-testid="spend-breakdown-chart"
-        >
-          <path
-            v-for="segment in segments"
-            :key="segment.typeId"
-            :d="segment.path"
-            :fill="segment.color"
-          />
-        </svg>
+        <Doughnut :data="chartData" :options="chartOptions" data-testid="spend-breakdown-chart" />
       </div>
-
-      <ul class="spend-breakdown__legend" data-testid="spend-breakdown-legend">
-        <li
-          v-for="item in legendItems"
-          :key="item.typeId"
-          class="spend-breakdown__legend-item"
-          data-testid="spend-breakdown-legend-item"
-        >
-          <span class="spend-breakdown__swatch" :style="{ backgroundColor: item.color }" />
-          <span class="spend-breakdown__type-name">{{ item.name }}</span>
-          <span class="spend-breakdown__amount">{{ item.formattedAmount }}</span>
-          <span class="spend-breakdown__percent">{{ item.percent }}%</span>
-        </li>
-      </ul>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Doughnut } from 'vue-chartjs'
+import { Chart as ChartJS, ArcElement, DoughnutController, Tooltip, Legend } from 'chart.js'
+import type { ChartData, ChartOptions } from 'chart.js'
 import { useFinanceStore } from '@/stores/finance'
 import { useFilteredTransactions } from '@/composables/useFilteredTransactions'
 import { TransactionKind } from '@/types/common'
+
+ChartJS.register(ArcElement, DoughnutController, Tooltip, Legend)
 
 const financeStore = useFinanceStore()
 const { filteredTransactions } = useFilteredTransactions()
@@ -108,129 +88,49 @@ function formatCurrency(value: number): string {
   }).format(value)
 }
 
-interface LegendItem {
-  typeId: number
-  name: string
-  formattedAmount: string
-  percent: number
-  color: string
-}
+const chartData = computed<ChartData<'doughnut'>>(() => ({
+  labels: expenseTotals.value.map((item) => item.name),
+  datasets: [
+    {
+      data: expenseTotals.value.map((item) => item.amount),
+      backgroundColor: expenseTotals.value.map((item) => item.color),
+      borderWidth: 0,
+    },
+  ],
+}))
 
-const legendItems = computed<LegendItem[]>(() =>
-  expenseTotals.value.map((item) => ({
-    typeId: item.typeId,
-    name: item.name,
-    formattedAmount: formatCurrency(item.amount),
-    percent: Math.round((item.amount / totalExpense.value) * 100),
-    color: item.color,
-  })),
-)
-
-const CHART_CX = 50
-const CHART_CY = 50
-const OUTER_RADIUS = 50
-const INNER_RADIUS = 30
-
-function polarToCartesian(cx: number, cy: number, radius: number, angleInDegrees: number) {
-  const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180
-  return {
-    x: cx + radius * Math.cos(angleInRadians),
-    y: cy + radius * Math.sin(angleInRadians),
-  }
-}
-
-function describeArc(
-  cx: number,
-  cy: number,
-  radius: number,
-  startAngle: number,
-  endAngle: number,
-  sweep: number,
-): string {
-  const start = polarToCartesian(cx, cy, radius, endAngle)
-  const largeArcFlag = Math.abs(endAngle - startAngle) > 180 ? '1' : '0'
-
-  return ['A', radius, radius, 0, largeArcFlag, sweep, start.x, start.y].join(' ')
-}
-
-function describeDonutSegment(
-  cx: number,
-  cy: number,
-  innerRadius: number,
-  outerRadius: number,
-  startAngle: number,
-  endAngle: number,
-): string {
-  const outerStart = polarToCartesian(cx, cy, outerRadius, startAngle)
-  const innerEnd = polarToCartesian(cx, cy, innerRadius, endAngle)
-  const innerStart = polarToCartesian(cx, cy, innerRadius, startAngle)
-
-  const angleSweep = endAngle - startAngle
-
-  // Full ring: draw two half-arcs so the path does not collapse to zero area.
-  if (Math.abs(angleSweep) >= 360) {
-    const mid = startAngle + 180
-    const outerMid = polarToCartesian(cx, cy, outerRadius, mid)
-    const innerMid = polarToCartesian(cx, cy, innerRadius, mid)
-
-    return [
-      `M ${outerStart.x} ${outerStart.y}`,
-      `A ${outerRadius} ${outerRadius} 0 1 1 ${outerMid.x} ${outerMid.y}`,
-      `A ${outerRadius} ${outerRadius} 0 1 1 ${outerStart.x} ${outerStart.y}`,
-      `L ${innerStart.x} ${innerStart.y}`,
-      `A ${innerRadius} ${innerRadius} 0 1 0 ${innerMid.x} ${innerMid.y}`,
-      `A ${innerRadius} ${innerRadius} 0 1 0 ${innerStart.x} ${innerStart.y}`,
-      'Z',
-    ].join(' ')
-  }
-
-  return [
-    `M ${outerStart.x} ${outerStart.y}`,
-    describeArc(cx, cy, outerRadius, startAngle, endAngle, 1),
-    `L ${innerEnd.x} ${innerEnd.y}`,
-    describeArc(cx, cy, innerRadius, endAngle, startAngle, 0),
-    'Z',
-  ].join(' ')
-}
-
-interface Segment {
-  typeId: number
-  path: string
-  color: string
-}
-
-const segments = computed<Segment[]>(() => {
-  const total = totalExpense.value
-  if (total === 0) {
-    return []
-  }
-
-  let currentAngle = 0
-  const result: Segment[] = []
-
-  expenseTotals.value.forEach((item, index) => {
-    const isLast = index === expenseTotals.value.length - 1
-    const sweep = isLast ? 360 - currentAngle : (item.amount / total) * 360
-    const endAngle = currentAngle + sweep
-
-    result.push({
-      typeId: item.typeId,
-      path: describeDonutSegment(
-        CHART_CX,
-        CHART_CY,
-        INNER_RADIUS,
-        OUTER_RADIUS,
-        currentAngle,
-        endAngle,
-      ),
-      color: item.color,
-    })
-
-    currentAngle = endAngle
-  })
-
-  return result
-})
+const chartOptions = computed<ChartOptions<'doughnut'>>(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '60%',
+  plugins: {
+    legend: {
+      display: true,
+      position: 'bottom',
+      labels: {
+        boxWidth: 12,
+        padding: 8,
+        usePointStyle: false,
+      },
+    },
+    tooltip: {
+      callbacks: {
+        title: (items) => {
+          const item = items[0]
+          if (!item) {
+            return ''
+          }
+          return expenseTotals.value[item.dataIndex].name
+        },
+        label: (context) => {
+          const amount = expenseTotals.value[context.dataIndex].amount
+          const percent = Math.round((amount / totalExpense.value) * 100)
+          return `${formatCurrency(amount)} (${percent}%)`
+        },
+      },
+    },
+  },
+}))
 </script>
 
 <style scoped>
@@ -255,11 +155,9 @@ const segments = computed<Segment[]>(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-.spend-breakdown__chart {
   width: 160px;
   height: 160px;
+  margin: 0 auto;
 }
 
 .spend-breakdown__empty {
@@ -273,49 +171,10 @@ const segments = computed<Segment[]>(() => {
   margin: 0;
 }
 
-.spend-breakdown__legend {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.spend-breakdown__legend-item {
-  display: grid;
-  grid-template-columns: auto 1fr auto auto;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9em;
-}
-
-.spend-breakdown__swatch {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
-.spend-breakdown__type-name {
-  font-family: Trajan, 'Perpetua', serif;
-  color: #424242;
-}
-
-.spend-breakdown__amount {
-  color: #666;
-  white-space: nowrap;
-}
-
-.spend-breakdown__percent {
-  color: #666;
-  min-width: 2.5rem;
-  text-align: right;
-}
-
 @media (max-width: 480px) {
-  .spend-breakdown__legend-item {
-    font-size: 0.85em;
+  .spend-breakdown__chart-wrapper {
+    width: 140px;
+    height: 140px;
   }
 }
 </style>
