@@ -47,3 +47,15 @@ export function isDateRangeContext(value: unknown): value is DateRangeContext {
   const context = value as Record<string, unknown>
   return typeof context.start === 'string' && typeof context.end === 'string'
 }
+
+export type TransactionKindFilter = TransactionKind | 'all'
+
+export interface FinanceFilters {
+  dateRange: DateRangeContext
+  transactionTypeIds: number[]
+  kind: TransactionKindFilter
+}
+
+export function isTransactionKindFilter(value: unknown): value is TransactionKindFilter {
+  return typeof value === 'string' && (isTransactionKind(value) || value === 'all')
+}

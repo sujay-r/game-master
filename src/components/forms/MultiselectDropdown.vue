@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import Pill from '@/components/base/Pill.vue'
 
 const props = defineProps<{
@@ -43,7 +43,15 @@ const emits = defineEmits<{
 
 const dropdown = ref<HTMLElement | null>(null)
 const dropdownOpen = ref<boolean>(false)
-const selectedOptions = ref<any[]>([])
+const selectedOptions = ref<any[]>([...props.modelValue])
+
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    selectedOptions.value = [...newValue]
+  },
+  { deep: true },
+)
 
 function selectOption(option: any) {
   if (!contains(selectedOptions.value, option, 'id')) {

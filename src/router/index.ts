@@ -6,6 +6,12 @@ import QuestView from '@/views/QuestView.vue'
 import ShopView from '@/views/ShopView.vue'
 
 const LoginView = defineAsyncComponent(() => import('@/views/LoginView.vue'))
+const FinanceDashboard = defineAsyncComponent(() => import('@/views/FinanceDashboard.vue'))
+const TransactionEntry = defineAsyncComponent(() => import('@/views/TransactionEntry.vue'))
+const QueryHistory = defineAsyncComponent(() => import('@/views/QueryHistory.vue'))
+const FinanceDashboardErrorTest = defineAsyncComponent(
+  () => import('@/views/FinanceDashboardErrorTest.vue'),
+)
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,6 +39,30 @@ const router = createRouter({
       name: 'Login',
       component: LoginView,
       meta: { requiresAuth: false },
+    },
+    {
+      path: '/finance',
+      name: 'FinanceDashboard',
+      component: FinanceDashboard,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/finance/entry',
+      name: 'TransactionEntry',
+      component: TransactionEntry,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/finance/history',
+      name: 'QueryHistory',
+      component: QueryHistory,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/finance/error-test',
+      name: 'FinanceDashboardErrorTest',
+      component: FinanceDashboardErrorTest,
+      meta: { requiresAuth: true },
     },
   ],
 })

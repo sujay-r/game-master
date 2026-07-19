@@ -5,6 +5,8 @@ import type {
   CreateTransactionInput,
   CreateBudgetInput,
   CreateUserQueryInput,
+  FinanceFilters,
+  TransactionKindFilter,
 } from '@/types/finance'
 import {
   fetchTransactionTypes,
@@ -16,12 +18,21 @@ import {
   fetchUserQueries,
   createUserQuery,
 } from '@/lib/supabase'
+import { seedBudgets, seedTransactionTypes, seedTransactions } from '@/utils/financeSeed'
+
+function getCurrentMonthRange(): { start: string; end: string } {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0)
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+  return { start: start.toISOString(), end: end.toISOString() }
+}
 
 interface FinanceStoreState {
   transactionTypes: TransactionType[]
   transactions: Transaction[]
   budgets: Budget[]
   userQueries: UserQuery[]
+  filters: FinanceFilters
   loading: boolean
   error: string | null
 }
@@ -32,6 +43,11 @@ const useFinanceStore = defineStore('finance', {
     transactions: [],
     budgets: [],
     userQueries: [],
+    filters: {
+      dateRange: getCurrentMonthRange(),
+      transactionTypeIds: [],
+      kind: 'all',
+    },
     loading: false,
     error: null,
   }),
@@ -48,6 +64,14 @@ const useFinanceStore = defineStore('finance', {
       } finally {
         this.loading = false
       }
+    },
+
+    seedFinanceData() {
+      this.transactionTypes = seedTransactionTypes()
+      this.transactions = seedTransactions()
+      this.budgets = seedBudgets()
+      this.loading = false
+      this.error = null
     },
 
     async addTransactionType(input: CreateTransactionTypeInput): Promise<TransactionType> {
@@ -137,11 +161,42 @@ const useFinanceStore = defineStore('finance', {
     clearError() {
       this.error = null
     },
+
+    setDateRange(dateRange: FinanceFilters['dateRange']) {
+      this.filters.dateRange = { ...dateRange }
+    },
+
+    setTransactionTypeIds(ids: number[]) {
+      this.filters.transactionTypeIds = [...ids]
+    },
+
+    setKind(kind: TransactionKindFilter) {
+      this.filters.kind = kind
+    },
+
+    resetFilters() {
+      this.filters = {
+        dateRange: getCurrentMonthRange(),
+        transactionTypeIds: [],
+        kind: 'all',
+      }
+    },
   },
 
   getters: {
     expenseTypes: (state) => state.transactionTypes.filter((type) => type.kind === 'expense'),
     incomeTypes: (state) => state.transactionTypes.filter((type) => type.kind === 'income'),
+    selectedTransactionTypes: (state) =>
+      state.transactionTypes.filter((type) => state.filters.transactionTypeIds.includes(type.id)),
+    isFiltered: (state) => {
+      const defaultRange = getCurrentMonthRange()
+      return (
+        state.filters.kind !== 'all' ||
+        state.filters.transactionTypeIds.length > 0 ||
+        state.filters.dateRange.start !== defaultRange.start ||
+        state.filters.dateRange.end !== defaultRange.end
+      )
+    },
   },
 })
 

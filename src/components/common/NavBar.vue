@@ -59,6 +59,35 @@
         </RouterLink>
 
         <RouterLink
+          to="/finance"
+          class="nav-link"
+          :class="{ 'nav-link--active': currentPath.startsWith('/finance') }"
+          aria-label="Finance"
+          :aria-current="currentPath.startsWith('/finance') ? 'page' : undefined"
+        >
+          <span class="nav-link__icon">
+            <!-- Coin/Finance icon -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v12" />
+              <path d="M8 10h8" />
+              <path d="M8 14h8" />
+            </svg>
+          </span>
+          <span class="nav-link__label">Finance</span>
+        </RouterLink>
+
+        <RouterLink
           to="/"
           class="nav-link"
           :class="{ 'nav-link--active': currentPath === '/' }"
@@ -232,6 +261,35 @@
             </svg>
           </span>
           <span class="nav-link__label">Shop</span>
+        </RouterLink>
+
+        <RouterLink
+          to="/finance"
+          class="nav-link"
+          :class="{ 'nav-link--active': currentPath.startsWith('/finance') }"
+          aria-label="Finance"
+          :aria-current="currentPath.startsWith('/finance') ? 'page' : undefined"
+        >
+          <span class="nav-link__icon">
+            <!-- Coin/Finance icon -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v12" />
+              <path d="M8 10h8" />
+              <path d="M8 14h8" />
+            </svg>
+          </span>
+          <span class="nav-link__label">Finance</span>
         </RouterLink>
       </div>
 
