@@ -54,11 +54,7 @@
       </DashboardSlot>
 
       <DashboardSlot test-id="budget-status-slot" class="slot-budget" enable-error-toggle>
-        <div class="placeholder" data-testid="budget-status-placeholder">
-          <h3>Budget Status</h3>
-          <p>{{ budgetCount }} active budgets</p>
-          <p>Overall status: on track</p>
-        </div>
+        <BudgetStatus />
       </DashboardSlot>
 
       <DashboardSlot test-id="spend-breakdown-slot" class="slot-breakdown" enable-error-toggle>
@@ -99,6 +95,7 @@ import HKTitle from '@/components/common/HKTitle.vue'
 import FinanceFilterBar from '@/components/finance/FinanceFilterBar.vue'
 import DashboardSlot from '@/components/finance/DashboardSlot.vue'
 import SummaryBar from '@/components/finance/SummaryBar.vue'
+import BudgetStatus from '@/components/finance/BudgetStatus.vue'
 import { useFinanceStore } from '@/stores/finance'
 import { TransactionKind } from '@/types/common'
 import type { Transaction } from '@/types/common'
@@ -143,8 +140,6 @@ const filteredTransactions = computed(() =>
 )
 
 const filteredTransactionCount = computed(() => filteredTransactions.value.length)
-
-const budgetCount = computed(() => financeStore.budgets.length)
 
 const expenseTypeCount = computed(() => {
   const selectedIds = financeStore.filters.transactionTypeIds
