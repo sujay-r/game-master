@@ -66,10 +66,16 @@ const useFinanceStore = defineStore('finance', {
       }
     },
 
-    seedFinanceData() {
-      this.transactionTypes = seedTransactionTypes()
-      this.transactions = seedTransactions()
-      this.budgets = seedBudgets()
+    async seedFinanceData() {
+      // Always try Supabase types first — they're FK targets and must be real.
+      // Fall back to hardcoded types only when Supabase is unavailable.
+      try {
+        await this.loadTransactionTypes()
+      } catch {
+        this.transactionTypes = seedTransactionTypes()
+      }
+      this.transactions = seedTransactions(this.transactionTypes)
+      this.budgets = seedBudgets(this.transactionTypes)
       this.loading = false
       this.error = null
     },

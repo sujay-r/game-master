@@ -101,11 +101,11 @@ const selectedTypeNames = computed(() => {
   return names.length > 0 ? names.join(', ') : 'All types'
 })
 
-onMounted(() => {
-  if (import.meta.env.DEV && financeStore.transactionTypes.length === 0) {
-    financeStore.seedFinanceData()
+onMounted(async () => {
+  if (import.meta.env.DEV && financeStore.transactions.length === 0) {
+    await financeStore.seedFinanceData()
   } else if (financeStore.transactionTypes.length === 0) {
-    financeStore.loadTransactionTypes()
+    await financeStore.loadTransactionTypes()
   }
 })
 </script>

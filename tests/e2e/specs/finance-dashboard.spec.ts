@@ -88,7 +88,7 @@ test.describe('finance dashboard shell', () => {
   test('navigation links to Transaction Entry and Query History work', async ({ page }) => {
     await page.getByRole('link', { name: 'New Transaction' }).click()
     await expect(page.getByRole('heading', { name: 'Transaction Entry' })).toBeVisible()
-    await expect(page.getByText('This screen will be built in task 274')).toBeVisible()
+    await expect(page.getByTestId('transaction-entry-form')).toBeVisible()
 
     await page.getByRole('link', { name: 'Back to Dashboard' }).click()
     await expect(page.getByRole('heading', { name: 'Finance Dashboard' })).toBeVisible()

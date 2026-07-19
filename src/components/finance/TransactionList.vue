@@ -98,11 +98,17 @@ function resolveTypeName(transaction: Transaction): string {
 }
 
 function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-IN', {
+  const datePart = date.toLocaleDateString('en-IN', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
   })
+  const timePart = date.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+  return `${datePart} ${timePart}`
 }
 
 function formatCurrency(amount: number): string {
