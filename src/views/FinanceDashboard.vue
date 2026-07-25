@@ -45,27 +45,27 @@
     <FinanceFilterBar />
 
     <div class="dashboard-grid">
-      <DashboardSlot test-id="summary-bar-slot" class="slot-summary" enable-error-toggle>
+      <DashboardSlot test-id="summary-bar-slot" class="slot-summary">
         <SummaryBar />
       </DashboardSlot>
 
-      <DashboardSlot test-id="budget-status-slot" class="slot-budget" enable-error-toggle>
+      <DashboardSlot test-id="budget-status-slot" class="slot-budget">
         <BudgetStatus />
       </DashboardSlot>
 
-      <DashboardSlot test-id="spend-breakdown-slot" class="slot-breakdown" enable-error-toggle>
+      <DashboardSlot test-id="spend-breakdown-slot" class="slot-breakdown">
         <SpendBreakdown />
       </DashboardSlot>
 
-      <DashboardSlot test-id="transaction-list-slot" class="slot-transactions" enable-error-toggle>
+      <DashboardSlot test-id="transaction-list-slot" class="slot-transactions">
         <TransactionList />
       </DashboardSlot>
 
-      <DashboardSlot test-id="income-expense-chart-slot" class="slot-chart" enable-error-toggle>
+      <DashboardSlot test-id="income-expense-chart-slot" class="slot-chart">
         <IncomeExpenseChart />
       </DashboardSlot>
 
-      <DashboardSlot test-id="nlq-panel-slot" class="slot-nlq" enable-error-toggle>
+      <DashboardSlot test-id="nlq-panel-slot" class="slot-nlq">
         <div class="placeholder" data-testid="nlq-panel-placeholder">
           <h3>NLQ Panel</h3>
           <p>Selected types: {{ selectedTypeNames }}</p>

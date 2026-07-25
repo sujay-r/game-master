@@ -22,32 +22,20 @@
       </p>
       <button type="button" class="dashboard-slot__retry" @click="resetError">Try again</button>
     </div>
-    <ThrowingPlaceholder v-else-if="forceThrow" />
+
     <slot v-else />
-    <button
-      v-if="enableErrorToggle && !hasError && !forceThrow"
-      type="button"
-      class="dashboard-slot__throw"
-      aria-label="Throw error"
-      @click="forceThrow = true"
-    >
-      Throw Error
-    </button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onErrorCaptured, ref } from 'vue'
-import ThrowingPlaceholder from '@/components/finance/ThrowingPlaceholder.vue'
 
 const props = defineProps<{
   testId?: string
-  enableErrorToggle?: boolean
 }>()
 
 const hasError = ref(false)
 const errorMessage = ref('')
-const forceThrow = ref(false)
 
 onErrorCaptured((err) => {
   hasError.value = true
@@ -59,7 +47,6 @@ onErrorCaptured((err) => {
 function resetError() {
   hasError.value = false
   errorMessage.value = ''
-  forceThrow.value = false
 }
 </script>
 
@@ -120,25 +107,4 @@ function resetError() {
   background: #a32121;
 }
 
-.dashboard-slot__throw {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  font-family: Perpetua, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 0.75em;
-  color: #666;
-  cursor: pointer;
-  transition:
-    border-color 0.2s,
-    color 0.2s;
-}
-
-.dashboard-slot__throw:hover {
-  border-color: #c62828;
-  color: #c62828;
-}
 </style>
