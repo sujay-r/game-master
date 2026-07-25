@@ -1406,6 +1406,7 @@ async function fetchTransactions(): Promise<Transaction[]> {
         date: new Date(item.date),
         createdAt: new Date(item.created_at),
         source: isTransactionSource(item.source) ? item.source : TransactionSource.Manual,
+        paymentMode: item.payment_mode,
       }
     })
   } catch (err) {
@@ -1428,6 +1429,7 @@ async function createTransaction(transactionData: CreateTransactionInput): Promi
         description: transactionData.description,
         date: transactionData.date.toISOString(),
         source: transactionData.source,
+        payment_mode: transactionData.paymentMode ?? null,
       })
       .select()
       .single()
@@ -1444,6 +1446,7 @@ async function createTransaction(transactionData: CreateTransactionInput): Promi
       date: new Date(data.date),
       createdAt: new Date(data.created_at),
       source: isTransactionSource(data.source) ? data.source : transactionData.source,
+      paymentMode: data.payment_mode,
     }
   } catch (err) {
     console.error('Error creating transaction: ', err)
@@ -1475,6 +1478,9 @@ async function updateTransaction(
       }
       payload.source = updates.source
     }
+    if (updates.paymentMode !== undefined) {
+      payload.payment_mode = updates.paymentMode
+    }
 
     const { data, error } = await client
       .from('Transaction')
@@ -1495,6 +1501,7 @@ async function updateTransaction(
       date: new Date(data.date),
       createdAt: new Date(data.created_at),
       source: isTransactionSource(data.source) ? data.source : TransactionSource.Manual,
+      paymentMode: data.payment_mode,
     }
   } catch (err) {
     console.error('Error updating transaction: ', err)

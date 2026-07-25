@@ -138,6 +138,7 @@ export interface Transaction {
   date: Date
   createdAt: Date
   source: TransactionSource
+  paymentMode?: string | null
 }
 
 export interface Budget {

@@ -51,14 +51,39 @@ interface SeedTransactionSpec {
 }
 
 const transactionSpecs: SeedTransactionSpec[] = [
-  { amount: 5000, typeName: 'Income', description: 'Monthly salary deposit', date: currentMonthDate(1) },
+  {
+    amount: 5000,
+    typeName: 'Income',
+    description: 'Monthly salary deposit',
+    date: currentMonthDate(1),
+  },
   { amount: 1200, typeName: 'Need', description: 'Rent payment', date: currentMonthDate(3) },
   { amount: 350, typeName: 'Need', description: 'Weekly groceries', date: currentMonthDate(5) },
   { amount: 120, typeName: 'Want', description: 'Dinner with friends', date: currentMonthDate(8) },
-  { amount: 80, typeName: 'Want', description: 'Movie and streaming subscriptions', date: currentMonthDate(10) },
-  { amount: 500, typeName: 'Investment', description: 'Index fund contribution', date: currentMonthDate(12) },
-  { amount: 150, typeName: 'Need', description: 'Electricity and internet bill', date: currentMonthDate(15) },
-  { amount: 45, typeName: 'Want', description: 'Mobile app subscription', date: currentMonthDate(20) },
+  {
+    amount: 80,
+    typeName: 'Want',
+    description: 'Movie and streaming subscriptions',
+    date: currentMonthDate(10),
+  },
+  {
+    amount: 500,
+    typeName: 'Investment',
+    description: 'Index fund contribution',
+    date: currentMonthDate(12),
+  },
+  {
+    amount: 150,
+    typeName: 'Need',
+    description: 'Electricity and internet bill',
+    date: currentMonthDate(15),
+  },
+  {
+    amount: 45,
+    typeName: 'Want',
+    description: 'Mobile app subscription',
+    date: currentMonthDate(20),
+  },
 ]
 
 interface SeedBudgetSpec {
