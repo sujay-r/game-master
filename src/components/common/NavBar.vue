@@ -549,6 +549,8 @@ async function handleLogout() {
   }
 
   .nav-mobile__track {
+    display: flex;
+    align-items: center;
     background: #eeede8;
     border-top: 1px solid #cfcfcf;
     box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
@@ -559,8 +561,8 @@ async function handleLogout() {
   /* Links panel: slides off above the track when collapsed so icons don't show */
   .nav-mobile__links {
     display: flex;
-    justify-content: center;
-    gap: 2rem;
+    flex: 1;
+    justify-content: space-around;
     padding: 0.75rem 1.5rem 0.75rem;
     transform: translateY(-100%);
     transition: transform 0.3s ease;
@@ -570,14 +572,13 @@ async function handleLogout() {
     transform: translateY(0);
   }
 
-  /* Mobile logout button - positioned at right extreme */
+  /* Mobile logout button - sits cleanly on the right as a flex child */
   .nav-mobile .mobile-logout {
-    position: absolute;
-    right: 0.5rem;
-    top: 50%;
-    transform: translateY(-50%);
+    position: static;
+    flex-shrink: 0;
     width: auto;
     padding: 0.5rem;
+    margin-right: 0.5rem;
   }
 
   .nav-mobile:not(.nav-mobile--open) .mobile-logout {

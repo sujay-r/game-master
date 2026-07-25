@@ -1,6 +1,11 @@
 <template>
   <div class="budget-status" data-testid="budget-status">
-    <h3 class="budget-status__title">Budget Status</h3>
+    <div class="budget-status__header">
+      <h3 class="budget-status__title">Budget Status</h3>
+      <RouterLink to="/finance/budgets" class="budget-status__manage-link">
+        Manage Budgets
+      </RouterLink>
+    </div>
 
     <div v-if="financeStore.filters.kind === 'income'" class="budget-status__empty">
       <p>Budgets apply to expenses only</p>
@@ -45,6 +50,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useFinanceStore } from '@/stores/finance'
 import { TransactionKind } from '@/types/common'
 import type { Budget, Transaction, TransactionType } from '@/types/common'
@@ -167,11 +173,30 @@ const visibleBudgets = computed<BudgetRow[]>(() => {
   gap: 0.75rem;
 }
 
+.budget-status__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
 .budget-status__title {
   font-family: Trajan, 'Perpetua', serif;
   font-size: 1.1em;
   color: #424242;
   margin: 0;
+}
+
+.budget-status__manage-link {
+  font-size: 0.85em;
+  color: #32a287;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.budget-status__manage-link:hover {
+  color: #2d826d;
 }
 
 .budget-status__empty {

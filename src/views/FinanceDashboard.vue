@@ -3,10 +3,6 @@
     <HKTitle :img_path="financeTitleURL" :size="1" />
 
     <div class="dashboard-header">
-      <div class="dashboard-title-section">
-        <h1 class="dashboard-title">Finance Dashboard</h1>
-        <p class="dashboard-subtitle">Track income, expenses, and budgets in one place</p>
-      </div>
       <div class="dashboard-actions">
         <RouterLink to="/finance/entry" class="action-button primary">
           <svg
@@ -91,6 +87,7 @@ import SpendBreakdown from '@/components/finance/SpendBreakdown.vue'
 import TransactionList from '@/components/finance/TransactionList.vue'
 import IncomeExpenseChart from '@/components/finance/IncomeExpenseChart.vue'
 import { useFinanceStore } from '@/stores/finance'
+import { getLatestIncome } from '@/utils/finance'
 
 const financeStore = useFinanceStore()
 
@@ -102,10 +99,21 @@ const selectedTypeNames = computed(() => {
 })
 
 onMounted(async () => {
+  await financeStore.loadTransactionTypes()
+  await financeStore.loadTransactions()
+  await financeStore.loadBudgets()
+
   if (import.meta.env.DEV && financeStore.transactions.length === 0) {
     await financeStore.seedFinanceData()
-  } else if (financeStore.transactionTypes.length === 0) {
-    await financeStore.loadTransactionTypes()
+  }
+
+  const latestIncome = getLatestIncome(financeStore.transactions)
+  if (latestIncome) {
+    const start = new Date(latestIncome.date)
+    start.setHours(0, 0, 0, 0)
+    const end = new Date()
+    end.setHours(23, 59, 59, 999)
+    financeStore.setDateRange({ start: start.toISOString(), end: end.toISOString() })
   }
 })
 </script>
@@ -120,27 +128,15 @@ onMounted(async () => {
 .dashboard-header {
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
+  justify-content: center;
   gap: 1rem;
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
 }
 
-.dashboard-title {
-  font-family: Trajan, 'Perpetua', serif;
-  font-size: 1.75em;
-  color: #424242;
-  margin: 0;
-}
-
-.dashboard-subtitle {
-  color: #666;
-  margin: 0.25rem 0 0;
-  font-size: 0.95em;
-}
-
 .dashboard-actions {
   display: flex;
+  justify-content: center;
   gap: 0.75rem;
   flex-wrap: wrap;
 }

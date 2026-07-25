@@ -9,6 +9,7 @@ const LoginView = defineAsyncComponent(() => import('@/views/LoginView.vue'))
 const FinanceDashboard = defineAsyncComponent(() => import('@/views/FinanceDashboard.vue'))
 const TransactionEntry = defineAsyncComponent(() => import('@/views/TransactionEntry.vue'))
 const QueryHistory = defineAsyncComponent(() => import('@/views/QueryHistory.vue'))
+const BudgetManagement = defineAsyncComponent(() => import('@/views/BudgetManagement.vue'))
 const FinanceDashboardErrorTest = defineAsyncComponent(
   () => import('@/views/FinanceDashboardErrorTest.vue'),
 )
@@ -56,6 +57,12 @@ const router = createRouter({
       path: '/finance/history',
       name: 'QueryHistory',
       component: QueryHistory,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/finance/budgets',
+      name: 'BudgetManagement',
+      component: BudgetManagement,
       meta: { requiresAuth: true },
     },
     {

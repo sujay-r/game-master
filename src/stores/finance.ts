@@ -15,6 +15,8 @@ import {
   createTransaction,
   fetchBudgets,
   createBudget,
+  updateBudget,
+  deleteBudget,
   fetchUserQueries,
   createUserQuery,
 } from '@/lib/supabase'
@@ -136,6 +138,32 @@ const useFinanceStore = defineStore('finance', {
         return created
       } catch (err) {
         console.error('Error adding budget: ', err)
+        throw err
+      }
+    },
+
+    async updateBudget(id: number, updates: Partial<CreateBudgetInput>): Promise<Budget> {
+      try {
+        const updated = await updateBudget(id, updates)
+        const index = this.budgets.findIndex((budget) => budget.id === id)
+        if (index !== -1) {
+          this.budgets[index] = updated
+        } else {
+          this.budgets.unshift(updated)
+        }
+        return updated
+      } catch (err) {
+        console.error('Error updating budget: ', err)
+        throw err
+      }
+    },
+
+    async deleteBudget(id: number): Promise<void> {
+      try {
+        await deleteBudget(id)
+        this.budgets = this.budgets.filter((budget) => budget.id !== id)
+      } catch (err) {
+        console.error('Error deleting budget: ', err)
         throw err
       }
     },
