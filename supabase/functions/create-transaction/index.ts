@@ -52,7 +52,7 @@ Deno.serve(async (req: Request) => {
 
   const { amount, transactionTypeId, transactionTypeName, description, date, createdAt, paymentMode } = body
 
-  if (typeof amount !== 'number' || Number.isNaN(amount) || amount <= 0) {
+  if (typeof amount !== 'number' || Number.isNaN(amount) || amount < 0) {
     return jsonResponse({ error: 'Amount must be a positive number' }, 400)
   }
 
