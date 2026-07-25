@@ -290,6 +290,8 @@ function parseDate(value: string, format: CliArgs['dateFormat']): Date {
       }
     }
     const parsed = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds))
+    // CSV timestamps are in IST (UTC+5:30); treat them as UTC then shift back.
+    parsed.setUTCMinutes(parsed.getUTCMinutes() - 330)
     if (Number.isNaN(parsed.getTime())) {
       throw new Error(`Cannot parse dd-mm-yyyy date: "${value}"`)
     }
@@ -336,6 +338,8 @@ function parseDate(value: string, format: CliArgs['dateFormat']): Date {
         }
       }
       const parsed = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds))
+      // CSV timestamps are in IST (UTC+5:30); treat them as UTC then shift back.
+      parsed.setUTCMinutes(parsed.getUTCMinutes() - 330)
       if (!Number.isNaN(parsed.getTime())) {
         return parsed
       }
