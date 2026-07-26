@@ -10,6 +10,7 @@ const FinanceDashboard = defineAsyncComponent(() => import('@/views/FinanceDashb
 const TransactionEntry = defineAsyncComponent(() => import('@/views/TransactionEntry.vue'))
 const QueryHistory = defineAsyncComponent(() => import('@/views/QueryHistory.vue'))
 const BudgetManagement = defineAsyncComponent(() => import('@/views/BudgetManagement.vue'))
+const BacklogView = defineAsyncComponent(() => import('@/views/BacklogView.vue'))
 const FinanceDashboardErrorTest = defineAsyncComponent(
   () => import('@/views/FinanceDashboardErrorTest.vue'),
 )
@@ -33,6 +34,12 @@ const router = createRouter({
       path: '/shop',
       name: 'Shop',
       component: ShopView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/quests/backlog',
+      name: 'Backlog',
+      component: BacklogView,
       meta: { requiresAuth: true },
     },
     {

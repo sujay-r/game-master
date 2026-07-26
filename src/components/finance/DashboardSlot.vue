@@ -106,5 +106,4 @@ function resetError() {
 .dashboard-slot__retry:hover {
   background: #a32121;
 }
-
 </style>

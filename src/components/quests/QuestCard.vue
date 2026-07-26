@@ -121,7 +121,7 @@
 
       <!-- Footer Actions -->
       <div class="quest-footer">
-        <button class="action-button add-task" @click="$emit('add-task', quest)">
+        <button v-if="showAddTask" class="action-button add-task" @click="$emit('add-task', quest)">
           <!-- TODO: Move this icon to the icons store as well -->
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -136,6 +136,25 @@
         </button>
 
         <div class="footer-actions">
+          <button
+            v-if="canToggleStatus"
+            class="action-button toggle-status"
+            :class="toggleStatusClass"
+            @click="$emit('toggle-status', quest)"
+            :title="toggleStatusTitle"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="18px"
+              viewBox="0 -960 960 960"
+              width="18px"
+              fill="currentColor"
+            >
+              <path :d="toggleStatusIconPath" />
+            </svg>
+            <span>{{ toggleStatusLabel }}</span>
+          </button>
+
           <button class="action-button edit" @click="$emit('edit', quest)">
             <!-- TODO: Move this icon to the icons store as well -->
             <svg
@@ -175,15 +194,21 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { Quest, TaskType, QuestType } from '@/types/common'
+import { QuestStatus, type Quest, type TaskType, type QuestType } from '@/types/common'
 import Task from '@/components/tasks/Task.vue'
 import TagPill from '@/components/tags/TagPill.vue'
 
-const props = defineProps<{
-  quest: Quest
-  tasks: TaskType[]
-  isExpanded: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    quest: Quest
+    tasks: TaskType[]
+    isExpanded: boolean
+    showAddTask?: boolean
+  }>(),
+  {
+    showAddTask: true,
+  },
+)
 
 const emit = defineEmits<{
   (e: 'toggle-expand'): void
@@ -194,6 +219,7 @@ const emit = defineEmits<{
   (e: 'add-task', quest: Quest): void
   (e: 'open-quest', quest: Quest): void
   (e: 'task-delete', taskId: number | string): void
+  (e: 'toggle-status', quest: Quest): void
 }>()
 
 const showCompleted = ref(false)
@@ -226,6 +252,26 @@ const activeTasks = computed(() => {
 const completedTasks = computed(() => {
   return props.tasks.filter((t) => t.status === 'DONE')
 })
+
+const canToggleStatus = computed(() => {
+  return props.quest.status === QuestStatus.Active || props.quest.status === QuestStatus.Todo
+})
+
+const isBacklogAction = computed(() => props.quest.status === QuestStatus.Active)
+
+const toggleStatusLabel = computed(() => (isBacklogAction.value ? 'Backlog' : 'Activate'))
+
+const toggleStatusTitle = computed(() =>
+  isBacklogAction.value ? 'Move to Backlog' : 'Move to Active',
+)
+
+const toggleStatusClass = computed(() => (isBacklogAction.value ? 'backlog' : 'activate'))
+
+const toggleStatusIconPath = computed(() =>
+  isBacklogAction.value
+    ? 'M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Z'
+    : 'M320-200v-560l440 280-440 280Z',
+)
 </script>
 
 <style scoped>
@@ -584,6 +630,24 @@ const completedTasks = computed(() => {
 
 .action-button.delete:hover {
   background: #ffcdd2;
+}
+
+.action-button.toggle-status {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.action-button.toggle-status:hover {
+  background: #bbdefb;
+}
+
+.action-button.toggle-status.backlog {
+  background: #f5f5f5;
+  color: #616161;
+}
+
+.action-button.toggle-status.backlog:hover {
+  background: #e0e0e0;
 }
 
 .completed-tasks-toggle {

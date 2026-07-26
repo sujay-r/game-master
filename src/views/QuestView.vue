@@ -43,6 +43,22 @@
           Tags
         </button>
 
+        <!-- View Backlog Button -->
+        <RouterLink to="/quests/backlog" class="view-backlog-button">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            height="18px"
+            viewBox="0 -960 960 960"
+            width="18px"
+            fill="currentColor"
+          >
+            <path
+              d="M120-320v-80h320v80H120Zm0-160v-80h480v80H120Zm0-160v-80h480v80H120Zm560 520v-160H520v-80h160v-160h80v160h160v80H760v160h-80Z"
+            />
+          </svg>
+          View Backlog
+        </RouterLink>
+
         <!-- New Quest Button -->
         <button class="new-quest-button" @click="openCreateModal">
           <svg
@@ -105,6 +121,7 @@
           @add-task="openAddTaskModal"
           @open-quest="openQuestDetail"
           @task-delete="handleTaskDelete"
+          @toggle-status="handleToggleStatus"
         />
       </div>
     </div>
@@ -206,6 +223,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import HKTitle from '@/components/common/HKTitle.vue'
 import Task from '@/components/tasks/Task.vue'
 import QuestCard from '@/components/quests/QuestCard.vue'
@@ -271,8 +289,8 @@ const taskCreationInitialQuestId = ref<number | null>(null)
 
 // Computed
 const filteredQuests = computed(() => {
-  // Filter out completed quests
-  let quests = questStore.quests.filter((q) => q.status !== QuestStatus.Completed)
+  // Show only active quests
+  let quests = questStore.quests.filter((q) => q.status === QuestStatus.Active)
 
   // Filter by type
   if (currentFilter.value === 'main') {
@@ -445,6 +463,15 @@ async function handleTaskDelete(taskId: number | string) {
   }
 }
 
+async function handleToggleStatus(quest: Quest) {
+  const newStatus = quest.status === QuestStatus.Active ? QuestStatus.Todo : QuestStatus.Active
+  try {
+    await questStore.updateQuest(quest.id, { status: newStatus })
+  } catch (err) {
+    console.error('Failed to toggle quest status:', err)
+  }
+}
+
 // Lifecycle
 onMounted(() => {
   loadData()
@@ -583,6 +610,33 @@ onMounted(() => {
   transform: translateY(0);
 }
 
+.view-backlog-button {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  color: #666;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-family: Trajan, 'Perpetua', serif;
+  font-size: 0.8em;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-backlog-button:hover {
+  border-color: #32a287;
+  color: #32a287;
+  transform: translateY(-1px);
+}
+
+.view-backlog-button:active {
+  transform: translateY(0);
+}
+
 .loading-state,
 .error-state {
   text-align: center;
@@ -716,6 +770,11 @@ onMounted(() => {
   }
 
   .manage-tags-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .view-backlog-button {
     width: 100%;
     justify-content: center;
   }

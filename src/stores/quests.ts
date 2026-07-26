@@ -216,11 +216,15 @@ const useQuestStore = defineStore('quests', {
     },
 
     activeQuests: (state) => {
-      return state.quests.filter((q) => q.status === 'active' || q.status === 'todo')
+      return state.quests.filter((q) => q.status === QuestStatus.Active)
+    },
+
+    backlogQuests: (state) => {
+      return state.quests.filter((q) => q.status === QuestStatus.Todo)
     },
 
     completedQuests: (state) => {
-      return state.quests.filter((q) => q.status === 'completed')
+      return state.quests.filter((q) => q.status === QuestStatus.Completed)
     },
 
     questProgress: (state) => {
