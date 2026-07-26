@@ -147,17 +147,44 @@
         </button>
       </div>
     </form>
+
+    <div class="token-count-wrapper">
+      <TokenCountDisplay />
+    </div>
+
+    <QuickAddButton
+      @click="openQuickAddTaskModal"
+      :style="{ bottom: 'calc(20px + var(--nav-bottom-offset, 0px))' }"
+    />
   </div>
+
+  <TaskCreationModal
+    v-model="isTaskCreationModalOpen"
+    :quests="questStore.activeQuests"
+    :initial-quest-id="null"
+    @created="handleTaskCreated"
+    @cancelled="handleTaskCreationCancelled"
+  />
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useFinanceStore } from '@/stores/finance'
+import { useQuestStore } from '@/stores/quests'
+import { useTaskSync } from '@/composables/useTaskSync'
+import { useTokenStore } from '@/stores/resources'
+import TokenCountDisplay from '@/components/common/TokenCountDisplay.vue'
+import QuickAddButton from '@/components/common/QuickAddButton.vue'
+import TaskCreationModal from '@/components/tasks/TaskCreationModal.vue'
 import { TransactionKind, TransactionSource } from '@/types/common'
 import type { CreateTransactionInput } from '@/types/finance'
+import type { TaskStatus, TaskOutcomeType } from '@/types/common'
 
 const financeStore = useFinanceStore()
+const questStore = useQuestStore()
+const taskSync = useTaskSync()
+const tokenStore = useTokenStore()
 const router = useRouter()
 
 const amount = ref<number | null>(null)
@@ -168,6 +195,7 @@ const time = ref(todayTime())
 const attemptedSubmit = ref(false)
 const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)
+const isTaskCreationModalOpen = ref(false)
 
 const incomeTypes = computed(() =>
   financeStore.transactionTypes.filter((type) => type.kind === TransactionKind.Income),
@@ -244,18 +272,55 @@ function handleCancel() {
   router.push('/finance')
 }
 
+function openQuickAddTaskModal() {
+  isTaskCreationModalOpen.value = true
+}
+
+async function handleTaskCreated(taskData: {
+  title: string
+  description: string
+  notes: string
+  status: TaskStatus
+  dueDate: Date | null
+  questId?: number
+  outcomes?: TaskOutcomeType[]
+  tagIds?: number[]
+}) {
+  try {
+    await taskSync.createOptimisticTask(taskData)
+  } catch (err) {
+    console.error('Failed to create task:', err)
+  }
+}
+
+function handleTaskCreationCancelled() {
+  // Modal handles its own cleanup
+}
+
 onMounted(async () => {
   if (import.meta.env.DEV && financeStore.transactions.length === 0) {
     await financeStore.seedFinanceData()
   } else if (financeStore.transactionTypes.length === 0) {
     await financeStore.loadTransactionTypes()
   }
+
+  if (questStore.quests.length === 0) {
+    try {
+      await questStore.loadQuests()
+    } catch (err) {
+      console.error('Error loading quests:', err)
+    }
+  }
+  taskSync.hydratePendingTasks()
+  if (tokenStore.tokens.length === 0) {
+    tokenStore.fetchTokensFromDb()
+  }
 })
 </script>
 
 <style scoped>
 .transaction-entry {
-  padding: 2rem 1rem;
+  padding: 2rem 1rem 100px;
   max-width: 800px;
   margin: 0 auto;
 }
@@ -393,6 +458,16 @@ onMounted(async () => {
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+.token-count-wrapper {
+  position: fixed;
+  bottom: calc(20px + var(--nav-bottom-offset, 0px));
+  right: 76px;
+  z-index: 100;
+  transition: bottom 0.3s ease;
+}
+
+/* Quick add button bottom offset is overridden via inline style using --nav-bottom-offset */
 
 @media (max-width: 480px) {
   .form-actions {

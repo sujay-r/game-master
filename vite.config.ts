@@ -36,7 +36,7 @@ export default defineConfig({
     // vueDevTools(),
   ],
   server: {
-    host: '0.0.0.0'
+    host: '0.0.0.0',
   },
   resolve: {
     alias: {

@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
-import { precacheAndRoute } from 'workbox-precaching'
+import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching'
+import { NavigationRoute, registerRoute } from 'workbox-routing'
 import { createClient } from '@supabase/supabase-js'
 
 interface SyncEvent extends ExtendableEvent {
@@ -18,6 +19,7 @@ const supabaseKey =
   (import.meta as unknown as { env: Record<string, string> }).env?.VITE_SUPABASE_API_KEY ?? ''
 
 precacheAndRoute(self.__WB_MANIFEST)
+registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html')))
 
 const DB_NAME = 'gamemaster_sync'
 const DB_VERSION = 1
